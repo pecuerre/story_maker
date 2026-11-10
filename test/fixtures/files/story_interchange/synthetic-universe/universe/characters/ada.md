@@ -2,6 +2,8 @@
 name: Ada
 slug: ada
 affiliation: "[[faction:wardens]]"
+pronouns: she/her
+languages: Dutch, English, German
 ---
 
 # Ada

@@ -108,8 +108,9 @@ becomes an appearance. Their matching rules and surfaces are in [mentions.md](me
 ## Interaction network
 
 The **Network** tab beside Characters and Relations at `/u/:universe_slug/network`
-(`CharacterNetworksController#show`) draws how often each pair of Characters shares the page. It is
-read-only, has no stored result, and is derived from the Universe's live records on every request.
+(`CharacterNetworksController#show`) draws how Characters connect through shared scenes, dialogue,
+stated Relations, and faction membership. It is read-only, has no stored result, and is derived from
+the Universe's live records on every request.
 
 **Scope.** Every live Scene of every live Story in the Universe, regardless of which Story is
 currently selected. The Characters workspace is Universe-scoped, so its network is too.
@@ -130,23 +131,48 @@ never their sum. A pair appears only when its score is positive.
 
 Two things deliberately do **not** count. A prose mention is a suggestion, not an appearance
 ([mentions.md](mentions.md)), so naming two Characters in one paragraph is not interaction. A
-Relation is a stated link rather than a counted event, so it neither creates an edge nor thickens
-one; it can color an edge that interaction already created, as described below.
+Relation is a stated link rather than a counted event, so it neither creates a score nor thickens an
+interaction edge.
 
-Faction membership is a third layer and is not interaction either. **Show faction membership as
-relation** is on by default and joins every pair of Characters in the same live Faction with a dotted
-line. It adds no score, changes no table row, and does not bring a Character into the graph on its
-own: only pairs whose two Characters are already nodes are drawn. Because **Show characters with no
-connections** is also on by default, every live Character is a node, so faction members with no
-recorded interaction are included and the layout places them as a group. A pair in several Factions
-gets one line, colored by the first Faction in that pair's list. At most 160 faction pairs are drawn,
-in Faction name then member name order, and the summary says when the cap truncated them. Turning the
-option off is `faction_links=0` in the URL; both view options preserve each other. The server always
-renders the whole graph, so a toggle only hides a layer and never moves a node.
+### Lines and precedence
 
-A Faction's `bgcolor` is the dotted line's color. `fgcolor` is stored for a future use and is not
-painted. A pair in several Factions uses the first Faction by name then id, matching the order the
-links are built in.
+The diagram draws three layers from the same live records:
+
+| Layer | Line | Color | Meaning |
+|---|---|---|---|
+| Interaction | solid | one neutral color; thickness follows the score | a shared Scene or Dialogue |
+| Relation | dashed | the pair's first Relation tag `bgcolor`, or the neutral color when untagged | a live Relation between the pair |
+| Faction membership | dotted | one neutral color | the pair is in the same live Faction |
+
+A pair shows the strongest line it has, with one deliberate exception: interaction and Relation are
+independent evidence, so both are drawn and the dashed line sits over the solid one. The rule is:
+
+| Interaction | Relation | Same faction | Drawn |
+|---|---|---|---|
+| no | no | no | nothing |
+| no | no | yes | dotted |
+| no | yes | no | dashed |
+| no | yes | yes | dashed only |
+| yes | no | no | solid |
+| yes | no | yes | solid only |
+| yes | yes | no | solid and dashed |
+| yes | yes | yes | solid and dashed |
+
+A Relation adds no score and changes no table row. The graph is undirected, so a Relation in either
+direction belongs to the same pair. When a pair has several Relations the first Relation by id
+supplies the link and the first Relation with a tag supplies its color; inside one Relation the
+first tag by `(position, id)` is chosen because a HABTM has no order of its own.
+
+Faction membership is the fallback layer. A pair in several Factions gets one line carrying all of
+them, in Faction name then id order. At most 160 faction pairs are drawn. A dotted line does not
+bring a Character into the graph on its own: only pairs whose two Characters are already nodes are
+drawn. Because **Show characters with no connections** is on by default, every live Character is a
+node, so faction members and relation-only pairs with no recorded interaction are included and the
+layout places them as a group.
+
+A Faction's `bgcolor` is stored for a future use and is not painted; `fgcolor` is also stored for a
+future use. The network now draws every dotted line in the same neutral color, so a pair in several
+Factions no longer needs a color decision.
 
 ### Derivation, not counters
 
@@ -157,44 +183,49 @@ delete and restore. Reading the live rows means a soft-deleted record leaves the
 next request by construction. If a Universe ever grows enough for the request to cost too much, a
 cached read model is the place to add one; a second stored truth is not.
 
-The diagram keeps at most 120 Characters, the table keeps at most the 240 strongest connections, and
-the faction layer keeps at most 160 pairs; the page says when any of them is showing a subset.
+The diagram keeps at most 120 Characters, the table keeps at most the 240 strongest interaction
+pairs, the Relation layer keeps at most 160 pairs, and the faction layer keeps at most 160 pairs; the
+page says when any of them is showing a subset.
 
 ### Diagram and text alternative
 
 `CharacterNetworkLayout` derives coordinates at render time from a deterministic force-directed
 simulation, following the [Map](map.md#page)'s derived-SVG pattern. The seed is fixed and the input
-order is stable, so the same records always produce the same picture. Interaction edges and faction
-links are both springs, so faction members settle together even when they share no Scene; stronger
-interactions pull harder. Line thickness follows the interaction score and dot size follows the
-Character's total interaction.
+order is stable, so the same records always produce the same picture. Interaction edges, Relation
+links, and faction links are all springs, so faction members and relation-only pairs settle together
+even when they share no Scene; stronger interactions pull harder. Line thickness follows the
+interaction score and dot size follows the Character's total interaction.
 
 Every live Character is a node by default. One with no positive interaction is drawn as a smaller
 dashed ring and still takes part in the force layout, rather than being parked in a separate band,
-because the default faction links need it in the graph to group its Faction. A Universe with no
-interaction edge still draws its cast; the connections table is omitted and a note says there are no
-interaction connections yet. The summary above the diagram states how many of the Universe's
-Characters have a recorded connection.
+because the default faction and Relation links need it in the graph to group its connections. A
+Universe with no interaction edge still draws its cast; the connections table is omitted and a note
+says there are no interaction connections yet. The summary above the diagram states how many of the
+Universe's Characters have a recorded connection.
 
-The two view controls are real links, so without JavaScript they navigate to the server-rendered
-alternative and preserve the other option. With JavaScript, `character_network_controller.js` hides
-and shows the layers in place instead: the server has already laid out every node, so a toggle never
-moves a node and leaves a gap where a hidden Character or faction line was. The URL is rewritten in
-place (`show_unconnected=0`, `faction_links=0`), so a reload or a shared link restores the same view.
+The three view controls are real checkboxes stacked above the diagram, on the right of the summary.
+All three start checked. Their labels begin **Show** and name the layer, not the current state:
+**Show characters with no connections**, **Show relations between characters**, and **Show faction
+membership**. Turning a layer off is `show_unconnected=0`, `relation_links=0`, or `faction_links=0` in
+the URL; absence means on. The server always renders the whole graph, so a checkbox only hides a
+layer and never moves a node. Without JavaScript the checkboxes are a GET form and its **Apply view
+options** button navigates to the server-rendered state. With JavaScript,
+`character_network_controller.js` hides and shows the layers in place and rewrites the URL, so a
+reload or a shared link restores the same view.
 
-An edge is neutral unless the pair has a Relation carrying a Relation tag. It then takes that tag's
-`bgcolor`, and the table repeats the tag badge, so the color is never the only signal. The graph is
-undirected, so a Relation in either direction colors the pair. When a pair has several Relations the
-first Relation by id that has a tag supplies it, and inside that Relation the first tag by
-`(position, id)` is chosen because a HABTM has no order of its own. A Relation with no interaction
-still draws no line.
+An interaction edge is always the neutral solid color; a Relation tag no longer colors it. A dashed
+Relation line takes its tag's `bgcolor` and otherwise stays neutral, and the table repeats the tag
+badge, so the color is never the only signal. The legend lists one item per line: solid line, dashed
+Relation line, dotted faction line, dot size, and the dashed ring for a Character with no recorded
+connection.
 
-The ordered table below the diagram is the accessible and printable equivalent: it names the pair,
-the Relation tag that colors the line, the shared Scene count, the shared Dialogue count, the
-exchange count, and the score. The diagram is a labelled `role="group"` inside a focusable scroll
-region and every node links to its Character. The only empty state is a Universe with no Characters:
-a Universe with Characters but no interaction edge still draws the cast and says the interaction
-connections are not recorded yet.
+The ordered table below the diagram is the accessible and printable equivalent of the interaction
+layer: it names the pair, the Relation tag that colors the pair's dashed line, the shared Scene
+count, the shared Dialogue count, the exchange count, and the score. A Relation-only pair is not a
+table row because it has no interaction score; the Relations workspace lists it. The diagram is a
+labelled `role="group"` inside a focusable scroll region and every node links to its Character. The
+only empty state is a Universe with no Characters: a Universe with Characters but no interaction
+edge still draws the cast and says the interaction connections are not recorded yet.
 
 ## Character sample records
 

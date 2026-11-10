@@ -14,6 +14,7 @@ class CharacterNetworksController < ApplicationController
     # Both layers are on by default. The URL records only the decision to turn
     # one off, and the buttons preserve each other.
     @show_unconnected = params[:show_unconnected] != "0"
+    @show_relation_links = params[:relation_links] != "0"
     @show_faction_links = params[:faction_links] != "0"
     # The server always builds the whole graph, because the client-side toggles
     # only hide layers and must not move a node. The initial URL state is applied
@@ -21,7 +22,8 @@ class CharacterNetworksController < ApplicationController
     @network = CharacterNetwork.new(
       Current.universe,
       include_unconnected: true,
-      include_faction_links: true
+      include_faction_links: true,
+      include_relation_links: true
     )
     @layout = CharacterNetworkLayout.new(@network)
   end

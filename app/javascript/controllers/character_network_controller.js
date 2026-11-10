@@ -1,111 +1,100 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The Network tab's two view toggles. The server renders the whole graph, with
-// every node already laid out, so these toggles only hide layers: a node never
-// moves when a layer is turned off.
+// The Network tab's three view checkboxes. The server renders the whole graph,
+// with every node already laid out, so these checkboxes only hide layers: a node
+// never moves when a layer is turned off.
 //
-// The controls stay real links. Without JavaScript they navigate to the
-// server-rendered alternative; with JavaScript the click is intercepted, the
-// layers are hidden or shown, and the URL is rewritten in place so a reload or a
-// shared link restores the same view.
+// The controls are real checkboxes in a GET form. With JavaScript the change is
+// applied in place and the URL is rewritten so a reload or a shared link restores
+// the same view. Without it the form's Apply button navigates to the
+// server-rendered alternative.
 export default class extends Controller {
-  static values = { showUnconnected: Boolean, showFactionLinks: Boolean }
-  static targets = [ "unconnectedButton", "unconnectedLabel", "factionButton" ]
+  static values = {
+    showUnconnected: Boolean,
+    showRelationLinks: Boolean,
+    showFactionLinks: Boolean
+  }
 
   connect() {
     this.apply()
-    this.updateButtonHrefs()
   }
 
   toggleUnconnected(event) {
-    event.preventDefault()
-    this.showUnconnectedValue = !this.showUnconnectedValue
+    this.showUnconnectedValue = event.target.checked
     this.apply()
     this.updateUrl()
-    this.updateButtonHrefs()
+  }
+
+  toggleRelationLinks(event) {
+    this.showRelationLinksValue = event.target.checked
+    this.apply()
+    this.updateUrl()
   }
 
   toggleFactionLinks(event) {
-    event.preventDefault()
-    this.showFactionLinksValue = !this.showFactionLinksValue
+    this.showFactionLinksValue = event.target.checked
     this.apply()
     this.updateUrl()
-    this.updateButtonHrefs()
   }
 
   apply() {
     this.toggleAll("[data-character-network-unconnected]", !this.showUnconnectedValue)
-    this.toggleAll("[data-character-network-unconnected-legend]", !this.showUnconnectedValue)
+    this.toggleAll(
+      "[data-character-network-unconnected-legend]",
+      !this.showUnconnectedValue
+    )
 
-    this.element.querySelectorAll("[data-character-network-faction-link]").forEach((element) => {
-      const touchesUnconnected =
-        element.dataset.characterNetworkFactionUnconnected === "true"
-      const hidden =
-        !this.showFactionLinksValue ||
-        (!this.showUnconnectedValue && touchesUnconnected)
+    this.querySelectorAll("[data-character-network-relation-link]").forEach(
+      (element) => {
+        const touchesUnconnected =
+          element.dataset.characterNetworkRelationUnconnected === "true"
+        const hidden =
+          !this.showRelationLinksValue ||
+          (!this.showUnconnectedValue && touchesUnconnected)
 
-      element.classList.toggle("character-network-hidden", hidden)
-    })
+        element.classList.toggle("character-network-hidden", hidden)
+      }
+    )
 
-    this.toggleAll("[data-character-network-faction-legend]", !this.showFactionLinksValue)
+    this.toggleAll(
+      "[data-character-network-relation-legend]",
+      !this.showRelationLinksValue
+    )
 
-    if (this.hasUnconnectedButtonTarget) {
-      this.unconnectedButtonTarget.setAttribute(
-        "aria-pressed",
-        String(this.showUnconnectedValue)
-      )
-    }
+    this.querySelectorAll("[data-character-network-faction-link]").forEach(
+      (element) => {
+        const touchesUnconnected =
+          element.dataset.characterNetworkFactionUnconnected === "true"
+        const hidden =
+          !this.showFactionLinksValue ||
+          (!this.showUnconnectedValue && touchesUnconnected)
 
-    if (this.hasUnconnectedLabelTarget) {
-      const labels = this.unconnectedLabelTarget.dataset
-      this.unconnectedLabelTarget.textContent = this.showUnconnectedValue
-        ? labels.characterNetworkOnLabel
-        : labels.characterNetworkOffLabel
-    }
+        element.classList.toggle("character-network-hidden", hidden)
+      }
+    )
 
-    if (this.hasFactionButtonTarget) {
-      this.factionButtonTarget.setAttribute(
-        "aria-pressed",
-        String(this.showFactionLinksValue)
-      )
-      this.factionButtonTarget.classList.toggle(
-        "btn-primary",
-        this.showFactionLinksValue
-      )
-      this.factionButtonTarget.classList.toggle(
-        "btn-outline-secondary",
-        !this.showFactionLinksValue
-      )
-    }
+    this.toggleAll(
+      "[data-character-network-faction-legend]",
+      !this.showFactionLinksValue
+    )
   }
 
   updateUrl() {
     window.history.replaceState(
       {},
       "",
-      this.urlFor(this.showUnconnectedValue, this.showFactionLinksValue)
+      this.urlFor(
+        this.showUnconnectedValue,
+        this.showRelationLinksValue,
+        this.showFactionLinksValue
+      )
     )
   }
 
-  updateButtonHrefs() {
-    if (this.hasUnconnectedButtonTarget) {
-      this.unconnectedButtonTarget.href = this.urlFor(
-        !this.showUnconnectedValue,
-        this.showFactionLinksValue
-      )
-    }
-
-    if (this.hasFactionButtonTarget) {
-      this.factionButtonTarget.href = this.urlFor(
-        this.showUnconnectedValue,
-        !this.showFactionLinksValue
-      )
-    }
-  }
-
-  urlFor(showUnconnected, showFactionLinks) {
+  urlFor(showUnconnected, showRelationLinks, showFactionLinks) {
     const url = new URL(window.location.href)
     this.writeParam(url, "show_unconnected", showUnconnected)
+    this.writeParam(url, "relation_links", showRelationLinks)
     this.writeParam(url, "faction_links", showFactionLinks)
 
     return url.toString()
@@ -117,8 +106,12 @@ export default class extends Controller {
   }
 
   toggleAll(selector, hidden) {
-    this.element.querySelectorAll(selector).forEach((element) => {
+    this.querySelectorAll(selector).forEach((element) => {
       element.classList.toggle("character-network-hidden", hidden)
     })
+  }
+
+  querySelectorAll(selector) {
+    return this.element.querySelectorAll(selector)
   }
 }

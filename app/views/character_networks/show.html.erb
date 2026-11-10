@@ -19,6 +19,7 @@
 <% else %>
   <div data-controller="character-network"
     data-character-network-show-unconnected-value="<%= @show_unconnected %>"
+    data-character-network-show-relation-links-value="<%= @show_relation_links %>"
     data-character-network-show-faction-links-value="<%= @show_faction_links %>">
     <div class="character-network-options">
       <p>
@@ -27,46 +28,58 @@
         <% if @network.nodes_truncated? %>
           <%= t("character_networks.characters_truncated", limit: CharacterNetwork::MAX_NODES) %>
         <% end %>
+        <% if @network.relation_links_truncated? %>
+          <%= t("character_networks.relation_links_truncated", limit: CharacterNetwork::MAX_RELATION_LINKS) %>
+        <% end %>
         <% if @network.faction_links_truncated? %>
           <%= t("character_networks.faction_links_truncated", limit: CharacterNetwork::MAX_FACTION_LINKS) %>
         <% end %>
       </p>
-      <div class="character-network-option-buttons">
-        <% if @network.unconnected_characters.any? %>
-          <%= link_to character_network_unconnected_toggle_path(
-              show_unconnected: @show_unconnected, show_faction_links: @show_faction_links),
-            class: "btn btn-sm btn-outline-secondary",
-            role: "button",
-            aria: { pressed: @show_unconnected },
-            data: { action: "character-network#toggleUnconnected",
-              character_network_target: "unconnectedButton" } do %>
-            <span data-character-network-target="unconnectedLabel"
-              data-character-network-on-label="<%= t("character_networks.hide_unconnected") %>"
-              data-character-network-off-label="<%= t("character_networks.show_unconnected", count: @network.unconnected_characters.size) %>">
-              <% if @show_unconnected %>
-                <%= t("character_networks.hide_unconnected") %>
-              <% else %>
-                <%= t("character_networks.show_unconnected", count: @network.unconnected_characters.size) %>
-              <% end %>
-            </span>
-          <% end %>
-        <% end %>
-        <%= link_to character_network_faction_links_toggle_path(
-            show_unconnected: @show_unconnected, show_faction_links: @show_faction_links),
-          class: "btn btn-sm #{@show_faction_links ? 'btn-primary' : 'btn-outline-secondary'}",
-          role: "button",
-          aria: { pressed: @show_faction_links },
-          data: { action: "character-network#toggleFactionLinks",
-            character_network_target: "factionButton" } do %>
-          <%= t("character_networks.show_faction_links") %>
-        <% end %>
-      </div>
+      <%# The three view options are real checkboxes in a GET form. JavaScript
+          toggles the layers in place and never submits the form; without it the
+          Apply button navigates to the server-rendered state. %>
+      <%= form_with url: universe_character_network_path, method: :get,
+        class: "character-network-option-checks" do %>
+        <div class="form-check">
+          <%= hidden_field_tag :show_unconnected, "0", id: nil %>
+          <%= check_box_tag :show_unconnected, "1", @show_unconnected,
+            id: "character_network_show_unconnected",
+            class: "form-check-input",
+            data: { action: "change->character-network#toggleUnconnected" } %>
+          <%= label_tag :show_unconnected, t("character_networks.show_unconnected"),
+            for: "character_network_show_unconnected", class: "form-check-label" %>
+        </div>
+        <div class="form-check">
+          <%= hidden_field_tag :relation_links, "0", id: nil %>
+          <%= check_box_tag :relation_links, "1", @show_relation_links,
+            id: "character_network_relation_links",
+            class: "form-check-input",
+            data: { action: "change->character-network#toggleRelationLinks" } %>
+          <%= label_tag :relation_links, t("character_networks.show_relation_links"),
+            for: "character_network_relation_links", class: "form-check-label" %>
+        </div>
+        <div class="form-check">
+          <%= hidden_field_tag :faction_links, "0", id: nil %>
+          <%= check_box_tag :faction_links, "1", @show_faction_links,
+            id: "character_network_faction_links",
+            class: "form-check-input",
+            data: { action: "change->character-network#toggleFactionLinks" } %>
+          <%= label_tag :faction_links, t("character_networks.show_faction_links"),
+            for: "character_network_faction_links", class: "form-check-label" %>
+        </div>
+        <noscript>
+          <%= submit_tag t("character_networks.apply_view_options"),
+            name: nil, class: "btn btn-sm btn-outline-secondary mt-2" %>
+        </noscript>
+      <% end %>
     </div>
 
     <section class="mb-4" aria-labelledby="character-network-diagram-heading">
       <h2 class="h5 mb-3" id="character-network-diagram-heading"><%= t("character_networks.diagram_heading") %></h2>
       <%= render "diagram", layout: @layout,
-        show_unconnected: @show_unconnected, show_faction_links: @show_faction_links %>
+        show_unconnected: @show_unconnected,
+        show_relation_links: @show_relation_links,
+        show_faction_links: @show_faction_links %>
     </section>
 
     <% if @network.edges.any? %>

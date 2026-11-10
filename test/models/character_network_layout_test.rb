@@ -10,7 +10,7 @@ class CharacterNetworkLayoutTest < ActiveSupport::TestCase
 
     assert_equal @network.nodes.map(&:character), layout.nodes.map(&:character)
     assert_equal @network.edges.size, layout.edges.size
-    assert_equal @network.edges.map(&:relation_tag), layout.edges.map(&:relation_tag)
+    assert_equal @network.relation_links.size, layout.relation_links.size
     assert_equal layout.width, layout.width.to_i
     assert_operator layout.width, :>=, CharacterNetworkLayout::MIN_WIDTH
 
@@ -88,15 +88,33 @@ class CharacterNetworkLayoutTest < ActiveSupport::TestCase
     with_factions = CharacterNetworkLayout.new(
       CharacterNetwork.new(universes(:universe_one), include_unconnected: true)
     )
-    before = without_factions.nodes.find { |candidate| candidate.character == loner }
-    after = with_factions.nodes.find { |candidate| candidate.character == loner }
+    before = coordinates(without_factions)
+    after = coordinates(with_factions)
 
-    refute_equal [ before.x, before.y ], [ after.x, after.y ],
-      "the faction spring changes where the isolated Character settles"
+    refute_equal before, after,
+      "the faction spring changes where the cast settles"
+  end
+
+  test "a Relation link pulls its two nodes into the simulation" do
+    first = universes(:universe_one).characters.create!(name: "Relation first")
+    second = universes(:universe_one).characters.create!(name: "Relation second")
+    universes(:universe_one).relations.create!(character1: first, character2: second)
+
+    without_relations = CharacterNetworkLayout.new(
+      CharacterNetwork.new(universes(:universe_one), include_unconnected: true, include_relation_links: false)
+    )
+    with_relations = CharacterNetworkLayout.new(
+      CharacterNetwork.new(universes(:universe_one), include_unconnected: true)
+    )
+
+    refute_equal coordinates(without_relations), coordinates(with_relations),
+      "the Relation spring changes where the cast settles"
   end
 
   test "faction links are placed on the same nodes as the interaction graph" do
-    factions(:faction_one).characters << characters(:character_two)
+    first = universes(:universe_one).characters.create!(name: "Faction first")
+    second = universes(:universe_one).characters.create!(name: "Faction second")
+    factions(:faction_two).characters << [ first, second ]
     network = CharacterNetwork.new(universes(:universe_one), include_unconnected: true)
     layout = CharacterNetworkLayout.new(network)
     link = layout.faction_links.first
@@ -104,7 +122,26 @@ class CharacterNetworkLayoutTest < ActiveSupport::TestCase
     assert_equal 1, layout.faction_links.size
     assert_includes layout.nodes, link.source
     assert_includes layout.nodes, link.target
-    assert_equal [ factions(:faction_one) ], link.factions
+    assert_equal [ factions(:faction_two) ], link.factions
+  end
+
+  test "relation links are placed on the same nodes and carry the tag" do
+    first = universes(:universe_one).characters.create!(name: "Relation first")
+    second = universes(:universe_one).characters.create!(name: "Relation second")
+    universes(:universe_one).relations.create!(
+      character1: first, character2: second,
+      relation_tags: [ relation_tags(:relation_tag_two) ]
+    )
+    network = CharacterNetwork.new(universes(:universe_one), include_unconnected: true)
+    layout = CharacterNetworkLayout.new(network)
+    link = layout.relation_links.find do |candidate|
+      [ candidate.source.character, candidate.target.character ].to_set == [ first, second ].to_set
+    end
+
+    assert link
+    assert_includes layout.nodes, link.source
+    assert_includes layout.nodes, link.target
+    assert_equal relation_tags(:relation_tag_two), link.relation_tag
   end
 
   test "a network with no positive pair still has a bounded empty canvas" do

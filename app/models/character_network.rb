@@ -29,18 +29,28 @@
 # for every live Character instead, which adds the unconnected ones as isolated
 # nodes; that choice is the caller's and is carried in the page's URL.
 #
-# **Faction membership** is a second, deliberately non-interaction layer. When it
-# is on (the default), every pair of Characters in the same live Faction is
-# returned as a `FactionLink`, which the diagram draws as a dotted line. It never
-# changes a pair's score, never reorders the interaction edges, and never turns a
-# mention into an appearance. It is bounded separately by `MAX_FACTION_LINKS`.
+# **A Relation** is a stated link between two Characters, so it is a third layer
+# rather than interaction evidence. When the relation layer is on (the default),
+# every live Relation between two nodes becomes a `RelationLink`, which the
+# diagram draws as a dashed line in the color of the Relation's tag. A Relation
+# still adds no score and never turns a mention into an appearance.
 #
-# The graph is bounded: at most `MAX_NODES` Characters and `MAX_EDGES` pairs are
-# kept, strongest first. A Universe can be much larger than a diagram that is
-# readable, and the page states when it is showing a subset.
+# **Faction membership** is the fallback layer. When it is on (the default),
+# every pair of Characters in the same live Faction is returned as a
+# `FactionLink`, which the diagram draws as a dotted line. A pair that already has
+# an interaction edge or a Relation is not returned here: the stronger line wins,
+# so a faction line is only drawn when neither of the other two applies. It never
+# changes a pair's score or reorders the interaction edges. It is bounded
+# separately by `MAX_FACTION_LINKS`.
+#
+# The graph is bounded: at most `MAX_NODES` Characters, `MAX_EDGES` interaction
+# pairs, `MAX_RELATION_LINKS` Relation pairs, and `MAX_FACTION_LINKS` faction
+# pairs are kept. A Universe can be much larger than a diagram that is readable,
+# and the page states when it is showing a subset.
 class CharacterNetwork
   MAX_NODES = 120
   MAX_EDGES = 240
+  MAX_RELATION_LINKS = 160
   MAX_FACTION_LINKS = 160
   DIALOGUE_ELEMENT_POINTS = 2
 
@@ -63,14 +73,22 @@ class CharacterNetwork
   # two Characters in two factions still get one line rather than two.
   FactionLink = Data.define(:character_a, :character_b, :factions)
 
-  attr_reader :universe, :scenes, :nodes, :edges, :total_edge_count,
+  # A stated link. `relation` is the first live Relation for the pair by id and
+  # `relation_tag` is the first tag on any Relation for that pair, so the line has
+  # one stable color even when a pair has several Relations.
+  RelationLink = Data.define(:character_a, :character_b, :relation, :relation_tag)
+
+  attr_reader :universe, :scenes, :nodes, :edges, :relation_links, :total_edge_count,
     :characters, :unconnected_characters, :connected_count, :faction_links
 
-  def initialize(universe, include_unconnected: false, include_faction_links: true)
+  def initialize(universe, include_unconnected: false, include_faction_links: true,
+    include_relation_links: true)
     @universe = universe
     @include_unconnected = include_unconnected
     @include_faction_links = include_faction_links
+    @include_relation_links = include_relation_links
     @faction_links_truncated = false
+    @relation_links_truncated = false
     @scenes = Scene.where(story_id: universe.stories.select(:id)).reorder(:id).to_a
     @pairs = Hash.new do |hash, key|
       hash[key] = PairStats.new(scene_ids: Set.new, dialogue_element_ids: Set.new, exchanges: 0)
@@ -79,6 +97,7 @@ class CharacterNetwork
     accumulate_scene_pairs
     accumulate_dialogue_pairs
     load_characters
+    load_relations
     build_graph
   end
 
@@ -90,8 +109,16 @@ class CharacterNetwork
     @include_faction_links
   end
 
+  def include_relation_links?
+    @include_relation_links
+  end
+
   def faction_links_truncated?
     @faction_links_truncated
+  end
+
+  def relation_links_truncated?
+    @relation_links_truncated
   end
 
   def character_total
@@ -99,8 +126,8 @@ class CharacterNetwork
   end
 
   # With the unconnected layer on, every live Character is a node, so a Universe
-  # with no interaction edge still draws its cast and any faction links. The page
-  # is empty only when there is no node to draw at all.
+  # with no interaction edge still draws its cast and any Relation or faction
+  # links. The page is empty only when there is no node to draw at all.
   def empty?
     nodes.empty?
   end
@@ -172,34 +199,36 @@ class CharacterNetwork
       @unconnected_characters = @characters.reject { |character| @connected_ids.include?(character.id) }
     end
 
-    # A pair's line color is the tag on its first Relation, in Relation id order.
-    # The graph is undirected, so a Relation in either direction colors the pair.
-    # Within one Relation the first tag is chosen by `(position, id)`, the same
-    # order the taxonomy uses, because a HABTM has no order of its own.
+    # A Relation is a stated link, not interaction evidence, so every live
+    # Relation between two live Characters is kept here for both the dashed layer
+    # and the table's tag badge. The graph is undirected: a Relation in either
+    # direction belongs to the same sorted pair. Within one Relation the first tag
+    # is chosen by `(position, id)`, the same order the taxonomy uses, because a
+    # HABTM has no order of its own.
     #
-    # A Relation with no interaction still draws no line; this only colors an edge
-    # that `SceneParticipants` already produced. Only the edges that survived the
-    # caps are asked about, so the query stays bounded by the diagram's own size.
-    def relation_tags_by_pair(edges)
-      pairs = edges.map { |edge| [ edge.character_a.id, edge.character_b.id ].sort }.to_set
-      ids = pairs.to_a.flatten.uniq
-      return {} if ids.empty?
+    # For a pair with several Relations, the first Relation by id supplies the
+    # link's identity and the first tagged Relation supplies its color. That keeps
+    # an untagged Relation from hiding a later tagged one.
+    def load_relations
+      @relation_pairs = Set.new
+      @relations_by_pair = {}
+      @relation_tags_by_pair = {}
 
-      tags = {}
       Relation.where(universe_id: universe.id)
-        .where(character1_id: ids, character2_id: ids)
         .includes(:relation_tags)
         .order(:id)
         .each do |relation|
+          first = relation.character1_id
+          second = relation.character2_id
+          next if first == second
+          next unless @characters_by_id.key?(first) && @characters_by_id.key?(second)
+
+          key = [ first, second ].sort
+          @relation_pairs << key
+          @relations_by_pair[key] ||= relation
           tag = relation.relation_tags.min_by { |candidate| [ candidate.position, candidate.id ] }
-          next if tag.nil?
-
-          key = [ relation.character1_id, relation.character2_id ].sort
-          next unless pairs.include?(key)
-
-          tags[key] ||= tag
+          @relation_tags_by_pair[key] ||= tag if tag
         end
-      tags
     end
 
     def build_graph
@@ -227,9 +256,9 @@ class CharacterNetwork
       @edges = candidates.select do |edge|
         kept_ids.include?(edge.character_a.id) && kept_ids.include?(edge.character_b.id)
       end
-      relation_tags = relation_tags_by_pair(@edges)
       @edges = @edges.map do |edge|
-        edge.with(relation_tag: relation_tags[[ edge.character_a.id, edge.character_b.id ].sort])
+        key = [ edge.character_a.id, edge.character_b.id ].sort
+        edge.with(relation_tag: @relation_tags_by_pair[key])
       end
 
       totals.clear
@@ -253,13 +282,48 @@ class CharacterNetwork
       end.sort_by { |node| [ -node.interaction_total, name_key(node.character.id), node.character.id ] }
 
       @nodes = connected_nodes + optional_unconnected_nodes(connected_nodes.size)
+      @relation_links = @include_relation_links ? build_relation_links : []
       @faction_links = @include_faction_links ? build_faction_links : []
     end
 
-    # Every pair in a faction is a link, deduplicated across factions. Only
-    # Characters that already became nodes are paired, so turning the unconnected
-    # toggle on is what includes a faction member with no recorded interaction.
-    # Factions and members are ordered, so the cap and the layout are stable.
+    # Every live Relation between two nodes becomes one dashed link, deduplicated
+    # by undirected pair. The cap is applied after the tag scan, so a pair already
+    # kept still receives the first tagged Relation even when later pairs are
+    # dropped. Only Characters that already became nodes are paired, matching the
+    # faction layer's rule.
+    def build_relation_links
+      node_ids = @nodes.map { |node| node.character.id }.to_set
+      return [] if node_ids.empty?
+
+      links = {}
+      @relation_pairs.each do |key|
+        next unless node_ids.include?(key.first) && node_ids.include?(key.last)
+
+        if links.size >= MAX_RELATION_LINKS
+          @relation_links_truncated = true
+          next
+        end
+
+        links[key] = RelationLink.new(
+          character_a: @characters_by_id[key.first],
+          character_b: @characters_by_id[key.last],
+          relation: @relations_by_pair.fetch(key),
+          relation_tag: @relation_tags_by_pair[key]
+        )
+      end
+
+      links.values.sort_by do |link|
+        [ name_key(link.character_a.id), name_key(link.character_b.id), link.character_a.id, link.character_b.id ]
+      end
+    end
+
+    # Every pair in a faction is a candidate link, deduplicated across factions.
+    # A pair that already has an interaction edge or a Relation is skipped: the
+    # stronger line wins, so the dotted layer is only the fallback for a pair with
+    # neither. Only Characters that already became nodes are paired, so turning
+    # the unconnected toggle on is what includes a faction member with no recorded
+    # interaction. Factions and members are ordered, so the cap and the layout are
+    # stable.
     def build_faction_links
       node_ids = @nodes.map { |node| node.character.id }.to_set
       return [] if node_ids.empty?
@@ -271,6 +335,8 @@ class CharacterNetwork
 
         member_ids.combination(2) do |first, second|
           key = [ first, second ]
+          next if @pairs.key?(key) || @relation_pairs.include?(key)
+
           if links.key?(key)
             links[key] << faction
           elsif links.size >= MAX_FACTION_LINKS

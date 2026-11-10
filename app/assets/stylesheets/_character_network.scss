@@ -3,7 +3,7 @@
 }
 
 .character-network-options {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   flex-wrap: wrap;
   gap: .75rem;
@@ -16,10 +16,15 @@
   margin-bottom: 0;
 }
 
-.character-network-option-buttons {
+.character-network-option-checks {
   display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
+  flex-direction: column;
+  gap: .25rem;
+  margin-inline-start: auto;
+}
+
+.character-network-option-checks .form-check {
+  margin-bottom: 0;
 }
 
 .character-network-diagram {
@@ -53,14 +58,18 @@
   stroke-width: 1.5;
 }
 
+.character-network-relation-link {
+  stroke: var(--bs-secondary-color);
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
+  stroke-opacity: .9;
+  stroke-width: 2;
+}
+
 .character-network-edge {
   stroke: var(--bs-secondary-color);
   stroke-linecap: round;
   stroke-opacity: .45;
-}
-
-.character-network-edge--tagged {
-  stroke-opacity: .8;
 }
 
 .character-network-node {
@@ -115,23 +124,25 @@
 
 .character-network-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: .5rem 1rem;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.character-network-legend li {
+  align-items: center;
+  display: flex;
+  gap: .5rem;
 }
 
 .character-network-legend-line {
   display: inline-block;
+  flex: 0 0 auto;
   width: 1.5rem;
-  margin-inline-end: .25rem;
   border-top: 3px solid var(--bs-secondary-color);
-  vertical-align: middle;
 }
 
-.character-network-legend-line--tagged {
-  height: 3px;
-  border-top: 0;
-  background: linear-gradient(90deg, var(--bs-primary), var(--bs-success), var(--bs-warning));
-  border-radius: 2px;
+.character-network-legend-line--relation {
+  border-top: 2px dashed var(--bs-primary);
 }
 
 .character-network-legend-line--faction {
@@ -140,12 +151,11 @@
 
 .character-network-legend-node {
   display: inline-block;
+  flex: 0 0 auto;
   width: .75rem;
   height: .75rem;
-  margin-inline-end: .25rem;
   background: var(--bs-primary);
   border-radius: 50%;
-  vertical-align: middle;
 }
 
 .character-network-legend-node--isolated {

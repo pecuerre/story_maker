@@ -137,7 +137,7 @@ one.
 
 | Record | Required keys | Optional keys |
 |---|---|---|
-| Character | `name`, `slug`, `affiliation` | `role`, `status`, `first_appears`, `backlog` |
+| Character | `name`, `slug`, `affiliation` | `pronouns`, `languages`, `role`, `status`, `first_appears`, `backlog` |
 | Faction | `name`, `slug` | `type`, `home`, `status`, `backlog` |
 | Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
@@ -222,14 +222,18 @@ The description is the one answer whose `[[kind:slug]]` references stay in their
 details page turns each into a link, so resolving it to plain names would lose the link. That render
 is owned by [Characters](characters.md#links-inside-a-description).
 
-The source has no pronouns or aliases section; those fields stay blank when a Character has none.
+`pronouns` and `languages` are frontmatter values rather than columns: the pronoun set and each
+comma-separated language become Universe Character Tags, created when that name does not already
+exist, so two Characters that name the same language share one tag. `TBD` means undecided and creates
+no tag. The Character's `pronouns` column and its `aliases` stay blank, because the source has no
+aliases field and the import writes pronouns as tags.
 `affiliation` is the source's faction list. Each `[[faction:slug]]` becomes a Faction membership;
 the validator has already refused a link to a missing record or to another kind, and the Factions
 slice runs first so the record exists. A bare name such as an in-world institution, or `TBD`, has no
 Faction behind it and is reported instead of guessed into one. The frontmatter keys `role`, `status`,
 `first_appears`, and `backlog` have no Character column and are reported when they are present; the
-current source keeps only the three identity keys in frontmatter and writes the others under
-`Information`.
+current source keeps the identity keys and the two tag fields in frontmatter and writes the others
+under `Information`.
 
 #### Relationships
 

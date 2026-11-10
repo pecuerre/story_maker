@@ -74,11 +74,12 @@ module StoryInterchange
         kind: :character,
         count: :characters,
         label: "character",
-        # The current character file keeps only the three identity fields in
-        # frontmatter and moves role, status, and first appearance into the
-        # `## Information` body. The older keys are still accepted.
+        # The current character file keeps its identity fields in frontmatter:
+        # `pronouns` and comma-separated `languages` become Character Tags, and
+        # role, status, and first appearance stay in the `## Information` body.
+        # The older keys are still accepted.
         required: %w[name slug affiliation],
-        optional: %w[role status first_appears backlog]
+        optional: %w[pronouns languages role status first_appears backlog]
       },
       "factions" => {
         directory: "factions",

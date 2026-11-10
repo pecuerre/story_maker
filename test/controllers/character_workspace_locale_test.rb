@@ -96,7 +96,9 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
 
   test "the Network tab, its options, and its table are Spanish" do
     @universe.characters.create!(name: "Sin conexión")
-    factions(:faction_one).characters << characters(:character_two)
+    first = @universe.characters.create!(name: "Facción uno")
+    second = @universe.characters.create!(name: "Facción dos")
+    factions(:faction_two).characters << [ first, second ]
 
     get universe_character_network_url(universe_slug: @universe.slug)
 
@@ -105,10 +107,10 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "nav.content-tabs a.active", text: "Red"
     assert_select "th", text: "Personajes"
     assert_select "th", text: "Etiqueta de relación"
-    assert_select ".character-network-options", text: /3 de 4 personajes tienen una conexión registrada/
-    assert_select ".character-network-options a", text: "Ocultar personajes sin conexión"
-    assert_select ".character-network-option-buttons a[role=button]",
-      text: "Mostrar la pertenencia a facciones como relación"
+    assert_select ".character-network-options", text: /3 de 6 personajes tienen una conexión registrada/
+    assert_select "label[for=character_network_show_unconnected]", text: "Mostrar personajes sin conexión"
+    assert_select "label[for=character_network_relation_links]", text: "Mostrar relaciones entre personajes"
+    assert_select "label[for=character_network_faction_links]", text: "Mostrar la pertenencia a facciones"
     assert_select ".character-network-legend", text: /Línea punteada: misma facción/
     assert_select ".character-network-table caption",
       text: /Cada escena compartida suma 1, cada diálogo compartido suma 2/

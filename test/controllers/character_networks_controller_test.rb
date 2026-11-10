@@ -17,13 +17,16 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
 
     assert_select "[data-controller=character-network]"
-    assert_select "a[data-action='character-network#toggleFactionLinks'][data-character-network-target=factionButton]"
+    assert_select "form[method=get] input[type=checkbox][name=show_unconnected][checked]"
+    assert_select "form[method=get] input[type=checkbox][name=relation_links][checked]"
+    assert_select "form[method=get] input[type=checkbox][name=faction_links][checked]"
     assert_select "svg.character-network-svg[role=group]"
     assert_select ".character-network-node", count: 3
     assert_select ".character-network-edge", count: 3
+    assert_select ".character-network-relation-link", count: 1
     assert_select ".character-network-table tbody tr", count: 3
     assert_select ".character-network-table caption", text: /shared scene/i
-    assert_select "main form", count: 0
+    assert_select "main form", { count: 1 }, "the view options are the page's only form"
   end
 
   test "the table reports the three counts behind an interaction score" do
@@ -38,32 +41,43 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "1", "1", "1", "4" ], row.css("td.text-end").map { |cell| cell.text.strip }
   end
 
-  test "a tagged Relation colors its line and repeats the tag in the table" do
+  test "a tagged Relation draws a dashed link in its tag color and repeats the tag in the table" do
     get universe_character_network_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_select "th", text: "Relation tag"
 
-    tagged_edges = css_select(".character-network-edge--tagged")
-    assert_equal 1, tagged_edges.size
-    assert_equal "#d3d3d3", tagged_edges.first["style"][/stroke:\s*(#[0-9a-fA-F]{6})/, 1]
+    relation_links = css_select(".character-network-relation-link")
+    assert_equal 1, relation_links.size
+    assert_equal "#d3d3d3", relation_links.first["style"][/stroke:\s*(#[0-9a-fA-F]{6})/, 1]
+    assert_select ".character-network-edge[style]", { count: 0 },
+      "the solid interaction line is always neutral"
     assert_select ".character-network-table .taxonomy-tag", text: "Relation tag one"
     assert_select ".character-network-table td .visually-hidden", text: "No relation tag", count: 2
+
+    get universe_character_network_url(universe_slug: @universe.slug, relation_links: "0")
+
+    assert_response :success
+    assert_select "input[type=checkbox][name=relation_links]:not([checked])"
+    assert_select ".character-network-relation-link.character-network-hidden", count: 1
+    assert_select "[data-character-network-relation-legend].character-network-hidden", count: 1
   end
 
-  test "faction membership draws colored dotted links and can be turned off" do
-    factions(:faction_one).update!(bgcolor: "#123456", fgcolor: "#ffffff")
-    factions(:faction_one).characters << characters(:character_two)
+  test "faction membership draws neutral dotted links and can be turned off" do
+    first = @universe.characters.create!(name: "Faction first")
+    second = @universe.characters.create!(name: "Faction second")
+    factions(:faction_two).update!(bgcolor: "#123456", fgcolor: "#ffffff")
+    factions(:faction_two).characters << [ first, second ]
 
     get universe_character_network_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select ".character-network-faction-link[style*=?]", "stroke: #123456", count: 1
-    assert_select ".character-network-option-buttons a[role=button][aria-pressed=true]",
-      text: "Show faction membership as relation"
-    assert_select ".character-network-option-buttons a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, faction_links: "0"),
-      text: "Show faction membership as relation"
+    assert_select ".character-network-faction-link", count: 1
+    assert_select ".character-network-faction-link[style]", { count: 0 },
+      "the dotted faction line is always neutral"
+    assert_select "label[for=character_network_faction_links]",
+      text: "Show faction membership"
+    assert_select "input[type=checkbox][name=faction_links][checked]"
     assert_select ".character-network-legend", text: /Dotted line: same faction/
 
     get universe_character_network_url(universe_slug: @universe.slug, faction_links: "0")
@@ -72,39 +86,33 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-network-faction-link", count: 1
     assert_select ".character-network-faction-link.character-network-hidden", count: 1
     assert_select "[data-character-network-faction-legend].character-network-hidden", count: 1
-    assert_select ".character-network-option-buttons a[role=button][aria-pressed=false]",
-      text: "Show faction membership as relation"
+    assert_select "input[type=checkbox][name=faction_links]:not([checked])"
   end
 
-  test "each network option keeps the other one as it was" do
-    factions(:faction_one).characters << characters(:character_two)
+  test "each checkbox reflects its own URL option" do
     @universe.characters.create!(name: "A Loner")
 
     get universe_character_network_url(universe_slug: @universe.slug)
 
-    assert_select ".character-network-option-buttons a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, show_unconnected: "0"),
-      text: "Hide characters with no connections"
-    assert_select ".character-network-option-buttons a[role=button][href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, faction_links: "0")
+    assert_select "input[type=checkbox][checked]", count: 3
+
+    get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
+
+    assert_select "input[type=checkbox][name=show_unconnected]:not([checked])"
+    assert_select "input[type=checkbox][name=relation_links][checked]"
+    assert_select "input[type=checkbox][name=faction_links][checked]"
+
+    get universe_character_network_url(universe_slug: @universe.slug, relation_links: "0")
+
+    assert_select "input[type=checkbox][name=show_unconnected][checked]"
+    assert_select "input[type=checkbox][name=relation_links]:not([checked])"
+    assert_select "input[type=checkbox][name=faction_links][checked]"
 
     get universe_character_network_url(universe_slug: @universe.slug, faction_links: "0")
 
-    assert_select ".character-network-option-buttons a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug,
-        show_unconnected: "0", faction_links: "0"),
-      text: "Hide characters with no connections"
-    assert_select ".character-network-option-buttons a[role=button][href=?]",
-      universe_character_network_path(universe_slug: @universe.slug)
-
-    get universe_character_network_url(universe_slug: @universe.slug,
-      show_unconnected: "0", faction_links: "0")
-
-    assert_select ".character-network-option-buttons a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, faction_links: "0"),
-      text: "Show 1 character with no connection"
-    assert_select ".character-network-option-buttons a[role=button][href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, show_unconnected: "0")
+    assert_select "input[type=checkbox][name=show_unconnected][checked]"
+    assert_select "input[type=checkbox][name=relation_links][checked]"
+    assert_select "input[type=checkbox][name=faction_links]:not([checked])"
   end
 
   test "all Characters are in the graph by default and zero only hides the unconnected ones" do
@@ -117,10 +125,7 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-network-node", count: 4
     assert_select ".character-network-node.character-network-hidden", count: 0
     assert_select ".character-network-node--isolated", count: 1
-    assert_select "a[data-action='character-network#toggleUnconnected'][data-character-network-target=unconnectedButton]"
-    assert_select ".character-network-options a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug, show_unconnected: "0"),
-      text: "Hide characters with no connections"
+    assert_select "input[type=checkbox][name=show_unconnected][checked]"
     assert_select ".character-network-legend", text: /Dashed ring/
 
     get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
@@ -129,9 +134,7 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-network-node", count: 4
     assert_select ".character-network-node:not(.character-network-hidden)", count: 3
     assert_select ".character-network-node.character-network-hidden", count: 1
-    assert_select ".character-network-options a[href=?]",
-      universe_character_network_path(universe_slug: @universe.slug),
-      text: "Show 1 character with no connection"
+    assert_select "input[type=checkbox][name=show_unconnected]:not([checked])"
   end
 
   test "only zero turns the unconnected layer off" do
@@ -158,12 +161,15 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "[data-character-network-show-unconnected-value=false]"
+    assert_select "[data-character-network-show-relation-links-value=true]"
     assert_select "[data-character-network-show-faction-links-value=true]"
     assert_select ".character-network-node", count: 4
     assert_select ".character-network-node.character-network-hidden", count: 1
+    assert_select ".character-network-faction-link", count: 2
     assert_select ".character-network-faction-link.character-network-hidden", count: 2
-    assert_select ".character-network-faction-link:not(.character-network-hidden)", count: 1
+    assert_select ".character-network-relation-link.character-network-hidden", count: 0
     assert_select "[data-character-network-unconnected-legend].character-network-hidden", count: 1
+    assert_select "[data-character-network-relation-legend].character-network-hidden", count: 0
     assert_select "[data-character-network-faction-legend].character-network-hidden", count: 0
 
     get universe_character_network_url(universe_slug: @universe.slug, faction_links: "0")
@@ -171,20 +177,41 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-character-network-show-faction-links-value=false]"
     assert_select ".character-network-node.character-network-hidden", count: 0
-    assert_select ".character-network-faction-link", count: 3
-    assert_select ".character-network-faction-link.character-network-hidden", count: 3
+    assert_select ".character-network-faction-link", count: 2
+    assert_select ".character-network-faction-link.character-network-hidden", count: 2
     assert_select "[data-character-network-faction-legend].character-network-hidden", count: 1
   end
 
-  test "faction links can carry the graph when there is no interaction edge" do
-    factions(:faction_one).characters << characters(:character_two)
+  test "faction links can carry the graph when there is no interaction or Relation" do
+    first = @universe.characters.create!(name: "Faction first")
+    second = @universe.characters.create!(name: "Faction second")
+    factions(:faction_two).characters << [ first, second ]
     scenes(:scene_one).soft_delete
+    relations(:relation_one).soft_delete
 
     get universe_character_network_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_select ".character-network-svg"
     assert_select ".character-network-faction-link", count: 1
+    assert_select ".character-network-relation-link", count: 0
+    assert_select ".character-network-table", count: 0
+    assert_select "p", text: /No interaction connections recorded yet/
+  end
+
+  test "relation links can carry the graph when there is no interaction or faction" do
+    first = @universe.characters.create!(name: "Relation first")
+    second = @universe.characters.create!(name: "Relation second")
+    @universe.relations.create!(character1: first, character2: second)
+    scenes(:scene_one).soft_delete
+    relations(:relation_one).soft_delete
+
+    get universe_character_network_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".character-network-svg"
+    assert_select ".character-network-relation-link", count: 1
+    assert_select ".character-network-faction-link", count: 0
     assert_select ".character-network-table", count: 0
     assert_select "p", text: /No interaction connections recorded yet/
   end

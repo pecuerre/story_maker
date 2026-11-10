@@ -42,14 +42,23 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Diagram Relations layer.** The Character network now draws a Relation between two Characters as a dashed line, colored by the pair's Relation tag, and keeps interaction solid and faction membership dotted.
 - **Plot Scene assignments on import.** A Scene's optional `plot` frontmatter now assigns it to that Plot, and the Plots slice writes the join after every Scene exists.
 
 ### changed
 
+- **Network view checkboxes.** The Network tab's two toggle buttons became three stacked checkboxes that all start checked, labelled **Show characters with no connections**, **Show relations between characters**, and **Show faction membership**.
+- **Network line precedence.** A pair shows interaction over Relation over faction membership, except that interaction and Relation both draw and overlap; solid and dotted lines are now one neutral color.
+- **Network legend.** Every entry in the diagram's legend now sits on its own line.
+- **Character tags from frontmatter.** The interchange import turns a Character's `pronouns` and comma-separated `languages` into shared Universe Character Tags, skipping `TBD`, instead of reporting them as unknown keys.
 - **Scene links and slugs.** The interchange accepts `[[scene:slug]]` story-wide and writes imported Scenes with the source's bare scene slug (no chapter prefix), so those links resolve.
 - **Chapter README frontmatter.** The import now reads a chapter README's YAML frontmatter: `summary` fills the Section's new `short_summary`, the other keys become its description, and the body is ignored.
 - **Section summary views.** The Sections tree shows `short_summary` as a row's second line, the details page shows it under the title, and the shared editor opens the wide scrollable dialog.
 - **Section editor fields.** The Section form now edits `short_summary` and reads name, tags, parent, short summary, description, photo in that order.
+
+### docs
+
+- **Network documentation.** The Characters and Factions documents describe the dashed Relations layer, line precedence, neutral solid and dotted colors, and the three checkbox controls.
 
 ## 2026-11-09
 

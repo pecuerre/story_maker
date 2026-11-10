@@ -114,11 +114,13 @@ class CharacterNetworkTest < ActiveSupport::TestCase
   end
 
   test "same-faction pairs are a separate layer that is on by default" do
-    factions(:faction_one).characters << characters(:character_two)
+    first = @universe.characters.create!(name: "Faction mate one")
+    second = @universe.characters.create!(name: "Faction mate two")
+    factions(:faction_one).characters << [ first, second ]
 
-    network = CharacterNetwork.new(@universe)
+    network = CharacterNetwork.new(@universe, include_unconnected: true)
     link = network.faction_links.find do |candidate|
-      endpoint_ids(candidate) == [ characters(:character_one).id, characters(:character_two).id ].sort
+      endpoint_ids(candidate) == [ first.id, second.id ].sort
     end
 
     assert link, "the two faction members get a faction link"
@@ -128,11 +130,13 @@ class CharacterNetworkTest < ActiveSupport::TestCase
   end
 
   test "a pair in several factions gets one link carrying all of them" do
-    factions(:faction_one).characters << characters(:character_two)
-    factions(:faction_two).characters << [ characters(:character_one), characters(:character_two) ]
+    first = @universe.characters.create!(name: "Shared member one")
+    second = @universe.characters.create!(name: "Shared member two")
+    factions(:faction_one).characters << [ first, second ]
+    factions(:faction_two).characters << [ first, second ]
 
-    link = CharacterNetwork.new(@universe).faction_links.find do |candidate|
-      endpoint_ids(candidate) == [ characters(:character_one).id, characters(:character_two).id ].sort
+    link = CharacterNetwork.new(@universe, include_unconnected: true).faction_links.find do |candidate|
+      endpoint_ids(candidate) == [ first.id, second.id ].sort
     end
 
     assert_equal [ factions(:faction_one), factions(:faction_two) ], link.factions
@@ -140,22 +144,89 @@ class CharacterNetworkTest < ActiveSupport::TestCase
 
   test "a faction member without interaction joins the graph only when unconnected is on" do
     loner = @universe.characters.create!(name: "Faction only")
-    factions(:faction_one).characters << [ characters(:character_two), loner ]
+    faction = @universe.factions.create!(name: "Small faction")
+    faction.characters << [ characters(:character_two), loner ]
 
     connected_only = CharacterNetwork.new(@universe)
-    assert_equal 1, connected_only.faction_links.size
+    assert_empty connected_only.faction_links
     assert_not_includes connected_only.nodes.map(&:character), loner
 
     whole_cast = CharacterNetwork.new(@universe, include_unconnected: true)
-    assert_equal 3, whole_cast.faction_links.size
+    assert_equal 1, whole_cast.faction_links.size
     assert_includes whole_cast.nodes.map(&:character), loner
   end
 
   test "a soft-deleted Faction contributes no links" do
-    factions(:faction_one).characters << characters(:character_two)
-    factions(:faction_one).soft_delete
+    first = @universe.characters.create!(name: "Deleted faction one")
+    second = @universe.characters.create!(name: "Deleted faction two")
+    faction = @universe.factions.create!(name: "Soon gone")
+    faction.characters << [ first, second ]
+    faction.soft_delete
 
-    assert_empty CharacterNetwork.new(@universe).faction_links
+    assert_empty CharacterNetwork.new(@universe, include_unconnected: true).faction_links
+  end
+
+  test "a Relation between two unconnected Characters draws a link, not interaction" do
+    first = @universe.characters.create!(name: "Relation only one")
+    second = @universe.characters.create!(name: "Relation only two")
+    relation = @universe.relations.create!(
+      character1: first, character2: second,
+      relation_tags: [ relation_tags(:relation_tag_one) ]
+    )
+
+    network = CharacterNetwork.new(@universe, include_unconnected: true)
+    link = network.relation_links.find do |candidate|
+      endpoint_ids(candidate) == [ first.id, second.id ].sort
+    end
+
+    assert link, "the stated Relation gets a dashed link"
+    assert_equal relation, link.relation
+    assert_equal relation_tags(:relation_tag_one), link.relation_tag
+    assert_nil network.edges.find { |edge| endpoint_ids(edge) == [ first.id, second.id ].sort },
+      "a Relation is not interaction evidence"
+    assert_empty CharacterNetwork.new(@universe, include_unconnected: true, include_relation_links: false).relation_links
+  end
+
+  test "a relation link keeps the first tagged Relation in id order for its color" do
+    first = @universe.characters.create!(name: "Two relations one")
+    second = @universe.characters.create!(name: "Two relations two")
+    untagged = @universe.relations.create!(character1: first, character2: second)
+    tagged = @universe.relations.create!(
+      character1: second, character2: first,
+      relation_tags: [ relation_tags(:relation_tag_two) ]
+    )
+
+    link = CharacterNetwork.new(@universe, include_unconnected: true).relation_links.find do |candidate|
+      endpoint_ids(candidate) == [ first.id, second.id ].sort
+    end
+
+    assert_operator untagged.id, :<, tagged.id
+    assert_equal untagged, link.relation
+    assert_equal relation_tags(:relation_tag_two), link.relation_tag,
+      "the first Relation is untagged, so the later tagged Relation colors the pair"
+  end
+
+  test "a stronger line suppresses the faction line for the same pair" do
+    interacted = [ characters(:character_two), characters(:character_three) ]
+    related = create_related_pair("Relation beats faction")
+    same_faction = create_faction_pair("Faction only")
+    factions(:faction_one).characters << interacted
+    factions(:faction_one).characters << related
+
+    network = CharacterNetwork.new(@universe, include_unconnected: true)
+    faction_pairs = network.faction_links.map { |link| endpoint_ids(link) }
+
+    assert_not_includes faction_pairs, interacted.map(&:id).sort,
+      "interaction suppresses the dotted line"
+    assert_not_includes faction_pairs, related.map(&:id).sort,
+      "a Relation suppresses the dotted line"
+    assert_includes faction_pairs, same_faction.map(&:id).sort,
+      "a pair with neither interaction nor Relation keeps the dotted line"
+
+    related_link = network.relation_links.find { |link| endpoint_ids(link) == related.map(&:id).sort }
+    assert related_link, "the Relation still draws its dashed line"
+    assert network.edges.any? { |edge| endpoint_ids(edge) == interacted.map(&:id).sort },
+      "the interaction still draws its solid line"
   end
 
   test "faction links are bounded and say when they truncated" do
@@ -168,6 +239,20 @@ class CharacterNetworkTest < ActiveSupport::TestCase
 
     assert_equal CharacterNetwork::MAX_FACTION_LINKS, network.faction_links.size
     assert network.faction_links_truncated?
+  end
+
+  test "relation links are bounded and say when they truncated" do
+    characters = 20.times.map do |index|
+      @universe.characters.create!(name: format("Related %02d", index))
+    end
+    characters.combination(2).first(CharacterNetwork::MAX_RELATION_LINKS + 1).each do |first, second|
+      @universe.relations.create!(character1: first, character2: second)
+    end
+
+    network = CharacterNetwork.new(@universe, include_unconnected: true)
+
+    assert_equal CharacterNetwork::MAX_RELATION_LINKS, network.relation_links.size
+    assert network.relation_links_truncated?
   end
 
   test "a Character with no pair is reported and only drawn when asked for" do
@@ -206,6 +291,21 @@ class CharacterNetworkTest < ActiveSupport::TestCase
   end
 
   private
+
+    def create_related_pair(label)
+      first = @universe.characters.create!(name: "#{label} one")
+      second = @universe.characters.create!(name: "#{label} two")
+      @universe.relations.create!(character1: first, character2: second)
+      [ first, second ]
+    end
+
+    def create_faction_pair(label)
+      first = @universe.characters.create!(name: "#{label} one")
+      second = @universe.characters.create!(name: "#{label} two")
+      faction = @universe.factions.create!(name: label)
+      faction.characters << [ first, second ]
+      [ first, second ]
+    end
 
     def edge_between(first, second)
       expected = [ first.id, second.id ].sort

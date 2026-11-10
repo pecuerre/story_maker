@@ -42,6 +42,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes character.description, "## Open questions"
     # A `[[faction:slug]]` affiliation is a membership, not free text.
     assert_equal [ "wardens" ], character.factions.map(&:slug)
+    # Frontmatter pronouns and languages become Character Tags, not columns.
+    assert_equal %w[Dutch English German she/her], character.character_tags.order(:name).pluck(:name)
 
     faction = universe.factions.find_by!(slug: "wardens")
     assert_equal "The Wardens", faction.name
@@ -65,6 +67,47 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes faction.description, "## The two rivals"
     assert_includes faction.description, "## Relationships"
     assert_includes faction.description, "## Open questions"
+  end
+
+  test "shares one character tag between characters that name the same language" do
+    write("universe/characters/bryn.md", <<~MARKDOWN)
+      ---
+      name: Bryn
+      slug: bryn
+      affiliation: TBD
+      pronouns: they/them
+      languages: English, Klingon
+      ---
+
+      # Bryn
+
+      ## Short summary
+
+      A second engineer.
+    MARKDOWN
+
+    universe = import.call.universe
+    ada = universe.characters.find_by!(slug: "ada")
+    bryn = universe.characters.find_by!(slug: "bryn")
+
+    assert_equal %w[Dutch English German she/her], ada.character_tags.order(:name).pluck(:name)
+    assert_equal %w[English Klingon they/them], bryn.character_tags.order(:name).pluck(:name)
+    assert_equal %w[Dutch English German Klingon she/her they/them],
+      universe.character_tags.order(:name).pluck(:name)
+    assert_equal [ ada, bryn ], universe.character_tags.find_by!(name: "English").characters.order(:name).to_a
+  end
+
+  test "does not create a character tag for an undecided pronoun or language" do
+    path = File.join(@root, "universe/characters/ada.md")
+    File.write(path, File.read(path)
+      .sub("pronouns: she/her", "pronouns: TBD")
+      .sub("languages: Dutch, English, German", "languages: TBD"))
+
+    universe = import.call.universe
+    character = universe.characters.find_by!(slug: "ada")
+
+    assert_empty character.character_tags
+    assert_empty universe.character_tags
   end
 
   test "uses Mission as a Faction summary only when there is no Short summary" do

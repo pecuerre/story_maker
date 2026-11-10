@@ -14,11 +14,11 @@ colors:
 |---|---|
 | `summary` | One line shown in the Faction list and at the top of its details page; plain text, references included |
 | `description` | The full profile, written in Markdown |
-| `bgcolor` | A `#rrggbb` color; it paints the Faction's dotted links on the Character network |
+| `bgcolor` | A `#rrggbb` color stored for future use; the Character network's dotted lines are one neutral color |
 | `fgcolor` | A `#rrggbb` color stored for future use; currently not painted |
 
 The colors default to `#d3d3d3` and `#000000`. `HasColor` validates both as `#rrggbb`. The Character
-network chooses the first Faction by name then id when a pair belongs to several.
+network does not use either color for its faction layer.
 
 The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
 `**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. The

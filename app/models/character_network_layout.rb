@@ -32,11 +32,17 @@ class CharacterNetworkLayout
   # as a group instead of scattering the characters with no Scene connection.
   FACTION_LINK_PULL = 2.0
 
-  Node = Data.define(:character, :x, :y, :radius, :label, :interaction_total, :degree)
-  Edge = Data.define(:source, :target, :weight, :stroke_width, :relation_tag)
-  FactionLink = Data.define(:source, :target, :factions)
+  # A Relation is a stated link without an interaction score. It is a spring for
+  # the same reason the faction link is: a relation-only pair should settle near
+  # each other rather than drift apart because it has no Scene in common.
+  RELATION_LINK_PULL = 2.0
 
-  attr_reader :nodes, :edges, :faction_links, :width, :height
+  Node = Data.define(:character, :x, :y, :radius, :label, :interaction_total, :degree)
+  Edge = Data.define(:source, :target, :weight, :stroke_width)
+  FactionLink = Data.define(:source, :target, :factions)
+  RelationLink = Data.define(:source, :target, :relation_tag)
+
+  attr_reader :nodes, :edges, :faction_links, :relation_links, :width, :height
 
   def initialize(network)
     @network = network
@@ -45,6 +51,7 @@ class CharacterNetworkLayout
     positions = simulate
     @nodes = build_nodes(positions)
     @edges = build_edges
+    @relation_links = build_relation_links
     @faction_links = build_faction_links
   end
 
@@ -55,10 +62,10 @@ class CharacterNetworkLayout
     end
 
     # Returns `{ character_id => [x, y] }` for every node, already scaled into
-    # the drawing area. Interaction edges and faction links are both springs, so
-    # the layout groups faction members even when they share no Scene. Coordinates
-    # stay inside the padding, so a label drawn under a node still fits inside the
-    # viewBox.
+    # the drawing area. Interaction edges, faction links, and Relation links are
+    # all springs, so the layout groups faction members and relation-only pairs
+    # even when they share no Scene. Coordinates stay inside the padding, so a
+    # label drawn under a node still fits inside the viewBox.
     def simulate
       nodes = @network.nodes
       count = nodes.size
@@ -73,6 +80,9 @@ class CharacterNetworkLayout
       end
       springs.concat(@network.faction_links.map do |link|
         [ index_by_id.fetch(link.character_a.id), index_by_id.fetch(link.character_b.id), FACTION_LINK_PULL ]
+      end)
+      springs.concat(@network.relation_links.map do |link|
+        [ index_by_id.fetch(link.character_a.id), index_by_id.fetch(link.character_b.id), RELATION_LINK_PULL ]
       end)
 
       ideal = Math.sqrt(1.0 / count)
@@ -197,6 +207,17 @@ class CharacterNetworkLayout
       end
     end
 
+    def build_relation_links
+      nodes_by_id = nodes.index_by { |node| node.character.id }
+      @network.relation_links.filter_map do |link|
+        source = nodes_by_id[link.character_a.id]
+        target = nodes_by_id[link.character_b.id]
+        next unless source && target
+
+        RelationLink.new(source: source, target: target, relation_tag: link.relation_tag)
+      end
+    end
+
     def build_edges
       nodes_by_id = nodes.index_by { |node| node.character.id }
       max_weight = @network.edges.map(&:weight).max.to_f
@@ -209,8 +230,7 @@ class CharacterNetworkLayout
           source: source,
           target: target,
           weight: edge.weight,
-          stroke_width: stroke_width_for(edge.weight, max_weight),
-          relation_tag: edge.relation_tag
+          stroke_width: stroke_width_for(edge.weight, max_weight)
         )
       end
     end

@@ -19,11 +19,18 @@ module StoryInterchange
     # names exists by then. A bare name such as an in-world institution, or
     # `TBD`, has no Faction record and is reported instead of guessed into one.
     #
+    # `pronouns` and comma-separated `languages` become Character Tags rather
+    # than columns. Each value is created once in the Universe and shared by every
+    # Character that names it, so a language that two people speak is one tag.
+    # `TBD` means undecided and creates no tag.
+    #
     # `role`, `status`, `first_appears`, and `backlog` have no Character column
     # and are reported when they appear in frontmatter.
     class Characters < Importer
       SUMMARY_HEADINGS = [ "short summary", "at a glance" ].freeze
       FACTION_REFERENCE = /\A\[\[faction:([^\[\]]+)\]\]\z/
+      TAG_KEYS = %w[pronouns languages].freeze
+      UNDECIDED = /\A[—–-]?\s*TBD\z/i
 
       slice label_key: "imports.slices.characters",
         count: :characters,
@@ -48,6 +55,13 @@ module StoryInterchange
           end.uniq
         end
 
+        # The Character Tags the source's `pronouns` and `languages` name, in
+        # source order. A language list is comma-separated; a pronoun set is
+        # usually one value. `TBD` is undecided rather than a tag.
+        def tag_names(entity)
+          TAG_KEYS.flat_map { |key| tag_values(entity.frontmatter[key]) }.uniq
+        end
+
         # The affiliation entries that are not Faction links: a bare institution
         # name or `TBD`. They have no record to join, so the import reports them.
         def unlinked_affiliations(report, entity)
@@ -62,6 +76,11 @@ module StoryInterchange
         end
 
         private
+          def tag_values(value)
+            values = value.is_a?(Array) ? value : value.to_s.split(",")
+            values.map { |name| name.to_s.strip }.reject { |name| name.blank? || name.match?(UNDECIDED) }
+          end
+
           def reported_entries(report, entity)
             entries = reported_keys.filter_map do |key|
               Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
@@ -82,7 +101,8 @@ module StoryInterchange
           record_attributes(entity).merge(
             summary: summary_for(entity),
             description: description_for(entity),
-            factions: factions_for(entity)
+            factions: factions_for(entity),
+            character_tags: character_tags_for(entity)
           )
         end
 
@@ -94,6 +114,15 @@ module StoryInterchange
           return [] if slugs.empty?
 
           Faction.where(universe: universe, slug: slugs).to_a
+        end
+
+        # Each pronoun and language value becomes a Universe Character Tag,
+        # created when the name is new. Names are matched exactly, so two
+        # Characters that write a language the same way share one tag.
+        def character_tags_for(entity)
+          self.class.tag_names(entity).map do |name|
+            universe.character_tags.find_or_create_by!(name: name)
+          end
         end
 
         def summary_for(entity)

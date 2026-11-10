@@ -149,7 +149,7 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 | Table | Columns | Notes |
 |---|---|---|
 | `stories` | `universe_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL) | unique index on `[universe_id, slug]`; `has_many :scenes, dependent: :destroy` |
-| `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story; `has_many :scenes, dependent: :nullify` (deleting a section only ungroups scenes) |
+| `sections` | `story_id` FK (NOT NULL), `name`, `short_summary`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story; `has_many :scenes, dependent: :nullify` (deleting a section only ungroups scenes); `short_summary` is the optional one-line summary, while `description` carries the full profile or the rest of a chapter README's frontmatter |
 | `plots` | `story_id` FK (NOT NULL), `name`, `short_summary`, `description`, `slug` (NOT NULL), `deleted_at` (nullable) | named story-owned through-line; `short_summary` is the list row's one line, while `description` keeps the source's Markdown sections; unique live `[story_id, name]` and `[story_id, slug]`; flat and unordered |
 | `plots_scenes` | `plot_id` FK, `scene_id` FK | HABTM link; unique `[plot_id, scene_id]`; both ends must belong to the same Story (application validation) |
 | `story_tropes` | `story_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Story; unique `[story_id, trope_slug]`; rows survive soft deletion for restore |

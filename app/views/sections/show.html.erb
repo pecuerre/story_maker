@@ -4,6 +4,7 @@
   record: @section,
   eyebrow: t("shared.eyebrow.story", story: @story.name),
   label: t("sections.show.label"),
+  description: summary_html(@section),
   facts: [
     detail_fact(t("sections.show.facts.story"), link_to(@story.name, universe_story_path(id: @story))),
     detail_fact(t("sections.show.facts.path"), @section_path || @section.name),

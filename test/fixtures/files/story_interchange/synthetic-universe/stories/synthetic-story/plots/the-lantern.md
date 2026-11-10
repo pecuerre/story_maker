@@ -43,9 +43,9 @@ The lantern stays lit until the hall.
 
 ## Progression
 
-| Scene | What changed | Who knows now |
-|---|---|---|
-| B-001 | the gate opened | Ada, the watch |
+- B-001 · [[scene:the-gate]].
+  What changed: the gate opened.
+  Who knows now: Ada, the watch.
 
 ## Open questions
 

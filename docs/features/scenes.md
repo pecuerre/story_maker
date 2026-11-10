@@ -478,6 +478,12 @@ to record presence.
 
 ## The Sections workspace's ungrouped block
 
+The Sections tree shows a Section's `short_summary` as the row's second line, with references
+reduced to record names and never links; a Section with none keeps a one-line row. The Section
+page shows the same summary under its title and keeps the full description as a fact. The
+shared taxonomy editor opens in the wide, scrollable dialog the other record editors use and
+reads name, tags, parent, short summary, description, photo in that order.
+
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it: only
 the Scenes that belong to no Section, in canonical narrative order, because a grouped Scene is read on
 its own Section's page. The badge above that list states how many ungrouped Scenes it holds

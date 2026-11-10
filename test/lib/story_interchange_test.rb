@@ -86,12 +86,23 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal [ "synthetic-story", "synthetic-story" ], report.chapters.map(&:story_slug)
     assert_equal [ "The Arrival Gate", "Winter" ], report.chapters.map(&:name)
 
-    # The README's prose before its first `##` is the Section description, and
-    # the subsection has no Section column so the importer reports it.
+    # A chapter README's frontmatter is its machine-readable record: `title`
+    # names the Section, `summary` is its short summary, and the other keys are
+    # carried in the description. Everything after the frontmatter is
+    # documentation and is skipped.
     arrival = report.chapters.first
-    assert_includes arrival.description, "[[location:keep]] and follows [[ada]]"
-    assert_equal [ "What is here" ], arrival.sections.map(&:heading)
-    assert_empty report.chapters.last.description
+    assert_equal "Ada reaches the gate at the edge of the keep and follows the hall beyond it.",
+      arrival.short_summary
+    assert_includes arrival.description, "act: I"
+    assert_includes arrival.description, "band: 1"
+    assert_includes arrival.description, "pov:\n- ada"
+    assert_includes arrival.description, "locations:\n- keep"
+    assert_includes arrival.description, "plots:\n- the-lantern"
+    refute_includes arrival.description, "summary:"
+    refute_includes arrival.description, "title:"
+    refute_includes arrival.description, "Documentation for this chapter directory"
+    assert_nil report.chapters.last.short_summary
+    assert_nil report.chapters.last.description
 
     # A Scene is parsed like an entity too; its chapter and sequence are the
     # path, so the report names the directory that holds it, and its body is the
@@ -101,6 +112,11 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal "The gate", scene.name
     assert_equal "synthetic-story", scene.story_slug
     assert_equal "01-arrival", scene.chapter_slug
+    # The filename is the scene's identity in its chapter; its story-wide
+    # address is the same name without the sequence.
+    assert_equal "01-the-gate", scene.slug
+    assert_equal "the-gate", scene.scene_slug
+    assert_equal "the-lantern", scene.frontmatter["plot"]
     assert_equal %w[Narration Dialog], scene.sections.map(&:heading)
     # The closing drafting contract is a Scene fact with its own column, so it
     # is read rather than reported or left in the prose.
@@ -220,9 +236,87 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert_equal "01-arrival", scene.chapter_slug
     assert_equal "02-the-hall", scene.slug
+    assert_equal "the-hall", scene.scene_slug
     # The old frontmatter keys are not required and not read.
     assert_nil scene.frontmatter["chapter"]
     assert_nil scene.frontmatter["sequence"]
+  end
+
+  test "accepts a scene link that crosses chapters by its story-wide slug" do
+    write("stories/synthetic-story/chapters/02-winter/01-the-return.md", <<~MARKDOWN)
+      ---
+      id: B-101
+      title: The return
+      pov: ada
+      location: keep
+      timeline: "back at the gate"
+      moment: ""
+      branch: main
+      ---
+
+      # The return
+
+      ## Narration
+
+      The gate is still open ([[scene:the-gate]]).
+    MARKDOWN
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "reports a scene link that names no scene in the story" do
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md",
+      "[[scene:the-gate]]", "[[scene:the-missing]]")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/unknown scene `the-missing` in story synthetic-story/, errors(report))
+  end
+
+  test "refuses two scenes in one story that share a story-wide slug" do
+    write("stories/synthetic-story/chapters/02-winter/01-the-gate.md", <<~MARKDOWN)
+      ---
+      id: B-101
+      title: Another gate
+      pov: ada
+      location: keep
+      timeline: "a second gate"
+      moment: ""
+      branch: main
+      ---
+
+      # Another gate
+
+      ## Narration
+
+      A gate with the same address as the first.
+    MARKDOWN
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/duplicate scene slug `the-gate`/, errors(report))
+  end
+
+  test "accepts a scene plot that names a thread in its story" do
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_equal "the-lantern", report.entity("01-the-gate").frontmatter["plot"]
+    assert_no_match(/scene plot/, warnings(report))
+  end
+
+  test "refuses a scene plot that names no thread in its story" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      "plot: the-lantern", "plot: the-missing")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene plot `the-missing` does not name a plot in story synthetic-story/, errors(report))
   end
 
   test "allows two scenes to share the backlog id the scene was written from" do

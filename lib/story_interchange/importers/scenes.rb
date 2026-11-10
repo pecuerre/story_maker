@@ -2,10 +2,13 @@ module StoryInterchange
   module Importers
     # A Scene file becomes one Scene inside the Section its chapter directory
     # names. The chapter and its two-digit sequence are the path, so the Scene's
-    # slug and flat position come from the directory and filename rather than
-    # from frontmatter. `title` is the Scene's name, `pov` is the point-of-view
-    # Character, `location` is a Location presence link, and the closing
-    # `DRAFTING CONTRACT` note is the Scene's `drafting_contract`.
+    # flat position comes from reading order and its slug is the filename
+    # without the sequence (`the-gate` for `01-the-gate.md`), the story-wide
+    # address a `[[scene:slug]]` reference names. `title` is the Scene's name,
+    # `pov` is the point-of-view Character, `location` is a Location presence
+    # link, and the closing `DRAFTING CONTRACT` note is the Scene's
+    # `drafting_contract`. The optional `plot` key is read by the Plots slice,
+    # which assigns this Scene to the thread it names.
     #
     # The body alternates `## Narration` and `## Dialog` blocks, one Element
     # each in reading order. A Narration block's paragraphs are its Content.
@@ -35,7 +38,9 @@ module StoryInterchange
         "Dialog" => SceneElement::DIALOGUE
       }.freeze
 
-      # The Scene facts the application has no column for.
+      # The Scene facts the application has no column for. `plot` is not here:
+      # it is the join into the Scenes a Plot owns, and the Plots slice writes
+      # that assignment.
       REPORTED_KEYS = %w[id timeline branch].freeze
 
       class << self
@@ -106,7 +111,7 @@ module StoryInterchange
             section: story.sections.find_by!(slug: entity.chapter_slug),
             position: position,
             name: entity.frontmatter["title"],
-            slug: "#{entity.chapter_slug}-#{entity.slug}",
+            slug: entity.scene_slug,
             status: Scene::DEFAULT_STATUS,
             datetime: Moment.parse(entity.frontmatter["moment"]).datetime,
             pov_character: character_for(entity),

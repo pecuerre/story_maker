@@ -90,12 +90,12 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     # A record with nothing left behind is listed too, and carries no note.
     assert_select "li", text: /Ada/
     assert_no_match(/\d+ words/, response.body)
-    # The chapter README's subsection is reported beside the Section the run
-    # writes from its identity block, and the chapter with no subsection is still
-    # listed.
+    # The chapter README's body is documentation, so neither it nor its
+    # subsection is reported beside the Section the run writes from the
+    # frontmatter. The chapter with no README is still listed.
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "The section “What is here” has no field, so it was not imported."
+    assert_not_includes response.body, "What is here"
     assert_includes response.body, "Records and notes"
     assert_not_includes response.body, "keep: Open questions"
   end
@@ -156,16 +156,14 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Ada/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "The section “What is here” has no field, so it was not imported."
+    assert_not_includes response.body, "What is here"
     assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 
-  test "a source with hundreds of unmapped sections still renders its reported record" do
-    # The report stores one record with a bounded note, so a large source can
-    # neither overflow the session cookie nor flood the page with 300 headings.
-    # A chapter README is the slice that still reports its subsections: the
-    # profile slices fold their sections into a description instead.
+  test "ignores a chapter README's documentation body however long it is" do
+    # Only the frontmatter is a record, so a large documentation body cannot
+    # become reported content or flood the run's page.
     sign_in_as @operator
     chapter = File.join(@source_root, "synthetic-universe/stories/synthetic-story/chapters/01-arrival/README.md")
     content = File.read(chapter)
@@ -177,15 +175,14 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :see_other
     run = StoryInterchangeRun.sole
-    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Arrival Gate" }
-    assert_equal 301, record.notes.count { |note| note.kind == :section }
+    record = run.slices.flat_map(&:records).find { |candidate| candidate.label == "The Arrival Gate" }
+    assert_empty record.notes
+    assert_not record.reported?
 
     follow_redirect!
     assert_response :success
     assert_select "li", text: /The Arrival Gate/
-    # The page names the first three leftovers and counts the rest.
-    assert_includes response.body, "“What is here”, “Unmapped note 0000 with a long heading”, “Unmapped note 0001 with a long heading” and 298 more have no field"
-    assert_no_match(/Unmapped note 0299/, response.body)
+    assert_no_match(/Unmapped note/, response.body)
   end
 
   test "a guest is sent to sign in from a run's page" do

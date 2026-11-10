@@ -1,16 +1,14 @@
 module StoryInterchange
   module Importers
     # Each chapter directory is one Section. The source has no chapter record,
-    # so the directory name is its slug (`01-arrival`), the `#` heading in the
-    # chapter's README is its display name when it carries one, and the slug
-    # part titleized is the fallback. The number is the chapter's place, not part
-    # of its name.
+    # so the directory name is its slug (`01-arrival`), and the README's YAML
+    # frontmatter is its machine-readable record: `title` is the display name,
+    # `summary` fills `short_summary`, and every other key is carried whole in
+    # the description as YAML. The slug part titleized is the name fallback. The
+    # number is the chapter's place, not part of its name.
     #
-    # The README's identity block — the prose before its first `##` heading — is
-    # the Section's description, with references resolved to record names like
-    # any other profile answer. A `##` subsection has no Section column, so it is
-    # reported instead of silently dropped; the preview names the chapter and its
-    # counts before the run.
+    # Everything after the README's frontmatter is documentation and is skipped,
+    # so a subsection is never reported or imported.
     #
     # Chapters are flat, so every imported Section is top-level and its position
     # follows the sorted directory order within its Story. The chapter is read
@@ -35,17 +33,14 @@ module StoryInterchange
         end
 
         private
-          # The chapter is in the list whether or not it has a subsection: the
-          # Section is written from the README's identity block, and the
-          # subsections are what the slice leaves behind.
+          # The Section is written from the README's frontmatter, so the only
+          # thing it can leave behind is a reference in that metadata that names
+          # no record this run writes.
           def record_for(report, chapter)
-            notes = chapter.sections.map { |section| Importer::Note.new(:section, section.heading) }
-            notes.concat(unresolved_references(report, chapter))
-
             Importer::Record.new(
               name: chapter.name,
               slug: chapter.slug,
-              notes: notes
+              notes: unresolved_references(report, chapter)
             )
           end
 
@@ -71,6 +66,7 @@ module StoryInterchange
             name: chapter.name,
             slug: chapter.slug,
             position: position,
+            short_summary: self.class.resolve_references(report, chapter.short_summary).presence,
             description: self.class.resolve_references(report, chapter.description).presence,
             section_tags: [ chapter_tag ]
           )

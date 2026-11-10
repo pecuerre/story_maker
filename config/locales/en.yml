@@ -3817,6 +3817,7 @@ en:
       # `human_attribute_name`, which is why these entries exist at all.
       section:
         name: "Name"
+        short_summary: "Short summary"
         description: "Description"
         # Resolved from `parent_id` by `DraftsHelper.label_field`, so the row says
         # what the tree's own parent selector is called.

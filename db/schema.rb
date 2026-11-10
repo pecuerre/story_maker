@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -748,6 +748,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_120000) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.integer "photo_id"
+    t.text "short_summary"
     t.index ["parent_id"], name: "index_sections_on_parent_id"
     t.index ["photo_id"], name: "index_sections_on_photo_id"
     t.index ["story_id"], name: "index_sections_on_story_id"

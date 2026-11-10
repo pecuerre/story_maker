@@ -403,7 +403,7 @@ module ApplicationHelper
   # list does not pay an association load per record; every record a list shows
   # is already scoped to the Universe being read.
   def summary_html(record)
-    MarkdownDescription.new(Current.universe, record.try(:summary)).to_inline_html
+    MarkdownDescription.new(Current.universe, record_summary(record)).to_inline_html
   end
 
   # The same summary as plain text for a list row: a reference is reduced to the
@@ -411,21 +411,33 @@ module ApplicationHelper
   # already carries its own Details link. The value is plain text, so the view
   # escapes it like any other string.
   def summary_text(record)
-    MarkdownDescription.new(Current.universe, record.try(:summary)).as_plain_text
+    MarkdownDescription.new(Current.universe, record_summary(record)).as_plain_text
   end
 
   # The one line a taxonomy tree row prints below its name. A content record
   # with a short summary shows **only** that summary, reduced to plain text: a
   # Location row is a glance, and the full profile belongs to the details page.
-  # A tag taxonomy has no summary, so its description is the row's line. `nil`
+  # A Section's short summary is the imported chapter summary, and a tag
+  # taxonomy has no summary at all, so its description is the row's line. `nil`
   # means the row has no second line, which is different from an empty one.
   def taxonomy_row_description(record)
-    return record.description unless record.respond_to?(:summary)
+    return record.description unless record.respond_to?(:summary) || record.respond_to?(:short_summary)
 
     summary_text(record).presence
   end
 
   private
+    # Section carries the imported chapter `short_summary`; every other content
+    # record spells the same answer `summary`. A record with neither has no
+    # summary line, so the caller falls back to its description.
+    def record_summary(record)
+      if record.respond_to?(:short_summary) && record.short_summary.present?
+        record.short_summary
+      elsif record.respond_to?(:summary)
+        record.summary
+      end
+    end
+
     # `key?` rather than a truthy test in both memos: "cannot write" and "no access
     # level" are answers this render repeats as often as the positive ones, and a
     # cached `false` or `nil` that read as a miss would put the query straight back.

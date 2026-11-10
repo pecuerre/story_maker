@@ -1,5 +1,6 @@
 require "pathname"
 require "set"
+require "yaml"
 
 module StoryInterchange
   # Checks one source directory against the interchange layout and returns a
@@ -61,7 +62,8 @@ module StoryInterchange
       "location" => :location,
       "item" => :item,
       "tech" => :item,
-      "plot" => :plot
+      "plot" => :plot,
+      "scene" => :scene
     }.freeze
     BACKLOG_REFERENCE = /\AB-\d{3}\z/
     PLACEHOLDER_REFERENCES = %w[slug].freeze
@@ -119,9 +121,11 @@ module StoryInterchange
     # no status or dependency list. `id` is the author's backlog item, not a
     # unique scene identity: two scenes may share it. `moment` is the parseable
     # twin of `timeline`; an older source may omit it, so it is optional rather
-    # than required, but a value that is present must follow the grammar.
+    # than required, but a value that is present must follow the grammar. `plot`
+    # is the bare slug of the thread the scene dramatises, and is omitted when
+    # the scene belongs to none.
     SCENE_REQUIRED = %w[id title pov location timeline branch].freeze
-    SCENE_OPTIONAL = %w[moment].freeze
+    SCENE_OPTIONAL = %w[moment plot].freeze
 
     # Everything directly under `universe/` that the interchange reads. A
     # `README.md` is documentation at any depth, and `inspirations.md` is
@@ -140,11 +144,18 @@ module StoryInterchange
       @character_slugs = Set.new
       @location_slugs = Set.new
       @canon_ids = {}
-      @scene_keys = Set.new
-      # `[[scene:NN-slug]]` names a scene in the same chapter, while a
-      # `moment` relation names a scene by its path under `chapters/`
-      # (`chapter/scene`). Both are checked after every scene has been read,
-      # because a relation may point forward to a scene that does not exist yet.
+      # A Scene is addressed story-wide by its bare slug (`the-gate`), the
+      # filename without the two-digit sequence; the sequence stays in the path.
+      # The bare slug must be unique within its Story, and the full filename is
+      # still accepted for an older source's `[[scene:NN-slug]]` link.
+      @scene_slugs = {}
+      @scene_files = Set.new
+      @scene_plots = []
+      @plot_slugs = Set.new
+      # A `moment` relation names a scene by its path under `chapters/`
+      # (`chapter/scene`). Both that target and a `[[scene:slug]]` reference are
+      # checked after every scene has been read, because a relation may point
+      # forward to a scene that does not exist yet.
       @scene_paths = Set.new
       @scene_moments = []
     end
@@ -162,6 +173,7 @@ module StoryInterchange
       read_canon
       read_entities
       read_stories
+      check_scene_plots
       check_moment_references
       check_references
       @report
@@ -578,6 +590,7 @@ module StoryInterchange
             optional: PLOT_OPTIONAL,
             label: "plot",
             slug_from_filename: true)
+          @plot_slugs << [ slug, File.basename(file, ".md") ]
           register_entity(document, :plot, frontmatter, story_slug: slug) if frontmatter
         end
       end
@@ -591,13 +604,14 @@ module StoryInterchange
           end
 
           document = chapter_readme(chapter_directory)
+          frontmatter = chapter_frontmatter(document)
           @report.count(:chapters)
           @report.add_chapter(
             story_slug: story_slug,
             slug: chapter,
-            name: chapter_name(chapter, document),
-            description: document&.introduction.to_s,
-            sections: document&.sections || []
+            name: chapter_name(chapter, document, frontmatter),
+            short_summary: chapter_short_summary(frontmatter),
+            description: chapter_description(frontmatter)
           )
           markdown_files(chapter_directory).each do |file|
             read_scene(file, story_slug, chapter)
@@ -605,19 +619,40 @@ module StoryInterchange
         end
       end
 
-      # A chapter directory may carry a README. Its `#` heading names the
-      # chapter for a human (`# Chapter 06 — The Meeting`), the prose before the
-      # first `##` becomes the Section's description, and the subsections are
-      # reported because a Section has no column for them.
+      # A chapter directory may carry a README. Its YAML frontmatter is the
+      # chapter's machine-readable record, and everything after it is
+      # documentation, so it is never read as content.
       def chapter_readme(directory)
         readme = File.join(directory, "README.md")
         File.file?(readme) ? document_for(readme) : nil
       end
 
-      def chapter_name(slug, document)
-        heading = document&.title.to_s.strip
+      def chapter_frontmatter(document)
+        document&.frontmatter.to_h.transform_keys(&:to_s)
+      end
+
+      # `title` names the Section. A README without frontmatter still falls back
+      # to its `#` heading, and then to the slug part, so an older source keeps
+      # importing.
+      def chapter_name(slug, document, frontmatter)
+        heading = frontmatter["title"].to_s.strip
+        heading = document&.title.to_s.strip if heading.blank?
         heading = heading.sub(/\Achapter\s+\d{2}\s*[—–:-]\s*/i, "").strip
         heading.presence || slug.sub(/\A\d{2}-/, "").tr("-", " ").titleize
+      end
+
+      def chapter_short_summary(frontmatter)
+        frontmatter["summary"].to_s.strip.presence
+      end
+
+      # The rest of the frontmatter is carried whole in the Section's
+      # description as YAML; `title` already names the Section and `summary`
+      # already fills `short_summary`.
+      def chapter_description(frontmatter)
+        metadata = frontmatter.except("title", "summary")
+        return nil if metadata.empty?
+
+        metadata.to_yaml.sub(/\A---\n/, "").strip.presence
       end
 
       def read_scene(file, story_slug, chapter)
@@ -664,7 +699,40 @@ module StoryInterchange
         check_named_slug(document, frontmatter["location"], @location_slugs, "location")
         check_scene_title(document, frontmatter["title"])
         check_scene_blocks(document)
-        @scene_keys << [ story_slug, chapter, File.basename(document.path, ".md") ]
+        register_scene_slug(document, story_slug)
+        @scene_plots << [ document, story_slug, frontmatter["plot"] ] if frontmatter["plot"].present?
+      end
+
+      # A scene's story-wide address is its filename without the `NN-` sequence.
+      # Two scenes in one Story may not share it, because a `[[scene:slug]]`
+      # would then have two targets. The full filename stays valid for the older
+      # `[[scene:NN-slug]]` form.
+      def register_scene_slug(document, story_slug)
+        filename = File.basename(document.path, ".md")
+        slug = filename.sub(/\A\d{2}-/, "")
+        key = [ story_slug, slug ]
+
+        if @scene_slugs.key?(key)
+          error(document, 1,
+            "duplicate scene slug `#{slug}` (also #{@scene_slugs[key].relative_path}) in story #{story_slug}")
+        else
+          @scene_slugs[key] = document
+        end
+
+        @scene_files << [ story_slug, filename ]
+      end
+
+      # A scene's `plot` is the bare slug of the thread it dramatises. The plot
+      # files are read after the chapters that reference them, so this runs once
+      # every Story has been read. A blank or `— TBD` value names no thread.
+      def check_scene_plots
+        @scene_plots.each do |document, story_slug, plot_slug|
+          next if blank?(plot_slug) || plot_slug.to_s.strip.start_with?("—")
+
+          unless plot_slug.is_a?(String) && plot_slug.match?(SLUG) && @plot_slugs.include?([ story_slug, plot_slug ])
+            error(document, 1, "scene plot `#{plot_slug}` does not name a plot in story #{story_slug}")
+          end
+        end
       end
 
       # `moment` is the parseable twin of `timeline`. A missing or blank value is
@@ -864,9 +932,7 @@ module StoryInterchange
             error(entry.document, reference.line, "unknown canon rule `#{match[1]}`")
           end
         elsif (match = target.match(SCENE_REFERENCE))
-          unless entry.kind == :scene && @scene_keys.include?([ entry.story_slug, entry.chapter_slug, match[1] ])
-            error(entry.document, reference.line, "unknown scene `#{match[1]}` in this chapter")
-          end
+          check_scene_reference(entry, reference, match[1])
         elsif (match = target.match(TYPED_REFERENCE)) && KIND_FOR_PREFIX.key?(match[:kind])
           check_typed_reference(entry, reference, KIND_FOR_PREFIX[match[:kind]], match[:slug])
         elsif target.match?(SLUG)
@@ -875,6 +941,21 @@ module StoryInterchange
           end
         else
           error(entry.document, reference.line, "unknown reference form `[[#{target}]]`")
+        end
+      end
+
+      # A `[[scene:slug]]` names a scene by its story-wide bare slug, so it may
+      # point into another chapter. A Plot file can name a scene the same way a
+      # Scene's own prose does. The older `[[scene:NN-slug]]` form is still
+      # accepted, because the filename remains the scene's source identity.
+      def check_scene_reference(entry, reference, slug)
+        if entry.story_slug.blank?
+          error(entry.document, reference.line,
+            "unknown scene `#{slug}`; only a story file can reference a scene")
+        elsif !@scene_slugs.key?([ entry.story_slug, slug ]) &&
+            !@scene_files.include?([ entry.story_slug, slug ])
+          error(entry.document, reference.line,
+            "unknown scene `#{slug}` in story #{entry.story_slug}")
         end
       end
 

@@ -209,12 +209,14 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update section details as json" do
     patch universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section),
-      params: { section: { name: "Renamed", description: "Updated", section_tag_ids: [ @section_tag.id ] } },
+      params: { section: { name: "Renamed", short_summary: "A short line", description: "Updated",
+        section_tag_ids: [ @section_tag.id ] } },
       as: :json
 
     assert_response :success
     @section.reload
-    assert_equal [ "Renamed", "Updated", [ @section_tag.id ] ], [ @section.name, @section.description, @section.section_tag_ids ]
+    assert_equal [ "Renamed", "A short line", "Updated", [ @section_tag.id ] ],
+      [ @section.name, @section.short_summary, @section.description, @section.section_tag_ids ]
   end
 
   test "creates a section at the requested position in one request" do
@@ -289,6 +291,29 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "41 words"
+  end
+
+  test "the section list shows the short summary and opens the wide editor dialog" do
+    @section.update!(short_summary: "The opening chapter's one line.")
+
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select ".taxonomy-node .entity-description", text: "The opening chapter's one line."
+    tree = Nokogiri::HTML(response.body).at_css("[data-taxonomy-tree-modal-fields-value]")
+    assert_equal "modal-dialog modal-lg modal-dialog-scrollable", tree["data-modal-dialog-class"]
+    fields = JSON.parse(tree["data-taxonomy-tree-modal-fields-value"])
+    assert_equal %w[name section_tag_ids parent_id short_summary description photo],
+      fields.map { |field| field["name"] }
+  end
+
+  test "the section details page shows the short summary under its title" do
+    @section.update!(short_summary: "The opening chapter's one line.")
+
+    get universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section)
+
+    assert_response :success
+    assert_select ".page-description", text: "The opening chapter's one line."
   end
 
   private

@@ -103,7 +103,8 @@ class SectionsController < ApplicationController
   end
 
   def section_params
-    params.expect(section: [ *photo_params, :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
+    params.expect(section: [ *photo_params, :name, :short_summary, :description,
+      { section_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_section(attributes)
@@ -114,6 +115,7 @@ class SectionsController < ApplicationController
     {
       id: @section.id,
       name: @section.name,
+      short_summary: @section.short_summary,
       description: @section.description,
       section_tag_ids: @section.section_tag_ids,
       parent_id: @section.parent_id,

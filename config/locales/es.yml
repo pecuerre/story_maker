@@ -3381,6 +3381,7 @@ es:
       # estas entradas existan.
       section:
         name: "Nombre"
+        short_summary: "Resumen breve"
         description: "Descripción"
         # `DraftsHelper.label_field` lo resuelve desde `parent_id`, así que la
         # fila dice lo que el propio selector de padre del árbol llama a esto.

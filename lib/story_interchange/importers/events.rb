@@ -29,11 +29,11 @@ module StoryInterchange
           end
         end
 
-        # The imported Scene's slug. `Scenes` builds it from the chapter
-        # directory and the scene filename, and this slice must find the same
-        # record rather than reading the file a second way.
+        # The imported Scene's slug: the source filename without its `NN-`
+        # sequence. `Scenes` writes the same value, and this slice must find the
+        # same record rather than reading the file a second way.
         def scene_slug(entity)
-          "#{entity.chapter_slug}-#{entity.slug}"
+          entity.scene_slug
         end
 
         # The key a `moment` relation names: the scene's path under its story's

@@ -121,8 +121,7 @@ module StoryInterchange
         text.to_s.gsub(Document::REFERENCE) do
           target = Regexp.last_match(1).strip
           kind, slug = reference_kind_and_slug(target)
-          entity = report.entity(slug)
-          entity = nil if kind && entity && entity.kind != kind
+          entity = report.entity(slug, kind: kind)
 
           entity && Importers.written?(entity.kind) ? entity.name : Regexp.last_match(0)
         end
@@ -174,8 +173,8 @@ module StoryInterchange
           return false unless slug.match?(Validator::SLUG)
           return false if Validator::PLACEHOLDER_REFERENCES.include?(slug)
 
-          entity = report.entity(slug)
-          entity.nil? || (kind && entity.kind != kind) || !Importers.written?(entity.kind)
+          entity = report.entity(slug, kind: kind)
+          entity.nil? || !Importers.written?(entity.kind)
         end
     end
 

@@ -36,15 +36,24 @@ module StoryInterchange
     # Plot or a Scene. `chapter_slug` names the chapter directory a Scene's
     # identity and placement come from. `drafting_contract` is the scene's
     # closing `DRAFTING CONTRACT` note when it has one; both are nil elsewhere.
+    #
+    # A Scene's `slug` is its filename (`01-the-gate`), because the chapter and
+    # the two-digit sequence are the path. Its story-wide address, the one a
+    # `[[scene:slug]]` reference names and the imported Scene itself uses, is
+    # `scene_slug`: the filename without that sequence (`the-gate`).
     Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug,
-      :chapter_slug, :drafting_contract)
+      :chapter_slug, :drafting_contract) do
+      def scene_slug
+        slug.to_s.sub(/\A\d{2}-/, "")
+      end
+    end
 
     # One chapter directory. A chapter has no record file, so its source facts
-    # are the directory name, the Story that holds it, the optional `#` heading
-    # in its README that names it for a reader, the identity block that becomes
-    # the Section's description, and the `##` sections that have no Section
-    # column. `sections` is empty when the README has no subsection.
-    Chapter = Data.define(:story_slug, :slug, :name, :description, :sections)
+    # are the directory name, the Story that holds it, and the README's YAML
+    # frontmatter: `title` names it, `summary` is the Section's short summary,
+    # and every other key is carried in `description` as YAML. Everything after
+    # the frontmatter is documentation and is skipped.
+    Chapter = Data.define(:story_slug, :slug, :name, :short_summary, :description)
 
     attr_reader :universe_slug, :universe_name, :stories, :chapters, :counts, :issues,
       :canon_rules, :canon_questions
@@ -74,11 +83,11 @@ module StoryInterchange
     end
 
     # One chapter directory, in the source's sorted order. The order is the
-    # Section position the import writes, and the README's identity block and
-    # subsections are what the Sections slice writes and reports.
-    def add_chapter(story_slug:, slug:, name:, description:, sections:)
+    # Section position the import writes, and the README's frontmatter is what
+    # the Sections slice writes.
+    def add_chapter(story_slug:, slug:, name:, short_summary:, description:)
       @chapters << Chapter.new(story_slug: story_slug, slug: slug, name: name,
-        description: description, sections: sections)
+        short_summary: short_summary, description: description)
     end
 
     def count(kind)
@@ -102,13 +111,19 @@ module StoryInterchange
     end
 
     # Every parsed record, or only those of one kind. A slice reads the kind it
-    # writes, so it never depends on another slice having run first.
+    # writes, so it never depends on another slice having run first. A typed
+    # lookup asks for its kind, so a Character and a Scene that share a slug can
+    # never resolve to each other. A Scene is addressed by its story-wide
+    # `scene_slug` (`the-gate`) as well as its filename (`01-the-gate`).
     def entities(kind = nil)
       kind ? @entities.select { |entity| entity.kind == kind } : @entities
     end
 
-    def entity(slug)
-      @entities.find { |entity| entity.slug == slug }
+    def entity(slug, kind: nil)
+      candidates = kind ? entities(kind) : @entities
+      candidates.find do |entity|
+        entity.slug == slug || (entity.kind == :scene && entity.scene_slug == slug)
+      end
     end
 
     def error(path:, message:, line: 1)

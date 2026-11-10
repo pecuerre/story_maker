@@ -198,17 +198,19 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
 
     # The modal editor sends the whole record, so a rename that only changes the
-    # description must not clear the assignment either.
+    # summary and description must not clear the assignment either.
     click_row_menu_action "li[data-node-id='#{section.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
+      fill_in "Short summary", with: "Summarized from the modal"
       fill_in "Description", with: "Described from the modal"
       click_button "Save changes"
     end
 
     within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
       assert_selector ".taxonomy-tag", text: "Section tag one"
-      assert_selector ".entity-description", text: "Described from the modal"
+      assert_selector ".entity-description", text: "Summarized from the modal"
     end
+    assert_equal "Described from the modal", section.reload.description
   end
 
   test "new taxonomy nodes can be renamed with the keyboard" do

@@ -6,6 +6,7 @@ location: keep
 timeline: "the first night after the first winter"
 moment: "2050-01-01 20:00"
 branch: main
+plot: the-lantern
 ---
 
 # The gate

@@ -38,6 +38,19 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-10
+
+### added
+
+- **Plot Scene assignments on import.** A Scene's optional `plot` frontmatter now assigns it to that Plot, and the Plots slice writes the join after every Scene exists.
+
+### changed
+
+- **Scene links and slugs.** The interchange accepts `[[scene:slug]]` story-wide and writes imported Scenes with the source's bare scene slug (no chapter prefix), so those links resolve.
+- **Chapter README frontmatter.** The import now reads a chapter README's YAML frontmatter: `summary` fills the Section's new `short_summary`, the other keys become its description, and the body is ignored.
+- **Section summary views.** The Sections tree shows `short_summary` as a row's second line, the details page shows it under the title, and the shared editor opens the wide scrollable dialog.
+- **Section editor fields.** The Section form now edits `short_summary` and reads name, tags, parent, short summary, description, photo in that order.
+
 ## 2026-11-09
 
 ### added

@@ -224,7 +224,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not_includes item.description, "The Wardens"
   end
 
-  test "writes each story and its plots, with no scene assignments" do
+  test "writes each story and its plots and assigns the scenes that name a thread" do
     universe = import.call.universe
 
     story = universe.stories.find_by!(slug: "synthetic-story")
@@ -243,9 +243,20 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes plot.description, "`[[character:ada]]` believes she can."
     assert_includes plot.description, "## Stakes"
     assert_includes plot.description, "## Players"
+    assert_includes plot.description, "## Progression"
+    assert_includes plot.description, "- B-001 · [[scene:the-gate]]."
     assert_includes plot.description, "## Open questions"
     assert_not_includes plot.description, "## Short summary"
-    assert_empty plot.scenes
+
+    # A scene's `plot` frontmatter is the join into the thread it dramatises.
+    gate = story.scenes.find_by!(slug: "the-gate")
+    assert_equal [ gate ], plot.scenes.to_a
+    assert_empty story.scenes.find_by!(slug: "the-hall").plots
+
+    # The scene link in the description resolves on the page because the
+    # imported Scene uses the same story-wide slug the source link names.
+    assert_includes MarkdownDescription.new(universe, plot.description).to_html,
+      "/scenes/#{gate.id}"
   end
 
   test "reports an older plot's frontmatter keys instead of importing them" do
@@ -271,11 +282,17 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "The Arrival Gate", arrival.name
     assert_equal 0, arrival.position
     assert_nil arrival.parent
-    # The README's identity block is the description, with references resolved
-    # to names; its `##` subsection has no Section column and is reported.
-    assert_includes arrival.description, "Documentation for this chapter directory"
-    assert_includes arrival.description, "follows Ada."
-    assert_not_includes arrival.description, "[[ada]]"
+    # The README's frontmatter is the machine-readable record: `summary` fills
+    # `short_summary`, and the other keys are carried in the description.
+    # Everything after the frontmatter is documentation and is skipped.
+    assert_equal "Ada reaches the gate at the edge of the keep and follows the hall beyond it.",
+      arrival.short_summary
+    assert_includes arrival.description, "act: I"
+    assert_includes arrival.description, "band: 1"
+    assert_includes arrival.description, "pov:\n- ada"
+    assert_not_includes arrival.description, "summary:"
+    assert_not_includes arrival.description, "title:"
+    assert_not_includes arrival.description, "Documentation for this chapter directory"
     assert_not_includes arrival.description, "## What is here"
 
     winter = story.sections.find_by!(slug: "02-winter")
@@ -291,7 +308,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal [ chapter_tag ], arrival.section_tags.to_a
     assert_equal [ chapter_tag ], winter.section_tags.to_a
 
-    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
+    gate = story.scenes.find_by!(slug: "the-gate")
     assert_equal "The gate", gate.name
     assert_equal arrival, gate.section
     assert_equal 0, gate.position
@@ -302,7 +319,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     # Scene's own in-world time as well as its Event's.
     assert_equal Time.utc(2050, 1, 1, 20), gate.datetime
 
-    hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
+    hall = story.scenes.find_by!(slug: "the-hall")
     assert_equal 1, hall.position
     # A relation is not a point, so it does not fill the Scene's own datetime;
     # the Events slice resolves it on the Event.
@@ -335,6 +352,10 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     hall_elements = hall.scene_elements.reorder(:position, :id)
     assert_equal [ "narration", "dialogue", "narration" ], hall_elements.map(&:kind)
     assert_equal [ "The hall", "The hall (2)", "The hall (3)" ], hall_elements.map(&:name)
+    # A scene link is a source reference resolved to the scene's name in prose,
+    # the same way an entity link is.
+    assert_includes hall_elements.first.body, "(`The gate`)"
+    assert_not_includes hall_elements.first.body, "[[scene:"
     assert_includes hall_elements.first.body, "[[rule:D1]]"
     assert_equal [ "There is nothing here.", "warden: Then we wait." ],
       hall_elements.second.scene_dialogue_turns.reorder(:position, :id).map(&:body)
@@ -349,8 +370,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
   test "writes one event per scene, dates it from moment, and links it to the scene" do
     universe = import.call.universe
     story = universe.stories.find_by!(slug: "synthetic-story")
-    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
-    hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
+    gate = story.scenes.find_by!(slug: "the-gate")
+    hall = story.scenes.find_by!(slug: "the-hall")
 
     gate_event = gate.events.sole
     hall_event = hall.events.sole
@@ -421,10 +442,10 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     universe = import.call.universe
     story = universe.stories.find_by!(slug: "synthetic-story")
-    gate_event = story.scenes.find_by!(slug: "01-arrival-01-the-gate").events.sole
-    before_event = story.scenes.find_by!(slug: "02-winter-01-before").events.sole
-    same_event = story.scenes.find_by!(slug: "02-winter-02-same").events.sole
-    after_event = story.scenes.find_by!(slug: "02-winter-03-after").events.sole
+    gate_event = story.scenes.find_by!(slug: "the-gate").events.sole
+    before_event = story.scenes.find_by!(slug: "before").events.sole
+    same_event = story.scenes.find_by!(slug: "same").events.sole
+    after_event = story.scenes.find_by!(slug: "after").events.sole
 
     assert_equal gate_event, before_event.before_event
     assert_nil before_event.after_event
@@ -445,7 +466,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     ))
 
     universe = import.call.universe
-    gate = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "01-arrival-01-the-gate")
+    gate = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "the-gate")
     turns = gate.scene_elements.reorder(:position, :id).last.scene_dialogue_turns.reorder(:position, :id)
 
     assert_includes turns.map(&:body), "The gate is open, and the wick is low."
@@ -455,7 +476,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
   test "writes a scene's drafting contract to its own column" do
     universe = import.call.universe
     story = universe.stories.find_by!(slug: "synthetic-story")
-    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
+    gate = story.scenes.find_by!(slug: "the-gate")
 
     assert_includes gate.drafting_contract, "one place, one beat of time"
     assert_includes gate.drafting_contract, "can the lantern"
@@ -470,7 +491,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     File.write(path, File.read(path).sub('@[[character:ada]] "There is nothing here."', '@other "There is nothing here."'))
 
     universe = import.call.universe
-    hall = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "01-arrival-02-the-hall")
+    hall = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "the-hall")
     dialogue = hall.scene_elements.reorder(:position, :id).second
 
     # Neither line names a Character file, so both become non-character turns
@@ -517,13 +538,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     assert_empty StoryInterchange::Importers::Stories.reported(report)
 
-    sections = reported_items(StoryInterchange::Importers::Sections.reported(report))
-    assert_equal [ "01-arrival: What is here" ], sections
-    # Both chapters are Sections this run writes; only the first has a
-    # subsection the app cannot store.
+    # A chapter README's body is documentation, so nothing from it is reported.
+    assert_empty reported_items(StoryInterchange::Importers::Sections.reported(report))
     section_list = StoryInterchange::Importers::Sections.records(report)
     assert_equal [ "The Arrival Gate", "Winter" ], section_list.map(&:label)
-    assert_equal [ true, false ], section_list.map(&:reported?)
+    assert_equal [ false, false ], section_list.map(&:reported?)
 
     plots = reported_items(StoryInterchange::Importers::Plots.reported(report))
     assert_empty plots
@@ -562,9 +581,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_empty wardens.notes
     assert_not wardens.reported?
 
-    arrival = StoryInterchange::Importers::Sections.reported(report).sole
+    # The chapter writes its frontmatter whole, so its documentation body is
+    # never a note either.
+    arrival = StoryInterchange::Importers::Sections.records(report).first
     assert_equal "The Arrival Gate", arrival.label
-    assert_equal [ [ :section, "What is here" ] ], arrival.notes.map { |note| [ note.kind, note.subject ] }
+    assert_empty arrival.notes
+    assert_not arrival.reported?
   end
 
   test "a second import of an unchanged source writes the same records" do
@@ -792,7 +814,9 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     end
 
     def section_records(universe)
-      universe.stories.flat_map { |story| story.sections.order(:slug).pluck(:slug, :name, :position, :description) }
+      universe.stories.flat_map do |story|
+        story.sections.order(:slug).pluck(:slug, :name, :position, :short_summary, :description)
+      end
     end
 
     def scene_records(universe)

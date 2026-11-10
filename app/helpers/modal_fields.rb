@@ -206,13 +206,15 @@ module ModalFields
   # assignment, so they are the only two editors with a parent selector beside a
   # tag selector. They were maintained separately and had to be kept in step by
   # hand; they differ in a few values and nothing else — which field carries the
-  # tag ids, what that selector is called, and whether the record has a short
-  # summary — so those are the only arguments.
+  # tag ids, what that selector is called, which column carries the short
+  # summary, and where the summary sits in the reading order — so those are the
+  # only arguments.
   #
-  # `profile_summary` adds the one-line summary a content record carries. A
-  # Location passes it and reads name, parent, tags, photo, summary, description,
-  # so its glance comes before its full profile; Section has no summary and keeps
-  # the shared order with the description after the name.
+  # `profile_summary` adds the one-line summary a content record carries, named
+  # by `summary_name` because Location stores it as `summary` and Section as
+  # `short_summary`. `field_order` names the descriptors in the order the editor
+  # reads them: Location puts its glance before its full profile, while Section
+  # reads name, tags, parent, summary, description, photo.
   #
   # `tags` and `parents` are the two per-call lists: the parent's own editor is
   # built from its siblings and its tag selector from its taxonomy's tags. The
@@ -220,7 +222,7 @@ module ModalFields
   # author's own record name, so neither is translated — only the blank parent's
   # label and the two selectors' own labels are chrome.
   def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:,
-    profile_summary: false, extra_fields: [])
+    profile_summary: false, summary_name: "summary", field_order: nil, extra_fields: [])
     name_field = {
       name: "name",
       label_key: "modal_fields.name",
@@ -246,12 +248,22 @@ module ModalFields
       options: tags.map { |tag| [ tag.id, tag.name ] }
     }
     summary_field = {
-      name: "summary",
+      name: summary_name,
       label_key: "modal_fields.summary",
       type: "textarea"
     }
 
-    fields = if profile_summary
+    fields = if field_order
+      descriptors = {
+        name: name_field,
+        tags: tag_field_descriptor,
+        parent: parent_field,
+        summary: summary_field,
+        description: description_field,
+        photo: photo_field
+      }
+      field_order.map { |key| descriptors.fetch(key) } + extra_fields
+    elsif profile_summary
       [ name_field, parent_field, tag_field_descriptor, photo_field,
         summary_field, description_field, *extra_fields ]
     else
@@ -344,9 +356,15 @@ module ModalFields
     taxonomy_tag_fields(nodes)
   end
 
+  # The nested-record editor for a Section. Its short summary is the imported
+  # chapter summary and the row's one line; its full profile lives in the shared
+  # Markdown description, which sits just above the photo.
   def section_taxonomy_fields(section_tags, sections = [])
     nested_record_taxonomy_fields(section_tags, sections,
       tag_field: "section_tag_ids",
-      tag_label_key: "modal_fields.section_tags")
+      tag_label_key: "modal_fields.section_tags",
+      profile_summary: true,
+      summary_name: "short_summary",
+      field_order: %i[name tags parent summary description photo])
   end
 end

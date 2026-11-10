@@ -40,7 +40,7 @@ repository process, not interchange data, and are ignored.
       chapters/
         README.md            how chapters and scenes are numbered
         NN-chapter/
-          README.md          the chapter's header and its display name
+          README.md          the chapter's frontmatter record and its documentation
           NN-scene.md
       plots/
         README.md            the plot-thread index
@@ -58,7 +58,8 @@ control. Only `.md` files are read.
 never a record, so the validator skips it rather than reporting a missing frontmatter block or
 parsing its examples as references. The Universe's and the Story's READMEs are still read for the
 one fact each owns: their display name. A chapter README is read for its Section as well, as
-described under [Story records](#story-records).
+described under [Story records](#story-records). Only the chapter README's YAML frontmatter is a
+record; its body stays documentation.
 
 ## Identity without a manifest
 
@@ -108,26 +109,31 @@ turn it into a record by accident.
   column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
   child of that is a scene file `NN-slug.md`; a chapter's own `README.md` is documentation and is
-  not a scene, but it supplies the Section record. A chapter becomes one top-level Section whose
-  slug is the directory name
-  (`01-arrival`) and whose name is the first `#` heading in the chapter's `README.md` when it has
-  one, with the leading `Chapter NN —` removed (`# Chapter 01 — The Arrival Gate` → `The Arrival
-  Gate`); without that heading the name is the slug part titleized (`01-arrival` → `Arrival`).
-  The prose before the README's first `##` heading is the Section's `description`, with its
-  Markdown kept and its entity references resolved to record names like any other profile answer.
-  A `##` subsection has no Section column, so the import reports it rather than dropping it; the
-  preview names the subsections it left behind. Every imported chapter Section is labelled with the
+  not a scene, but its YAML frontmatter supplies the Section record. A chapter becomes one
+  top-level Section whose slug is the directory name (`01-arrival`) and whose name is the
+  frontmatter `title`, with the leading `Chapter NN —` removed (`Chapter 01 — The Arrival Gate` →
+  `The Arrival Gate`); without frontmatter the name falls back to the README's first `#` heading,
+  then to the slug part titleized (`01-arrival` → `Arrival`). The frontmatter `summary` fills the
+  Section's `short_summary`, and every other key is carried whole in its `description` as YAML,
+  with entity references resolved to record names like any other profile answer. Everything after
+  the closing `---` is documentation and is skipped, so a `##` subsection is neither imported nor
+  reported. Every imported chapter Section is labelled with the
   Story's **Chapter** Section Tag, which the run creates once per Story. Chapters are written in
   sorted directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
   database ids. A scene's frontmatter `id` is the backlog item it was written from, never a unique
-  scene key; the filename is the scene's identity inside its chapter.
+  scene key; the filename is the scene's identity inside its chapter. Its story-wide address is that
+  filename without the two-digit sequence (`01-the-gate` → `the-gate`); it must be unique within the
+  Story and is frozen once the file exists. The imported Scene takes that address as its slug, so a
+  `[[scene:slug]]` link resolves from any file in the Story.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
   `README.md` is its human index and is not a Plot.
 
 ## Frontmatter
 
 Every entity, plot, and scene file begins with a YAML frontmatter block between `---` lines. A
-README and a canon area file do not need one.
+chapter README carries one as its machine-readable record; the import reads it when present and
+otherwise falls back to the heading and slug. The other READMEs and a canon area file do not need
+one.
 
 | Record | Required keys | Optional keys |
 |---|---|---|
@@ -136,7 +142,13 @@ README and a canon area file do not need one.
 | Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
 | Plot | `name`, `slug` | `type`, `status`, `owner_pov`, `opened_in`, `backlog` |
-| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment` |
+| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment`, `plot` |
+| Chapter README | `title` | `summary`, `act`, `band`, `pov`, `locations`, `plots`, `status`, `missing`, `words`, `provisional` |
+
+A chapter README's keys are read rather than validated against the entity rules: `title` names the
+Section, `summary` fills `short_summary`, `title` and `summary` are omitted from the description, and
+every other key is carried there as YAML. The body after the closing `---` is documentation and is
+never read as content.
 
 Rules for those values:
 
@@ -170,6 +182,9 @@ Rules for those values:
   `<scene>` is the target's path under the Story's `chapters/` directory without `.md`
   (`06-the-meeting/02-the-page`), so it is unique across chapters and may point forward or
   backward. A relation must name a scene that exists in the same Story, and never the scene itself.
+- A Scene's optional `plot` is the bare slug of a Plot in the same Story (`the-meeting`). It is the
+  join the import writes: the Scene is assigned to that thread. A value that names no Plot in the
+  Story is an error. The key is omitted when the Scene belongs to none.
 - An unknown frontmatter key is a warning; a missing or blank required key is an error.
 
 ## Profile sections
@@ -180,7 +195,7 @@ record and is not prose. A section that maps to a record's own answer is written
 answer, with its Markdown body kept as written; a section with no target is reported by the import
 slice, never silently dropped. Characters, Factions, Locations, and Items map their whole body
 instead, as described below; a Plot maps its `Short summary` and folds the rest into its description,
-and a Section maps only its identity block.
+and a Section maps only the chapter README's frontmatter.
 
 HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
 a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
@@ -295,14 +310,16 @@ Plot's `short_summary`, which its list row reads. The identity block before the 
 and every other `##` section become one Markdown `description`, in source order, with their headings
 and references kept as written. `type`, `status`, `owner_pov`, `opened_in`, and `backlog` have no
 Plot column; the current source keeps them under `## Information`, so they stay in the description,
-and an older file that still carries them in frontmatter has them reported by name. Plot Scene
-assignments belong to a later slice, so a Plot lands with no Scenes.
+and an older file that still carries them in frontmatter has them reported by name. The Plots slice
+runs last, after Scenes, and assigns the Plot every Scene whose own `plot` key names it.
 
 A Scene file becomes one Scene in the Section its chapter directory names. The frontmatter with an
 application column is written: `title` is the Scene's name, `pov` is its point-of-view Character,
 `location` is a Location presence link with no role, and a concrete `moment` (a date or a date and
-time) is the Scene's own `datetime`. `chapter`, `sequence`, and the scene slug come from the path,
-and `id`, `timeline`, and `branch` have no Scene column and are reported. Every imported Scene is
+time) is the Scene's own `datetime`. The chapter and sequence are the path; the Scene's slug is the
+filename without its two-digit sequence, the story-wide address a `[[scene:slug]]` link names. The
+optional `plot` key is the thread the Scene dramatises and becomes its Plot assignment. `id`,
+`timeline`, and `branch` have no Scene column and are reported. Every imported Scene is
 written as `draft`, because the source keeps no writing status. A Scene's closing `DRAFTING
 CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than into prose; it
 is the one comment the import keeps. The browser preference that can hide the note from Scene pages
@@ -373,7 +390,7 @@ a reference inside inline code is real, because the source writes rule citations
 | `[[plot:slug]]` | a Plot in the same source |
 | `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source, by slug alone |
 | `[[rule:ID]]` or `[[canon:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
-| `[[scene:NN-slug]]` | a scene in the same chapter as the referring scene |
+| `[[scene:slug]]` | a scene in the same Story, by its story-wide bare slug; it may cross chapters |
 | `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
 
 A Scene's `## Dialog` block names each line's speaker with an `@` form:
@@ -389,7 +406,8 @@ record kind, which the layout already requires.
 
 A `moment` relation is not a `[[bracket]]` reference: it names its target by the scene's path under
 `chapters/` without `.md` (`06-the-meeting/02-the-page`), so it is checked by the moment rules above
-rather than by the reference scanner. Unlike `[[scene:NN-slug]]`, it may cross chapters.
+rather than by the reference scanner. A `[[scene:slug]]` names the same Story's scene by its
+story-wide bare slug instead. Both forms may cross chapters; only the bracket form is a reference.
 
 A work-item id is not a link: the source writes `B-###` as plain prose, so the scanner ignores it
 rather than treating it as a reference. A bracketed `[[B-###]]` is still accepted as the same
@@ -400,8 +418,8 @@ is an error.
 
 A profile answer other than a Character description, and a Scene's prose, store a reference as the
 name of the record whose kind a slice in that run writes, so the sentence reads as prose. A Character
-description keeps the reference instead, because its page renders it as a link. Rule, scene, and
-backlog references are not entity references and are left as written.
+description keeps the reference instead, because its page renders it as a link. Rule and backlog
+references are not entity references and are left as written.
 
 ## The validator
 
@@ -413,12 +431,13 @@ characters, factions, locations, items, stories, plots, chapters, scenes, and ev
 
 The report also carries each parsed record as a `Report::Entity` — its kind, slug, name, frontmatter,
 `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
-also names the `story_slug` whose directory holds it, and a Scene names its `chapter_slug` and the
-`drafting_contract` its closing comment supplied. A slice reads that instead of opening the file
-again, so the write cannot disagree with the preview about a heading or a reference. A chapter is a
+also names the `story_slug` whose directory holds it, and a Scene names its `chapter_slug`, its
+story-wide `scene_slug`, and the `drafting_contract` its closing comment supplied. A slice reads that
+instead of opening the file again, so the write cannot disagree with the preview about a heading or a
+reference. A chapter is a
 directory rather than a record file, so it is a separate `Report::Chapter` with its Story slug,
-directory name, display name, the README identity block its Section writes as `description`, and the
-`##` subsections it reports, in the sorted order the Sections slice writes.
+directory name, display name, the README's `summary` as its `short_summary`, and the rest of that
+frontmatter as its `description`, in the sorted order the Sections slice writes.
 
 Run it without writing anything:
 
@@ -436,11 +455,12 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
 - `stories/` has no Story, or a Story has no `README.md` or no `#` heading;
 - an entity, plot, or scene file has no frontmatter, unreadable YAML, or a missing or blank required
   key;
-- a slug does not match its filename, or two records share a slug;
+- a slug does not match its filename, two records share a slug, or two scenes in one Story share a
+  story-wide scene slug;
 - a canon id is duplicated;
-- a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:NN-slug]]` does not resolve, or a bracket
+- a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:slug]]` does not resolve, or a bracket
   reference has an unknown form;
-- a Scene's id, branch, point of view, or location does not match the contract above;
+- a Scene's id, branch, point of view, location, or `plot` does not match the contract above;
 - a Scene's `moment` does not parse, names no scene, or names its own scene;
 - a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or
   `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, a Dialog
@@ -546,8 +566,10 @@ runs after Scenes and writes one Event per Scene, named after the Scene and link
 becomes the matching `before_event`, `after_event`, or `simultaneous_event`; a span also computes
 the Event's start from its target when the target has one. Every Event is created before any
 relation is written, so a relation may point forward to a later scene. **Plots** runs last and
-writes each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
-registry when their slice exists.
+writes each Plot, then assigns it every Scene whose `plot` frontmatter names that thread. The
+assignment is read from the Scene side; the source's `## Progression` rows stay in the Plot
+description and are not a second source of assignment. A Scene that names no thread is simply left
+unassigned.
 
 A slice's `Outcome` lists every record it writes, in source order, and marks the ones that carry
 content the app cannot store as reported. Both the preview and the [run page](#the-run-page) show one
@@ -571,12 +593,11 @@ a guest signs in and a signed-in non-operator receives `403`.
 ## What the import does not do
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
-it into the repository, or restore a replaced Universe. Character relations, Faction-to-Faction
-relationships, Location and Item hierarchy, Plot Scene assignments, and Scene Tags do not arrive from
-this slice; the source text that would carry them is reported. The one Section Tag it creates is the
-**Chapter** label every chapter Section carries, because a chapter is the only section kind the
-source names. A Scene's concrete `moment` and the
-Events one per Scene are written, but an Event's own description, tags, and parent stay empty
+it into the repository, or restore a replaced Universe. Faction-to-Faction relationships, Location
+and Item hierarchy, and Scene Tags do not arrive from this slice; the source text that would carry
+them is reported. The one Section Tag it creates is the **Chapter** label every chapter Section
+carries, because a chapter is the only section kind the source names. A Scene's concrete `moment` and
+the Events one per Scene are written, but an Event's own description, tags, and parent stay empty
 because the source states none there.
 
 Authoring guidance such as `universe/inspirations.md` has no record kind and is reported rather than

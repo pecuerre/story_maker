@@ -164,8 +164,8 @@ free of JavaScript and of a Stimulus controller that would exist only to call `w
 
 The second section downloads one `.tar.gz` whose single top-level directory is the Universe's slug.
 That directory is a **story-interchange source** in the layout
-[story_interchange.md](story_interchange.md) owns, so extracting it and importing the folder gives
-another site the Universe again. The file is assembled in memory by `StoryInterchange::Export` and is
+[story_interchange.md](story_interchange.md) owns, intended for extracting and importing at another
+site. The file is assembled in memory by `StoryInterchange::Export` and is
 never written into the repository.
 
 The download is **Universe-wide even though the page is Story-scoped**. A source describes one
@@ -174,9 +174,10 @@ different format. The Story only resolves the request's Universe and carries the
 every live Story, Character, Faction, Location, Item, canon Rule, Section, Scene, and Plot of that
 Universe is in the archive.
 
-The export is **validator-clean**: the directory it writes passes `StoryInterchange.validate`, so the
-import page can read it without an error. What the interchange layout cannot describe stays in the
-database rather than being invented: tags, Routes, tropes, relations, ownerships, Events, photos,
+The export aims to produce a directory `StoryInterchange.validate` accepts, but valid application data
+can make it fail or change on a round trip; see [known quirks](../known_quirks.md). What the interchange
+layout cannot describe stays in the database rather than being invented: tags, Routes, tropes,
+relations, ownerships, Events, photos,
 Character aliases, Section descriptions, Scene parentheticals, and a canon Rule's optional Story owner
 do not travel. The page names that boundary beside the button rather than implying a full backup.
 
@@ -187,8 +188,8 @@ Writing a source is not copying the database, so a few values have a canonical e
   facts and writes neither.
 - A Scene's prose becomes alternating `## Narration` and `## Dialog` blocks. Adjacent Elements of the
   same kind merge into one block, and a Scene that opens with Dialogue gets an empty Narration before
-  it, because that is the block grammar the validator accepts. The prose and its order survive; the
-  Element boundary and the Element titles do not.
+  it, because that is the block grammar the validator accepts. The Element boundary and the Element
+  titles do not survive; see [known quirks](../known_quirks.md) for the open prose and order issues.
 - A Scene in more than one Plot carries the first Plot in its `plot` key, because the format names one
   thread per Scene. The other assignments stay behind.
 - A Scene with no Section, or one whose Section is not in the Story's tree, is written in a chapter

@@ -15,12 +15,13 @@ The archive has three parts, and **only the first is authoritative**:
 
 | Path | Contents | Role |
 |---|---|---|
-| `data/` | one YAML file per table, plus every HABTM join table | the lossless copy a restore will read |
+| `data/` | one YAML file per table, plus every HABTM join table | the authoritative copy a restore would read |
 | `photos/` | the stored 300×300 files named by `data/photos.yml` | the photo bytes |
 | `content/` | a Markdown projection in the story-interchange shape | for a human reader |
 
 `backup.yml` names the format version, generation time, Universe identity, record counts, the list of
-deferred tables, and any photo row whose file was missing. `README.md` explains the same contents and
+deferred tables, and photo rows without attachments. Missing storage objects and other backup integrity
+limitations are [open findings](../known_quirks.md). `README.md` explains the same contents and
 the restore boundary inside the archive, so the archive is understandable without this repository.
 
 The data dump keeps the application's own columns, foreign-key ids, and soft-deleted core rows. It

@@ -13,7 +13,7 @@ what an import writes. It is **not** a second storage format: the database stays
 and the source is read in place and never modified.
 
 The reverse direction is `StoryInterchange::Export`, which writes one Universe back out as a
-validator-clean source for another site. [exports.md](exports.md#the-story-interchange-directory) owns
+source intended for another site. [exports.md](exports.md#the-story-interchange-directory) owns
 that download and the records it cannot carry.
 
 The app's code-owned starting shapes are a different subject: [Story structures](story_structures.md).
@@ -572,8 +572,9 @@ Story, the Section, and the Character and Location links those earlier slices cr
 runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
 `moment` becomes the Event's `start_datetime`; a `before`, `after`, or `at the same time as` relation
 becomes the matching `before_event`, `after_event`, or `simultaneous_event`; a span also computes
-the Event's start from its target when the target has one. Every Event is created before any
-relation is written, so a relation may point forward to a later scene. **Plots** runs last and
+the Event's start from its target when the target has one at that point in the pass. Every Event is
+created before any relation is written, so a relation may point forward to a later scene; chained
+forward dates have an [open issue](../known_quirks.md). **Plots** runs last and
 writes each Plot, then assigns it every Scene whose `plot` frontmatter names that thread. The
 assignment is read from the Scene side; the source's `## Progression` rows stay in the Plot
 description and are not a second source of assignment. A Scene that names no thread is simply left
@@ -592,8 +593,9 @@ README's identity block as the Section description.
 ### Where a source may live
 
 The page never accepts a path. It lists only the folders directly under
-`STORY_INTERCHANGE_IMPORT_ROOT`, and a name with a separator, `..`, a dot-file, or a symlink that
-resolves outside the root is refused. Nothing is copied into the repository. The preview, the write,
+`STORY_INTERCHANGE_IMPORT_ROOT`, and a name with a separator, `..`, a dot-file, or a selected-folder
+symlink that resolves outside the root is refused. Nested symlinks are an
+[open issue](../known_quirks.md). Nothing is copied into the repository. The preview, the write,
 and a run's page all ask for `:manage` on `StoryInterchange::Import`, the platform-level question the
 creation limit also asks, so
 a guest signs in and a signed-in non-operator receives `403`.

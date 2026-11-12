@@ -191,13 +191,12 @@ bundle exec simplecov uncovered --input tmp/coverage/coverage.json --top 20 --mi
   runner and their own gate (`bun run test:js`), and one number must not cover two toolchains.
 - The thresholds are **90% line / 75% branch**, set from a measured baseline (94.59% / 80.99% on
   2026-10-01) with a few points of headroom. They exist to catch a *drop*, not to reward adding
-  assertions, and they are only enforced when `CI` is set. A single-file or `-n`-filtered run
-  measures a fraction of the application by design and would fail spuriously, so it reports without
-  gating; `CI=1 bin/rails test` reproduces the CI check locally.
-- Consecutive runs within 10 minutes are **merged**, so a single-file run started right after a full
-  one reports the union of both. Merging only ever adds covered lines, so the number is never
-  understated and the gate cannot be weakened by it — but delete `tmp/coverage/` first if you want
-  one run's own figure.
+  assertions, and they are enforced whenever `CI` is set, including partial runs. A single-file or
+  `-n`-filtered run can therefore fail the gate despite passing its tests; see
+  [known quirks](known_quirks.md). `CI=1 bin/rails test` checks the gate locally.
+- Consecutive runs within 10 minutes can be **merged**, so a run may include coverage from another
+  run and overstate its own coverage. Use a fresh coverage directory when measuring a single run;
+  the GitHub full-suite job runs on a separate clean runner.
 - `merge_subprocesses` is on because `parallelize(workers:)` forks one process per worker. Without it
   the report holds only the parent process's own execution and reads a few percent with nothing to
   explain it.

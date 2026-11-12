@@ -218,15 +218,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-75. **Make the first Story-building step self-explanatory.**
-
-   The Story overview offers starting structures only when an empty Story is in direct mode, and
-   otherwise shows several empty sections and destinations ([`stories/show`](../app/views/stories/show.html.erb)).
-   Consider a compact, dismissible next-step guide that distinguishes choosing a starting structure
-   from adding a Section or Scene manually, explains the draft-mode limitation, and never requires a
-   template or tags. **Question:** what is the smallest successful first session? Validate separately
-   for writers and read-only users.
-
 76. **Improve the prose-writing loop.**
 
    Scene Details places Elements after identity facts, and each Element's edit action is inside a row
@@ -378,3 +369,8 @@ the same observations; use their findings to inform the other UI/UX items.
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
 analyzed like the list above, given the next number, and moved under PENDING WORK.
+
+- **Read-only Story overview empty copy.** An empty Story's cast card still says "Add the first
+  scene to begin" and its Section-tree card says "Add the first one to begin" to a guest or read-only
+  member, who can add neither. Give those cards a read-only description, the way the Sections
+  workspace already has `read_only_empty_description`, and add the Spanish copy.

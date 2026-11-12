@@ -1326,6 +1326,16 @@ es:
       cast_none_scenes_description: "Un personaje aparece aquí cuando una escena lo registra. Añade la primera escena para comenzar."
       cast_none_characters_title: "Ningún personaje aparece todavía en %{story}"
       cast_none_characters_description: "Registra un personaje en una escena, o dale una línea de diálogo, y aparecerá aquí."
+      start_guide:
+        heading: "Empieza esta historia"
+        summary: "Una historia se escribe como una secuencia ordenada de escenas, que se pueden agrupar en secciones."
+        structure_step: "Elige una estructura de partida abajo para crear secciones y escenas con nombre en un solo paso."
+        draft_step: "Una estructura de partida no está disponible en este universo, porque recuerda los cambios en borradores."
+        manual_step_html: "O crea la estructura tú mismo: %{sections_link} y después %{scenes_link}."
+        manual_sections_link: "añade la primera sección"
+        manual_scenes_link: "añade escenas"
+        optional: "Una plantilla es opcional, las etiquetas son opcionales, y cada sección y escena se puede renombrar o eliminar más adelante."
+        dismiss: "Descartar esta guía de inicio"
     structures:
       eyebrow: "Plantillas de historia"
       heading: "Empezar a partir de una estructura"

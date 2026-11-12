@@ -1394,6 +1394,19 @@ en:
       cast_none_scenes_description: "A character appears here when a scene records them. Add the first scene to begin."
       cast_none_characters_title: "No characters appear in %{story} yet"
       cast_none_characters_description: "Record a character in a scene, or give them a line of dialogue, and they will appear here."
+      # The first-session guide on an empty Story. It names the structure picker
+      # and the manually built outline as two ways to start, and says that
+      # neither a template nor tags is required.
+      start_guide:
+        heading: "Start this story"
+        summary: "A story is written as an ordered sequence of scenes, which can be grouped into sections."
+        structure_step: "Choose a starting structure below to create named sections and scenes in one step."
+        draft_step: "A starting structure is not available in this universe, because it remembers changes in drafts."
+        manual_step_html: "Or build the structure yourself: %{sections_link}, then %{scenes_link}."
+        manual_sections_link: "add the first section"
+        manual_scenes_link: "add scenes"
+        optional: "A template is optional, tags are optional, and every section and scene can be renamed or deleted later."
+        dismiss: "Dismiss this starting guide"
     # The code-owned starting shapes in `StoryStructureCatalog`. Their labels are
     # keys here rather than strings in the catalogue, so the picker and the
     # records it creates render in the request's language.

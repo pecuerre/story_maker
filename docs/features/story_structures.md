@@ -64,6 +64,19 @@ the mutation in a draft-based universe instead of writing through the draft cont
 states the reason where the control would otherwise be; a direct universe is the only place a
 structure can be applied.
 
+## The starting guide
+
+An empty Story shows a compact guide at the top of the Story overview, to a writer only. It names the
+two ways to begin — choose a starting structure, or build a Section and then Scenes by hand — and
+says plainly that a structure and tags are optional, so it never turns a template into a requirement.
+The manual path links to the Sections and Scenes workspaces.
+
+The guide is dismissible for the current view with the alert's own close control. It is rendered only
+while the Story has no live Sections or Scenes and only to a reader who can write, so it disappears
+permanently once the Story has structure and a read-only member is never told to build one. In a
+draft-based universe the guide replaces the structure invitation with a short statement that a
+structure is unavailable there; the structure card below keeps the detailed reason.
+
 ## The apply route and its responses
 
 | Purpose | Canonical URL | Response |

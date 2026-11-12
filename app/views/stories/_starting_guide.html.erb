@@ -1,0 +1,34 @@
+<%# The first-session guide on an empty Story. A new writer has two starting
+    points that are easy to confuse: the starting structures offered below, and
+    the Sections and Scenes workspaces where the same outline is built by hand.
+    The guide names both, says plainly that a structure and tags are optional,
+    and is rendered only while the Story is empty and only to a reader who can
+    write. A read-only member is never told to build anything, and a draft-based
+    universe states that a structure is unavailable there instead of inviting
+    the writer to choose one. %>
+<% story = local_assigns.fetch(:story) %>
+<% structure_available = local_assigns.fetch(:structure_available) %>
+
+<div class="alert alert-info alert-dismissible fade show starting-guide">
+  <div class="d-flex align-items-start gap-2">
+    <i class="bi bi-signpost-split" aria-hidden="true"></i>
+    <div>
+      <h2 class="h6"><%= t("stories.show.start_guide.heading") %></h2>
+      <p class="mb-2"><%= t("stories.show.start_guide.summary") %></p>
+      <ul class="mb-2 ps-3">
+        <li>
+          <%= structure_available ? t("stories.show.start_guide.structure_step") : t("stories.show.start_guide.draft_step") %>
+        </li>
+        <li>
+          <%= t("stories.show.start_guide.manual_step_html",
+            sections_link: link_to(t("stories.show.start_guide.manual_sections_link"),
+              universe_story_sections_path(story_id: story), class: "alert-link"),
+            scenes_link: link_to(t("stories.show.start_guide.manual_scenes_link"),
+              universe_story_scenes_path(story_id: story), class: "alert-link")) %>
+        </li>
+      </ul>
+      <p class="mb-0"><%= t("stories.show.start_guide.optional") %></p>
+    </div>
+  </div>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<%= t("stories.show.start_guide.dismiss") %>"></button>
+</div>

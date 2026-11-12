@@ -40,6 +40,16 @@
 <% end %>
 
 <div class="row g-3">
+  <%# The first-session guide names both ways to start an empty Story: a
+      starting structure or a manually built Section and Scene. It is offered to
+      a writer only, because a read-only member cannot build, and it disappears
+      with the rest of the empty state as soon as the Story has structure. %>
+  <% if @story_structure_empty && can_write_universe? %>
+    <div class="col-12">
+      <%= render "stories/starting_guide", story: @story, structure_available: @story_structure_available %>
+    </div>
+  <% end %>
+
   <%# A template is a starting shape, so it is offered only on an empty Story in
       a direct universe. Choosing one creates ordinary Sections and Scenes; the
       card disappears as soon as the Story has either. %>

@@ -198,4 +198,22 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_link I18n.t("sidebar.events"), href: universe_events_path(universe_slug: universe.slug)
     assert_link I18n.t("sidebar.timeline"), href: universe_timeline_path(universe_slug: universe.slug)
   end
+
+  # The starting guide is in the page's flow, not a flash toast, so it stays
+  # until the reader dismisses it or the Story gains structure. Its close control
+  # is Bootstrap's, which only a browser can exercise.
+  test "an empty story's starting guide can be dismissed" do
+    universe = universes(:universe_one)
+    story = Story.create!(universe: universe, name: "Guided story")
+
+    sign_in_via_form(users(:user_one))
+    visit universe_story_path(universe_slug: universe.slug, id: story)
+
+    within ".starting-guide" do
+      assert_text I18n.t("stories.show.start_guide.heading")
+      find("button.btn-close").click
+    end
+
+    assert_no_selector ".starting-guide"
+  end
 end

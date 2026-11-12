@@ -270,6 +270,57 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_select "legend", text: I18n.t("stories.structures.choose")
   end
 
+  test "an empty story opens with a starting guide for a writer" do
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".starting-guide", count: 1
+    assert_includes response.body, I18n.t("stories.show.start_guide.heading")
+    assert_includes response.body, I18n.t("stories.show.start_guide.structure_step")
+    assert_includes response.body, I18n.t("stories.show.start_guide.optional")
+    assert_select ".starting-guide a[href=?]",
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.start_guide.manual_sections_link")
+    assert_select ".starting-guide a[href=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.start_guide.manual_scenes_link")
+  end
+
+  test "a story with structure shows no starting guide" do
+    get universe_story_url(universe_slug: @universe.slug, id: stories(:story_one))
+
+    assert_response :success
+    assert_select ".starting-guide", count: 0
+  end
+
+  test "a draft-based universe's starting guide points at the manual path" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".starting-guide", count: 1
+    assert_includes response.body, I18n.t("stories.show.start_guide.draft_step")
+    assert_not_includes response.body, I18n.t("stories.show.start_guide.structure_step")
+  end
+
+  test "a read-only member sees no starting guide" do
+    universe = Universe.create!(owner: users(:user_one), name: "Private guide",
+      slug: "private-guide", private: true)
+    story = universe.stories.create!(name: "Private empty story")
+    UniverseMembership.create!(universe: universe, user: users(:user_two), access_level: :read)
+    sign_out
+    sign_in_as(users(:user_two))
+
+    get universe_story_url(universe_slug: universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".starting-guide", count: 0
+  end
+
   test "a story with sections does not offer a structure" do
     get universe_story_url(universe_slug: @universe.slug, id: stories(:story_one))
 
@@ -363,6 +414,7 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form[action=?]",
       apply_structure_universe_story_path(universe_slug: @universe.slug, id: story), count: 0
+    assert_select ".starting-guide", count: 0
   end
 
   test "a guest sees the same primary destination as a writer" do

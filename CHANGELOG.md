@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Story starting guide.** An empty Story now opens with a dismissible guide that names both ways to begin — a starting structure or a manually added Section and Scene — and states that a template and tags are optional.
 - **Story overview action hierarchy.** The Story overview now has one context-aware primary action — **Open sections** for an empty Story and **Open scenes** once it has content — while the other destinations stay in the body cards.
 - **Top-bar draft indicator.** Pending work now appears in the navbar as a **Draft** link with a count on every page, and the universe page states that count before an editing session starts instead of only during one.
 

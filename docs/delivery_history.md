@@ -29,6 +29,37 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[changed]** **An empty Story now explains its two starting points instead of only offering controls.**
+  - **The gap.** The Story overview offered the starting-structure picker on an empty direct-universe
+    Story, listed Sections, Plots, and Scenes in the structure card, and gave every empty card its own
+    copy, but nothing said how those paths related. A draft-based universe removed the picker and
+    explained why only inside the counts card, so the limitation read as a missing feature rather
+    than as a different building order. The earlier action-hierarchy change deliberately deferred a
+    first-session guide to backlog item 75.
+  - **The decision.** An empty Story opens with a compact, dismissible alert above the picker. It says
+    that a story is an ordered sequence of scenes grouped into sections, then names the two ways to
+    begin: choose a starting structure below, or add the first Section and then Scenes by hand. The
+    manual path links to both workspaces. A closing sentence says that a template and tags are
+    optional and that every created record can be renamed or deleted. In a draft-based universe the
+    structure invitation is replaced by a sentence that starting structures are unavailable there,
+    and the existing structure card keeps the detailed explanation.
+  - **Who sees it.** Only a reader with write access, and only while the Story has no live Sections or
+    Scenes. A guest or read-only member is not told to build anything, and the guide disappears with
+    the rest of the empty state once the Story has structure.
+  - **Why dismissal is page-only.** The guide is not a platform preference and adds no cookie or
+    settings entry. It exists only during the empty state, which ends when the writer creates the
+    first Section or Scene, so a dismissal remembered across requests would outlive the condition it
+    describes.
+  - **What it does not do.** It does not validate the first session with real participants, which
+    stays in backlog item 96, and it adds no template requirement, default tag, or header creation
+    shortcut. The empty cards' read-only copy, which still tells a guest to add records, is recorded
+    as a separate future-work follow-up rather than changed here.
+  - **Verification.** `test/controllers/stories_controller_test.rb` covers the writer's direct path,
+    the draft wording, the populated Story, and the read-only and guest views;
+    `test/system/universe_story_test.rb` dismisses the guide in a browser; the Spanish structure
+    picker page carries no untranslated chrome. The full Rails suite, `bin/rubocop`,
+    `bun run check:js`, and `bin/brakeman` pass.
+
 - **[changed]** **The Story overview offers one next action instead of four destinations.**
   - **The gap.** The page header carried **Open sections**, **Open plots**, **Open scenes**, and
     **Open appearance grid** side by side, repeated three of those destinations in the structure

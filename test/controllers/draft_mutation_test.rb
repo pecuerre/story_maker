@@ -612,15 +612,29 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "an html workspace redirects with the remembered sentence and the documented status" do
+  test "an html workspace redirects with the remembered change and the documented status" do
     collaboration_mode("wikipedia")
 
     patch universe_relation_url(universe_slug: @universe.slug, id: @relation.id),
       params: { relation: { name: RENAMED, character1_id: @character.id, character2_id: @other_character.id } }
 
     assert_response :see_other
-    assert_equal I18n.t("drafts.flash.remembered"), flash[:notice]
     assert_equal "Relation", last_change.record_type
+    assert_equal(
+      { "draft_id" => last_change.draft_id, "action" => "update", "record_type" => "Relation" },
+      flash[:draft_change]
+    )
+    assert_nil flash[:notice], "a remembered change is not also printed as a flash toast"
+
+    # The page the author lands on carries the result in its own flow, names what
+    # was remembered, and leads to the draft it joined. The alert is not the same
+    # fact as the toast: it stays for the whole page rather than four seconds,
+    # which is why a remembered create cannot read as a save that failed.
+    follow_redirect!
+
+    assert_response :success
+    assert_select ".draft-remembered", text: /Your Relation change is in your draft/
+    assert_select ".draft-remembered a[href=?]", universe_draft_path(universe_slug: @universe.slug, id: last_change.draft_id)
   end
 
   test "a remembered html mutation returns the author to the page they submitted from" do

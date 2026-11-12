@@ -373,6 +373,25 @@ module DraftsHelper
     record_label(record)
   end
 
+  # What the page an author lands on says after a change was remembered, from the
+  # entry `DraftMutation#render_draft_change` left in the flash.
+  #
+  # **The type is named, the record is not.** A remembered create has no record to
+  # name yet, and the draft's own page — which the alert links to — prints the
+  # values the change carries. Naming the type is what the generic sentence could
+  # not do: "a new Scene is in your draft" tells an author their creation was
+  # remembered, where "your change was remembered" left them working out which
+  # change and whether it was the one that had just failed to appear.
+  #
+  # The entry is a plain hash from a cookie-backed session, so its keys are read
+  # with indifferent access rather than assumed to be symbols.
+  def draft_remembered_sentence(remembered)
+    remembered = remembered.with_indifferent_access
+    kind = draft_record_kind(remembered[:record_type])
+
+    t("drafts.remembered.#{remembered[:action]}", kind: kind)
+  end
+
   # What a **pending row** calls itself: the record's own label where it has one to
   # give, and otherwise the type the change would create — the same sentence
   # `draft_change_subject` gives a remembered create on a draft's page and in the

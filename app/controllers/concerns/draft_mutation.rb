@@ -237,9 +237,30 @@ module DraftMutation
       # from another host. The status follows the verb, as the documented HTML flow
       # requires: a PATCH or a DELETE answers `see_other` rather than asking the
       # browser to repeat a non-GET verb as a GET.
+      #
+      # **The result is a datum rather than a sentence, because the page that reads
+      # it renders the sentence in flow instead of as a toast.** A create added from
+      # a full-page form is the case that matters: the author is returned to a blank
+      # form, which reads as a save that failed, and a four-second toast is easy to
+      # miss altogether. `shared/draft_remembered` prints this entry as a persistent
+      # alert naming what was remembered and carrying a link into the draft, and
+      # `shared/flash` deliberately leaves the entry alone so it is not also printed
+      # as a toast.
       redirect_back_or_to(universe_path(universe_slug: Current.universe.slug),
-        notice: t("drafts.flash.remembered"),
+        flash: { draft_change: draft_change_flash(change) },
         status: draft_redirect_status)
+    end
+
+    # What the landing page needs to say what was remembered, without naming the
+    # record: a create has none yet, and a draft's own page is where the change
+    # itself is read. The three values are plain strings and integers, because a
+    # cookie-backed session stores this entry between the two requests.
+    def draft_change_flash(change)
+      {
+        "draft_id" => change.draft_id,
+        "action" => change.action,
+        "record_type" => change.record_type
+      }
     end
 
     # The verb's own status, as the documented HTML flow requires

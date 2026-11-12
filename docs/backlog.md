@@ -197,19 +197,10 @@ triaged into this list.
 
 ### Browser baseline follow-ups — 2026-11-12
 
-These are recommended in the order below: address the observed readability and layout problems first,
-then focus and draft feedback, followed by the remaining validation. The
-[browser walkthrough](delivery_history.md#2026-11-12) records the evidence and its limitations;
-these items do not claim that participants experienced the same problems.
-
-95. **Clarify feedback after draft-mode creation.**
-
-   In the baseline, creating a Story or Scene in a draft-based Universe returned to a blank creation
-   form while the saved change appeared in the pending sidebar; the agent submitted one Story twice.
-   Examine the existing confirmation and redirect before choosing a change, and test whether a clear,
-   persistent indication of the remembered result and a path to pending work make the outcome easier
-   to understand. Preserve draft semantics and direct-mode behavior; coordinate with the broader draft
-   state and outcomes item rather than assuming this observation proves a user-testing result.
+The observed readability, layout, focus, and draft-feedback problems have been addressed; the item
+below is the remaining validation. The [browser walkthrough](delivery_history.md#2026-11-12) records
+the evidence and its limitations, and it does not claim that participants experienced the same
+problems.
 
 96. **Complete participant and accessibility validation.**
 

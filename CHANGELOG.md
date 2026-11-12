@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Draft-mode creation feedback.** A remembered change now lands on a page-level alert that names what was remembered and links to its draft, instead of relying on a four-second toast over a blank creation form.
 - **Editor focus on close.** Closing a shared flat-list or taxonomy tree editor now returns focus to the control that opened it, or to the row's menu toggle, instead of leaving the reader on the page body.
 - **Story header layout.** The Story overview's actions wrap inside the header at desktop and tablet widths instead of running into the right sidebar, and translated actions no longer widen the document.
 - **Dark-theme outline buttons.** Outline button text, borders, hover, and pressed states now use the dark theme's re-tinted colors, so the Story header's controls meet the AA contrast targets.

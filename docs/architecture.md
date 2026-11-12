@@ -318,10 +318,13 @@ there is no ambiguous HTML-and-JSON *mutation* to forbid, and
 
 A mutation in a universe whose collaboration mode is not `direct` is remembered instead of written, and
 it answers in **its own controller's flow rather than a third one**: `202 Accepted` with a body naming the
-remembered change for the JSON-only rows, and the HTML redirect with `drafts.flash.remembered` for the
-redirect rows. There is no record to redirect *to* for a remembered create, so the HTML flow returns the
-author to the page they submitted from and falls back to the universe. `DraftMutation` is where this is
-implemented; [conventions.md](conventions.md#controllers) owns the call each mutation action makes.
+remembered change for the JSON-only rows, and the HTML redirect for the redirect rows. There is no record
+to redirect *to* for a remembered create, so the HTML flow returns the author to the page they submitted
+from and falls back to the universe. That page then states what was remembered, in its own flow rather
+than as a toast, and links to the draft — `shared/_draft_remembered`, fed by `flash[:draft_change]`.
+`DraftMutation` is where this is implemented; [conventions.md](conventions.md#controllers) owns the call
+each mutation action makes, and [conventions.md](conventions.md#views---three-patterns) owns the alert
+and the flash rule.
 
 `DraftsController` is where those remembered changes are read and acted on. It is the only controller
 whose every action requires a session, because a draft belongs to a person, and it is read as its own

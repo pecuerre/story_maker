@@ -417,6 +417,12 @@ destructive actions marked by text/icon rather than a permanently red button. Fl
 rendered once by the application layout through `shared/_flash` as floating toasts fixed to the
 top-right corner. Success toasts auto-dismiss after 4 seconds; error toasts after 10 seconds. Both
 can be closed manually. The `flash_toast_controller.js` Stimulus controller manages the timers.
+**A remembered change is the one flash that is not a toast.** `DraftMutation` leaves
+`flash[:draft_change]` rather than a sentence, `shared/_flash` skips that key, and
+`shared/_draft_remembered` renders it in the page's own flow above the content, naming what was
+remembered and linking to the draft. It has to outlive a toast: a remembered create returns the
+author to the blank creation form, and a four-second sentence is not enough evidence that the
+create was accepted rather than refused.
 
 The three functional editing patterns are:
 

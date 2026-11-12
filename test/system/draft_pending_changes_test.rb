@@ -74,6 +74,29 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     end
   end
 
+  test "a remembered create says what happened on the page it returns to and leads to the draft" do
+    # The baseline's duplicate submit: a draft-mode Story create returns the author
+    # to the blank creation form, and the only evidence that anything happened was
+    # a four-second toast and the pending panel in the sidebar. The page now states
+    # the result itself, in its own flow, and carries the way into the draft.
+    sign_in_via_form(@user)
+    visit universe_stories_path(universe_slug: @universe.slug)
+    click_link "New story"
+
+    fill_in "Name", with: "Remembered from the form"
+    click_button "Create Story"
+
+    assert_selector ".draft-remembered", text: "New Story is in your draft"
+    assert_selector ".draft-remembered", text: "Nothing is live until you apply the draft"
+    assert_no_selector ".flash-stack .flash-toast"
+    assert_nil Story.find_by(name: "Remembered from the form")
+
+    click_link "Review your draft"
+
+    assert_selector ".draft-change", text: "Remembered from the form", wait: REFRESH_WAIT
+    assert_selector ".page-actions", text: "Apply changes"
+  end
+
   test "a remembered edit badges the row without changing it" do
     sign_in_via_form(@user)
     character = characters(:character_one)

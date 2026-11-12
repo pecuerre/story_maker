@@ -85,6 +85,7 @@
 
           <div class="page-shell">
             <%= render "shared/mutation_status" %>
+            <%= render "shared/draft_remembered" %>
             <% if !can_write_universe? %>
               <div class="alert alert-info access-notice" role="status">
                 <% if Current.user.present? %>

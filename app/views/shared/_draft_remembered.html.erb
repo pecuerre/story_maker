@@ -1,0 +1,34 @@
+<%# What this page says after a change that was remembered rather than written.
+    #
+    # **It is in the page's flow, not in the floating flash stack.** The flash is a
+    # toast that removes itself after four seconds, which is long enough to miss and
+    # is gone before a reader who looked away comes back to the page. A remembered
+    # create is the case this exists for: the author is returned to the blank
+    # creation form, which reads exactly like a save that failed, and the only other
+    # evidence is the pending work in the sidebar. The alert below stays until the
+    # next navigation, names what was remembered, and links to the draft where it can
+    # be applied.
+    #
+    # `DraftMutation#render_draft_change` leaves the entry in the flash and
+    # `shared/flash` deliberately skips it, so this partial is its only reader. The
+    # entry names the change's action and record type rather than the record, because
+    # a remembered create has no record to name yet; the draft's own page prints the
+    # values the change carries.
+    #
+    # It renders only inside a universe, which is where such an entry is set: a
+    # draft belongs to one universe, and the link has to name it. %>
+<% remembered = flash[:draft_change] %>
+<% if remembered.present? && Current.universe.present? %>
+  <div class="alert alert-info alert-dismissible fade show draft-remembered" role="status">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-journal-text" aria-hidden="true"></i>
+      <div>
+        <p class="mb-1"><%= draft_remembered_sentence(remembered) %></p>
+        <%= link_to t("drafts.remembered.review"),
+          universe_draft_path(universe_slug: Current.universe.slug, id: remembered.with_indifferent_access[:draft_id]),
+          class: "alert-link" %>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<%= t("shared.flash.close") %>"></button>
+  </div>
+<% end %>

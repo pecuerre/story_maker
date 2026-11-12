@@ -783,12 +783,19 @@ en:
     changes:
       drop: "Drop this change"
       drop_confirm: "Drop this change? It will not be written, and the rest of your draft is left as it is."
+    # What the page says after a change was remembered, printed in the page's flow
+    # rather than as a flash toast. It is its own block rather than a `flash` key
+    # because its alert stays for the whole page and links to the draft, and
+    # because a remembered create returns the author to a blank form that
+    # otherwise reads like a save that failed. The `kind` is the same word a
+    # search result uses (`searches.kinds`), so "Story" and "Scene" are capitalised
+    # inside the sentence exactly as they are in a pending row's own subject.
+    remembered:
+      create: "New %{kind} is in your draft. Nothing is live until you apply the draft."
+      update: "Your %{kind} change is in your draft. Nothing is live until you apply the draft."
+      delete: "Your %{kind} deletion is in your draft. Nothing is live until you apply the draft."
+      review: "Review your draft"
     flash:
-      # The one sentence the HTML workspaces say when a universe remembers a
-      # change instead of writing it. It says the change was *remembered*, never
-      # that the record was saved, because nothing was: the author is looking at
-      # the same page, and a "created" flash would be a lie about the universe.
-      remembered: "Your change was remembered. It is not live until you apply it."
       # What an apply did. A draft applied whole and a draft where some changes
       # could not be written are different sentences because they are different
       # outcomes, and the second one says where the changes still are rather than
@@ -866,9 +873,9 @@ en:
     submission_in_flight: "Your draft is with a reviewer, so this change was not remembered. A submitted draft cannot be edited: withdraw it from the draft's page, or wait for a decision."
     # The three steps, in the order an author meets them. They are the only place
     # the workflow is explained rather than referred to: every other sentence about
-    # it — the flash that says a change was remembered, a row's badge, the two
+    # it — the alert that says a change was remembered, a row's badge, the two
     # controls on a draft — is a consequence of one of these three, and an author
-    # who arrives from that flash has to be told what the consequences are. Rendered
+    # who arrives from that alert has to be told what the consequences are. Rendered
     # on both drafts pages, so the keys are stated once here rather than twice in the
     # views.
     guide:

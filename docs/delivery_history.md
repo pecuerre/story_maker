@@ -29,6 +29,40 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[fixed]** **A remembered change states its result on the page the author returns to.**
+  - **The failure.** A draft-based universe remembers a create instead of writing it, so there is no
+    record to redirect to; the HTML flow returns the author to the page they submitted from. From the
+    full-page Story and Scene forms that page is the blank creation form, and the only evidence
+    anything happened was a success-looking toast that removes itself after four seconds and a pending
+    row in the sidebar. The 2026-11-12 baseline agent read the blank form as a failed save and
+    submitted the Story twice.
+  - **The decision.** A remembered HTML mutation now leaves `flash[:draft_change]` — the draft id, the
+    action, and the record type — instead of the generic sentence. `shared/draft_remembered` renders it
+    as a Bootstrap alert in the page's own flow above the content, naming what was remembered
+    ("New Story is in your draft. Nothing is live until you apply the draft.") and linking to the
+    draft where it can be applied. The alert does not auto-dismiss; it is closable and leaves on the
+    next navigation. `shared/_flash` skips the key so the same entry is not also printed as a toast.
+  - **Why the redirect stayed.** The HTML flow's destination is part of the documented response
+    contract, and the JSON workspaces have the same no-record problem without a redirect to change.
+    The feedback is what the observation was about: the author knew the change had been remembered
+    but could not see it, not that they wanted to be somewhere else. Changing where a create lands
+    would also move every modal-based inline create away from its list.
+  - **Rejected alternatives.** Making the existing toast longer or non-dismissing (a floating alert
+    fixed over the page for an indeterminate time competes with the content it is about, and the
+    flash stack is a corner overlay rather than page flow); redirecting a remembered create to the
+    draft page (it would move inline creates out of the list they were typed into, and the author who
+    wants to continue creating would have to navigate back); naming the record in the alert (a
+    remembered create has none yet, and the draft's own page prints the values the change carries).
+  - **Not this item.** Item 73's broader draft-state indicator, the Start/Stop semantics, and
+    Apply/Submit/Discard comprehension remain separate pending work. This change does not claim a
+    participant-testing result; it addresses the observation that a blank form plus a transient toast
+    was ambiguous.
+  - **Verification.** `test/controllers/draft_mutation_test.rb` asserts the flash shape and that the
+    redirected page renders the alert with the draft link, and `test/system/draft_pending_changes_test.rb`
+    walks the baseline's Story creation in a browser: no toast, no stored Story, the alert naming the
+    create, and the link into the draft. The full Minitest suite (3,525 runs), the system suite (234
+    runs), and RuboCop over the changed files were run.
+
 - **[fixed]** **A closed modal editor gives focus back to the control that opened it.**
   - **The failure.** The baseline opened the Character editor from the list, saw its Name field
     focused, and after Escape found focus on `body`. Bootstrap 5.3 restores focus only for a dialog

@@ -729,12 +729,19 @@ es:
     changes:
       drop: "Quitar este cambio"
       drop_confirm: "¿Quitar este cambio? No se escribirá y el resto de tu borrador se queda tal como está."
+    # Lo que dice la página tras recordar un cambio, impreso en el flujo de la
+    # página y no como un aviso flotante. Tiene su propio bloque y no es una clave
+    # de `flash` porque su alerta permanece toda la página y enlaza al borrador, y
+    # porque crear algo recordado devuelve al autor a un formulario vacío que, sin
+    # esto, se lee como un guardado que falló. `kind` es la misma palabra que usa un
+    # resultado de búsqueda (`searches.kinds`), así que «Story» y «Scene» van en
+    # mayúscula dentro de la frase igual que en el asunto de una fila pendiente.
+    remembered:
+      create: "Nuevo/a %{kind} en tu borrador. Nada estará activo hasta que apliques el borrador."
+      update: "Cambio de %{kind} en tu borrador. Nada estará activo hasta que apliques el borrador."
+      delete: "Eliminación de %{kind} en tu borrador. Nada estará activo hasta que apliques el borrador."
+      review: "Revisar tu borrador"
     flash:
-      # La única frase que dicen los espacios de trabajo HTML cuando un universo
-      # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
-      # *recordado*, nunca que el registro se guardó, porque no se guardó nada: el
-      # autor está viendo la misma página y un aviso de "creado" mentiría.
-      remembered: "Tu cambio se ha recordado. No será visible hasta que lo apliques."
       # Lo que hizo una aplicación. Un borrador aplicado entero y un borrador en el
       # que algunos cambios no se pudieron escribir son frases distintas porque
       # son resultados distintos, y la segunda dice dónde siguen esos cambios en

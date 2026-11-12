@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Visual baseline triage.** Closed the initial walkthrough and added separate backlog items for its findings and remaining validation.
 - **Visual and task baseline.** Recorded a partial browser walkthrough, measured Story-header and dark-theme contrast issues, and identified the checks still needed.
 
 ### planned

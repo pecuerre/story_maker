@@ -29,6 +29,10 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[docs]** **Visual baseline follow-up triage.** The owner closed the initial walkthrough as a
+  partial baseline and deferred its observed issues and the remaining participant and accessibility
+  checks as separate pending work; no unperformed testing was claimed as complete.
+
 - **[docs]** **Partial visual and task baseline.**
   - **Scope.** An agent walked the local development app, not a usability-test participant. It viewed
     the public Dark universe as a guest and created a separate private, Wikipedia-mode `UI Baseline

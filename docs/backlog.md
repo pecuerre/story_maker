@@ -45,7 +45,7 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 91. The list below keeps the numbers it already had and never
+The highest number this file has used is 96. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
@@ -195,6 +195,54 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
+### Browser baseline follow-ups — 2026-11-12
+
+These are recommended in the order below: address the observed readability and layout problems first,
+then focus and draft feedback, followed by the remaining validation. The
+[browser walkthrough](delivery_history.md#2026-11-12) records the evidence and its limitations;
+these items do not claim that participants experienced the same problems.
+
+92. **Fix dark-theme outline-button contrast.**
+
+   The baseline measured normal-size outline-primary and outline-secondary text on the dark Story
+   header below the 4.5:1 contrast target. Check the actual button states and surfaces in both themes,
+   then adjust shared theme tokens or component styles to make text and control boundaries legible
+   without relying on color alone. Verify contrast and focus states on representative screens; this
+   targeted correction complements the broader visual hierarchy audit.
+
+93. **Keep the Story header readable at constrained widths.**
+
+   The signed-in Story overview's actions encroached on the sidebar while the description collapsed
+   at desktop width, and the Spanish tablet view overflowed horizontally. Investigate the shared page
+   header and Story action layout, allowing content and controls to wrap without overlap or document
+   overflow. Check desktop, tablet, phone, long names, both languages, zoom, and other users of the
+   shared header. Keep this layout fix distinct from choosing the overview's primary action.
+
+94. **Restore focus after closing the Character editor.**
+
+   In two baseline checks, the Character modal focused its Name field when opened but focus landed on
+   the page body after Escape closed it. Reproduce the behavior and determine whether the shared modal
+   contract is affected. Restore focus to the initiating control where appropriate, including after
+   cancellation and error recovery; verify with keyboard and browser tests without disturbing other
+   modal flows.
+
+95. **Clarify feedback after draft-mode creation.**
+
+   In the baseline, creating a Story or Scene in a draft-based Universe returned to a blank creation
+   form while the saved change appeared in the pending sidebar; the agent submitted one Story twice.
+   Examine the existing confirmation and redirect before choosing a change, and test whether a clear,
+   persistent indication of the remembered result and a path to pending work make the outcome easier
+   to understand. Preserve draft semantics and direct-mode behavior; coordinate with the broader draft
+   state and outcomes item rather than assuming this observation proves a user-testing result.
+
+96. **Complete participant and accessibility validation.**
+
+   Follow up the initial browser walkthrough with real participants and record where they hesitate.
+   Cover a writer-only account, actual screen-reader use, browser zoom, and the remaining role, theme,
+   language, viewport, focus, contrast, and reduced-motion combinations. Prioritize desktop while
+   retaining tablet and phone; use the findings to revisit the existing UI/UX and visual-design
+   hypotheses. An automated walkthrough or accessibility-tree inspection is not user testing.
+
 ### UI and UX review — 2026-11-12
 
 This is a **source-based design review**, not a browser, accessibility, or user-testing audit.
@@ -207,17 +255,8 @@ No UI changes are approved by recording them here. Each item is a separate decis
 The existing direction is worth keeping: a calm, scope-aware Bootstrap workspace, theme tokens,
 visible keyboard/touch controls, meaningful empty states, and accessible alternatives for diagrams.
 The main opportunity is to make the next task easier to find and reduce competing controls without
-losing the information writers need. The suggested order starts with evidence and accurate guidance,
-then draft clarity and the core Story-writing journey, followed by navigation and less frequent views.
-Reorder after the baseline if findings warrant it; each item remains an independent decision.
-
-71. **Establish a visual and task baseline.**
-
-   Finish the baseline described in the [browser walkthrough](delivery_history.md#2026-11-12): observe
-   real participants and their hesitations, and cover a writer-only account, actual screen-reader use,
-   browser zoom, and the remaining theme/language/role combinations and accessibility checks. The
-   owner chose desktop as the primary reference, while retaining tablet and phone comparisons. Use the
-   recorded observations to rank the hypotheses below; an automated walkthrough is not user testing.
+losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
+its own alongside the browser baseline follow-ups.
 
 72. **Reconcile visual guidance with the current shell.**
 

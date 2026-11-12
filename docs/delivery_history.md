@@ -29,6 +29,27 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[fixed]** **The dark theme re-tints the outline buttons.**
+  - **The failure.** Bootstrap's `button-outline-variant` mixin writes the light theme's color into
+    every `--bs-btn-*` variable at compile time, so `.btn-outline-primary` kept `#3454d1` as its
+    text and border on the dark canvas. The baseline measured 2.45:1 for primary and 3.10:1 for
+    secondary text, and the same values as the control boundary, below both AA targets. Bootstrap's
+    dark theme re-tints `--bs-*-text-emphasis` but leaves the outline component pointing elsewhere.
+  - **The decision.** One loop over Bootstrap's `$theme-colors-text-dark` re-points the idle text,
+    border, hover, pressed, disabled, and focus-shadow variables of every outline variant at the
+    dark emphasis color. Hover and the pressed state paint that color as a light fill with
+    Bootstrap's contrast-aware text, which stays visible on the dark canvas, rather than the light
+    theme's dark fill. The loop is keyed to the dark emphasis map so a new theme color needs no
+    second rule, and the light theme is untouched.
+  - **Rejected alternatives.** Hard-coding a lighter primary and secondary would fix the two
+    reported buttons and leave success, danger, warning, info, and dark broken; changing the shared
+    `$theme-colors` would also change filled buttons, badges, and links in both themes.
+  - **Verification.** A browser case opens the Story header in the dark theme and asserts the
+    computed text contrast against the canvas at 4.5:1 or better and the border at 3:1 or better for
+    both variants, then the same for the hovered label against its fill. With the rule disabled,
+    the same case reproduces the baseline's 2.45:1. The CSS build, the full Minitest suite, the
+    system suite, and RuboCop were run.
+
 - **[docs]** **Visual baseline follow-up triage.** The owner closed the initial walkthrough as a
   partial baseline and deferred its observed issues and the remaining participant and accessibility
   checks as separate pending work; no unperformed testing was claimed as complete.

@@ -55,6 +55,33 @@
   --um-disabled-text: #8a93a3;
 }
 
+// Bootstrap's dark theme does not re-tint outline buttons: its outline mixin
+// bakes the *light* theme color into every variable, so `.btn-outline-primary`
+// keeps `#3454d1` as its text and border. That is 2.45:1 on the dark canvas —
+// unreadable text, and a control boundary that does not meet the 3:1 non-text
+// target. Bootstrap's dark text-emphasis palette is the re-tinted counterpart,
+// so the idle text, the boundary it draws, and the fill that hover and the
+// pressed state paint all come from that value. Hover is a light fill with the
+// contrast-aware text Bootstrap gives a filled button, not the light theme's dark
+// fill, so the control stays visible on the dark canvas.
+@if $enable-dark-mode {
+  @each $color, $value in $theme-colors-text-dark {
+    [data-bs-theme="dark"] .btn-outline-#{$color} {
+      --bs-btn-color: #{$value};
+      --bs-btn-border-color: #{$value};
+      --bs-btn-hover-color: #{color-contrast($value)};
+      --bs-btn-hover-bg: #{$value};
+      --bs-btn-hover-border-color: #{$value};
+      --bs-btn-focus-shadow-rgb: #{to-rgb($value)};
+      --bs-btn-active-color: #{color-contrast($value)};
+      --bs-btn-active-bg: #{$value};
+      --bs-btn-active-border-color: #{$value};
+      --bs-btn-disabled-color: #{$value};
+      --bs-btn-disabled-border-color: #{$value};
+    }
+  }
+}
+
 html {
   scroll-padding-top: calc(var(--um-navbar-height) + 1rem);
 }

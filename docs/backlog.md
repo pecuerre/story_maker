@@ -202,14 +202,6 @@ then focus and draft feedback, followed by the remaining validation. The
 [browser walkthrough](delivery_history.md#2026-11-12) records the evidence and its limitations;
 these items do not claim that participants experienced the same problems.
 
-92. **Fix dark-theme outline-button contrast.**
-
-   The baseline measured normal-size outline-primary and outline-secondary text on the dark Story
-   header below the 4.5:1 contrast target. Check the actual button states and surfaces in both themes,
-   then adjust shared theme tokens or component styles to make text and control boundaries legible
-   without relying on color alone. Verify contrast and focus states on representative screens; this
-   targeted correction complements the broader visual hierarchy audit.
-
 93. **Keep the Story header readable at constrained widths.**
 
    The signed-in Story overview's actions encroached on the sidebar while the description collapsed

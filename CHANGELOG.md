@@ -40,6 +40,10 @@ Labels used below, in the order their groups appear:
 
 ## 2026-11-12
 
+### fixed
+
+- **Dark-theme outline buttons.** Outline button text, borders, hover, and pressed states now use the dark theme's re-tinted colors, so the Story header's controls meet the AA contrast targets.
+
 ### docs
 
 - **Project review.** Recorded verified security, backup, interchange, and test-suite findings, and corrected the affected operational documentation.

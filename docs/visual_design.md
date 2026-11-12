@@ -126,6 +126,11 @@ Rules for the dark theme:
   with a dark value, not a literal `rgba(255, 255, 255, …)` or near-white hex.
 - A scope keeps its hue across themes. Only the value and the background change, so the universe is
   still blue, the story still red, and the tools scope still green at a glance.
+- **Outline buttons need their own dark-theme rule.** Bootstrap's outline mixin bakes the light
+  theme's color into every button variable and never re-tints it, so `_application_custom.scss`
+  re-points the text, boundary, hover, and pressed variables of every `.btn-outline-*` at the dark
+  text-emphasis palette. Keep that loop rather than patching one variant, and check a changed theme
+  color in both themes against the 4.5:1 text and 3:1 boundary targets.
 - The navbar stays dark in both themes: it is the one dark surface that is part of the design, not a
   theme choice.
 - Author-chosen data colors are left alone: tag badges and timeline nodes keep the colors stored on

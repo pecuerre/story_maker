@@ -172,9 +172,13 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal @story.name, rendered_title
     assert_select ".page-eyebrow", text: "Espacio de trabajo de la historia"
-    assert_select ".page-actions a", text: "Abrir las secciones"
     assert_select ".page-actions a", text: "Abrir las escenas"
+    assert_select ".page-actions a", text: "Abrir las secciones", count: 0
     assert_select ".page-actions a", text: "Editar historia"
+    assert_select "a", text: "Gestionar las secciones"
+    assert_select "a", text: "Gestionar las tramas"
+    assert_select "a", text: "Gestionar las escenas"
+    assert_select "a", text: "Abrir la cuadrícula de apariciones"
     assert_select ".page-eyebrow", text: "Estructura de la historia"
     assert_select ".page-eyebrow", text: "Biblia del universo compartida"
     assert_select "h2", text: "Registros de construcción del mundo"

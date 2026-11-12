@@ -29,6 +29,57 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[changed]** **The Story overview offers one next action instead of four destinations.**
+  - **The gap.** The page header carried **Open sections**, **Open plots**, **Open scenes**, and
+    **Open appearance grid** side by side, repeated three of those destinations in the structure
+    card, and put **Open sections** and **Add section** next to each other although both opened the
+    same list. A reader had to choose between four equally weighted buttons before the page said
+    what the Story was for, and the creation label did not start the creation.
+  - **The decision.** The header keeps one primary action chosen from the Story's state: **Open
+    sections** while it has no Sections or Scenes, and **Open scenes** once it has either. Sections,
+    Plots, and Scenes stay in the structure card, and the appearance grid opens from the
+    scenes-per-character card. The header no longer offers **Add section**; the Sections workspace
+    owns creation, and the empty section card now uses the same **Open sections** label rather than
+    promising a create the link does not perform.
+  - **Why writing-forward after the first step.** An empty Story has nothing to write, so outlining
+    is the useful first move. Once a Section or Scene exists, the author's next task is prose, and
+    the Scenes list is where that happens. The owner chose the context-aware rule over always
+    opening Scenes or always opening Sections.
+  - **What it does not do.** It adds no creation shortcut and no first-session guide; the latter
+    remains a separate review finding. Reader access is unchanged: a guest sees the same primary
+    destination, without the write controls.
+  - **Verification.** `test/controllers/stories_controller_test.rb` covers the populated and empty
+    primary action plus the guest view; `test/system/universe_story_test.rb` checks the single header
+    primary and the body destinations in a browser; the Spanish workspace test covers both locales.
+
+- **[changed]** **Pending work is stated in the top bar, and the universe page states it before a
+  session starts.**
+  - **The gap.** A draft-based universe already stated pending work in the right sidebar's panel and in
+    the universe page's header, but both had edges. The tools column is a drawer below `xl`, so a
+    reader on a tablet had to open it to learn whether anything was waiting; and the header's count
+    rendered only while an editing session was on, although stopping a session leaves the draft open
+    (ADR 0027), which hid the work from an author coming back to it. The UI/UX review recorded this as
+    item 73, with the placement as its open question.
+  - **The decision.** A **Draft** link with a count sits in `.navbar-actions` before the bell, on every
+    page, in every expanded viewport. It is offered under the panel's own gate (a signed-in reader in a
+    draft-based universe), renders at zero as well as at any count, and reads `draft_preview.count`, so
+    it cannot disagree with the universe page or the panel. The universe page's count is now read
+    whenever a draft can exist rather than only during a session, so Start/Stop changes the session
+    without changing what the page says is waiting.
+  - **Why the top bar.** The owner chose it over surfacing the count in the mobile workspace bar and
+    over a universe-page-only state line: it is the one statement of pending state that needs nothing
+    opened and does not compete with a page's own actions. It sits before the bell because it is
+    workspace state, while a notification is addressed to the person.
+  - **What it does not say.** Nothing about an editing session or about whether a mutation is
+    remembered: every mutation is remembered in this mode whether **Start editing** was pressed or not
+    (ADR 0022). The indicator states what is waiting, and the count is the one fact all three surfaces
+    read.
+  - **Verification.** `test/controllers/draft_indicator_test.rb` covers the count, the zero state, the
+    drafts-page current marker, both gates, and the universe page's count before a session;
+    `test/system/draft_pending_changes_test.rb` checks the indicator at 1024px while the tools drawer
+    is closed and follows it into the draft. This change does not claim participant testing: whether
+    authors understand live, pending, Apply, Submit, and Discard remains item 96's work.
+
 - **[fixed]** **A remembered change states its result on the page the author returns to.**
   - **The failure.** A draft-based universe remembers a create instead of writing it, so there is no
     record to redirect to; the HTML flow returns the author to the page they submitted from. From the

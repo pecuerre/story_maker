@@ -211,12 +211,15 @@ class DraftWorkflowTest < ApplicationSystemTestCase
 
     visit universe_path(universe_slug: @universe.slug)
     assert_selector ".page-actions", text: "Start editing"
-    assert_selector ".page-actions", text: "No pending changes yet", count: 0
+    # The count is the draft's standing state rather than a property of the
+    # session, so it is already here before anything is started or remembered.
+    assert_selector ".page-actions", text: "No pending changes yet"
+    assert_selector ".navbar .draft-indicator", text: "Draft"
 
     click_button "Start editing"
 
-    # Entering the session opens the draft, so the count is honest from the first
-    # moment rather than appearing only once something has been remembered.
+    # Entering the session opens the draft, so the count is still honest and the
+    # session's own control is now the way out rather than the way in.
     assert_selector ".page-actions", text: "No pending changes yet"
     assert_selector ".page-actions", text: "Stop editing"
     assert_equal 1, Draft.open_for(@user, @universe).id
@@ -236,7 +239,10 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     assert_selector ".page-actions", text: "Stop editing"
 
     # The count is a way into the changes, so following it lands on the draft.
-    click_on "1 pending change"
+    # Scoped to the header because the top bar's indicator also names the count.
+    within ".page-actions" do
+      click_on "1 pending change"
+    end
     assert_selector "h1", text: "Pending changes"
     assert_selector ".entity-row", text: "1 remembered change"
 

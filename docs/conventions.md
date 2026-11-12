@@ -1072,10 +1072,11 @@ second answer to that question — a reader who forgot to press it would otherwi
 a universe whose mode exists to stop exactly that ([ADR
 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)). What entering a
 session does is **open the draft before the first change is made** (`Draft.open_for!`, which resumes an
-existing draft rather than replacing it), and what the flag gives the page is a count: the pending count
-is a link into the drafts page, because a number is only interesting as a way into the changes it is
-counting. That count is `draft_preview.count`, which the universe page's button and the sidebar's panel
-both read, because it is one fact about one draft read once per request; the sentence for it is
+existing draft rather than replacing it), and the page states the pending count beside the control
+whether or not the flag is set: the count is a link into the drafts page, because a number is only
+interesting as a way into the changes it is counting. That count is `draft_preview.count`, which the
+universe page's button, the sidebar's panel, and the top bar's indicator all read, because it is one
+fact about one draft read once per request; the sentence for it is
 `drafts.pending.count`, and two keys for one fact is how a fact goes stale in one place.
 
 The control is rendered where the server accepts it: a draft-based universe, a signed-in reader, and

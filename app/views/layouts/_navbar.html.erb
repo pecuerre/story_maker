@@ -54,6 +54,7 @@
           and a guest sees the same menu with Log in as its first entry and no bell,
           because there is nothing there addressed to a guest. %>
       <div class="navbar-actions ms-auto mt-3 mt-lg-0 d-flex align-items-center gap-2">
+        <%= render "layouts/draft_indicator" %>
         <%= render "layouts/notifications" %>
 
         <% on_settings_page = controller_name == "settings" %>

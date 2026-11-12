@@ -30,9 +30,10 @@ what the reader sees because of it is the explicit **None selected** state below
 
 ## Top bar — `app/views/layouts/_navbar.html.erb`
 
-The navbar is deliberately three links, one search box, and two actions. It is not a switcher. The search
-box issues **no query of its own**: it renders from `Current`, from `Search::Scope`, and from what a
-reader types. The notifications bell does issue one, and says why below.
+The navbar is deliberately three links, one search box, and up to three actions. It is not a
+switcher. The search box issues **no query of its own**: it renders from `Current`, from
+`Search::Scope`, and from what a reader types. The notifications bell does issue one, and says why
+below.
 
 - **Universe Maker** — the brand, and the landing page (`/`, the universes index). A guest sees the
   public front door there; a signed-in reader sees the universes they may open and creates one with
@@ -46,6 +47,17 @@ reader types. The notifications bell does issue one, and says why below.
   link, because a story is never implied.
 - **Search** — one GET form between the scope links and the actions, plus the dropdown that answers
   while someone types. See [features/search.md](search.md).
+- **Draft** — the reader's own pending work, in `.navbar-actions` before the bell, and rendered only
+  where a draft can exist: a signed-in reader in a universe that remembers changes rather than writing
+  them. It is one word and, when something is waiting, a count, and it links to the drafts list; it
+  renders at **zero** as well as at any count, because it is also the way in and an entry that appears
+  and disappears with a count needs an explanation whenever it is absent. It is the one statement of
+  pending state that needs nothing opened — the right sidebar's panel and its **Pending changes** entry
+  are behind the **Tools** drawer below `xl` — and it is deliberately **not** in a page header, whose
+  actions are about the page rather than about the universe. It states what is waiting and never
+  whether an editing session is on: every mutation is remembered in this mode whether the reader
+  pressed **Start editing** or not (ADR 0022), and its figure is the one `DraftPreview#count` that the
+  universe page and the sidebar panel also read.
 - **Notifications** — a bell dropdown in `.navbar-actions`, beside the account menu rather than
   inside it, and **rendered only for a signed-in reader**: there is nothing there addressed to a
   guest, and asking costs a query. It is server-rendered Bootstrap, which is why this feature added
@@ -143,7 +155,7 @@ then the sections that follow it:
   that appears and disappears with a count needs an explanation whenever it is absent. The panel is its own
   `<li>` beside the link rather than around it, because the shared link partial is itself a list item and
   a `<li>` inside a `<li>` is hoisted back out by the parser. The **Start editing** / **Stop editing**
-  control on the universe page is a second way in, and it is the one that opens a draft; both belong to the
+  control on the universe page is another way in, and it is the one that opens a draft; both belong to the
   universe workspace rather than to either sidebar.
 - **Change history**: the universe's closed drafts, grouped by the day each one closed, and the
   third kind of answer in this group — not the reader's own work, not what a reviewer must decide, but

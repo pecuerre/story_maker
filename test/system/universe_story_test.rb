@@ -146,8 +146,8 @@ class UniverseStoryTest < ApplicationSystemTestCase
   end
 
   # The Story overview is a dashboard: description, structure counts, section-tree
-  # preview, recently edited sections, quick "Add section" action, and Universe
-  # Bible links.
+  # preview, recently edited sections, one context-aware primary action, and
+  # Universe Bible links.
   test "the story overview renders as a working dashboard" do
     universe = universes(:universe_one)
     story = stories(:story_one)
@@ -163,11 +163,16 @@ class UniverseStoryTest < ApplicationSystemTestCase
     # Section count badge in the page header.
     assert_selector ".badge[aria-label='2 sections']"
 
-    # Quick actions.
-    assert_link I18n.t("stories.show.open_sections"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
-    assert_link I18n.t("stories.show.open_plots"), href: universe_story_plots_path(universe_slug: universe.slug, story_id: story)
-    assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
-    assert_link I18n.t("stories.show.add_section"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    # One context-aware primary action; the other destinations stay in the body.
+    within ".page-header .page-actions" do
+      assert_selector "a.btn-primary", count: 1
+      assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+      assert_no_link I18n.t("stories.show.open_sections")
+    end
+    assert_link I18n.t("stories.show.manage_sections"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.manage_plots"), href: universe_story_plots_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.manage_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.open_appearances"), href: universe_story_appearances_path(universe_slug: universe.slug, story_id: story)
 
     # Story balance: one bar per Character, each linking to the Character, with
     # the table equivalent beneath it.

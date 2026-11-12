@@ -6,12 +6,16 @@
   description: @story.description.presence || t("stories.show.default_description"),
   count: @sections.size,
   count_label: "section" do %>
-  <%= link_to t("stories.show.open_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
-  <%= link_to t("stories.show.open_plots"), universe_story_plots_path(story_id: @story), class: "btn btn-outline-primary" %>
-  <%= link_to t("stories.show.open_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
-  <%= link_to t("stories.show.open_appearances"), universe_story_appearances_path(story_id: @story), class: "btn btn-outline-primary" %>
+  <%# The overview has one context-aware primary action rather than one link per
+      workspace. An empty Story has nothing to write yet, so it leads to the
+      Sections list; once a Section or Scene exists, writing is the next task and
+      the primary action opens the Scenes list. The other destinations stay in
+      the structure card below, and the appearance grid opens from the cast card,
+      so the header does not repeat the same three body links. %>
+  <% primary_label = @story_structure_empty ? t("stories.show.open_sections") : t("stories.show.open_scenes") %>
+  <% primary_path = @story_structure_empty ? universe_story_sections_path(story_id: @story) : universe_story_scenes_path(story_id: @story) %>
+  <%= link_to primary_label, primary_path, class: "btn btn-primary" %>
   <% if can_write_universe? %>
-    <%= link_to t("stories.show.add_section"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-secondary" %>
     <%= link_to t("stories.edit"), edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
 
     <%= discussion_control(@story) %>
@@ -172,12 +176,9 @@
         <%= render "shared/empty_state",
           title: t("stories.show.cast_none_scenes_title"),
           description: t("stories.show.cast_none_scenes_description"),
-          icon: "film" do %>
-          <% if can_write_universe? %>
-            <%= link_to t("stories.show.open_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-primary" %>
-          <% end %>
-        <% end %>
+          icon: "film" %>
       <% end %>
+      <%= link_to t("stories.show.open_appearances"), universe_story_appearances_path(story_id: @story), class: "btn btn-sm btn-outline-secondary mt-3" %>
     </div>
   </div>
 
@@ -209,8 +210,11 @@
           title: t("stories.show.sections_none_title"),
           description: t("stories.show.sections_none_description"),
           icon: "diagram-3" do %>
-          <% if can_write_universe? %>
-            <%= link_to t("stories.show.add_section"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
+          <%# The header already offers Open sections while the whole Story is
+              empty. A Story with Scenes but no Sections keeps this link, because
+              its primary action is writing. %>
+          <% if can_write_universe? && !@story_structure_empty %>
+            <%= link_to t("stories.show.open_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
           <% end %>
         <% end %>
       <% end %>

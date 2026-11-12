@@ -11,25 +11,33 @@
   title: @universe.name,
   eyebrow: t("universes.show.eyebrow"),
   description: t("universes.show.description") do %>
-  <%# The editing session comes first because it is a mode rather than an action:
-      it says whether the buttons beside it remember what they do. The pending
-      count is a link rather than a badge, because the number is only interesting as
-      a way into the changes it is counting — and the right sidebar's panel states
-      the same number from the same `DraftPreview`, so the two cannot disagree. A
-      draft with nothing in it is a real state, so the answer is a count rather
-      than a boolean. Nothing here decides whether a mutation is remembered: in a
-      draft-based universe every mutation is, pressed or not (ADR 0022). %>
+  <%# The session is a mode rather than an action, so its control comes first and
+      keeps the same place whichever state it is in: entering one opens the draft
+      before the first change is made, and stopping leaves the draft where it is.
+      Nothing here decides whether a mutation is remembered — in a draft-based
+      universe every mutation is, pressed or not (ADR 0022). %>
   <% if draft_editing_available? %>
     <% if draft_editing? %>
-      <%= link_to universe_drafts_path, class: "btn btn-outline-primary" do %>
-        <i class="bi bi-journal-text" aria-hidden="true"></i>
-        <span><%= t("drafts.pending.count", count: draft_preview.count) %></span>
-      <% end %>
       <%= button_to t("drafts.editing.stop"), universe_editing_path, method: :delete,
         class: "btn btn-outline-secondary" %>
     <% else %>
       <%= button_to t("drafts.editing.start"), universe_editing_path,
         class: "btn btn-outline-secondary" %>
+    <% end %>
+  <% end %>
+  <%# The pending count is the standing state, read whether or not an editing
+      session is on: stopping releases the browser's claim, not the work (ADR
+      0027), so an author who comes back to a draft has to see what is waiting
+      before pressing anything. It is a link rather than a badge, because the
+      number is only interesting as a way into the changes it is counting — and
+      the top bar's indicator and the right sidebar's panel state the same number
+      from the same `DraftPreview`, so the three cannot disagree. A draft with
+      nothing in it is a real state, so the answer is a count rather than a
+      boolean. %>
+  <% if draft_preview.available? %>
+    <%= link_to universe_drafts_path, class: "btn btn-outline-primary" do %>
+      <i class="bi bi-journal-text" aria-hidden="true"></i>
+      <span><%= t("drafts.pending.count", count: draft_preview.count) %></span>
     <% end %>
   <% end %>
   <% if can_write_universe? %>

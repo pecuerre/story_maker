@@ -218,24 +218,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-73. **Make draft state and outcomes easier to understand.**
-
-   The [Universe page](../app/views/universes/show.html.erb) exposes Start/Stop editing, while the
-   [draft page](../app/views/drafts/show.html.erb) offers different actions by collaboration mode and
-   includes a workflow guide. Test whether authors understand what is live, what is pending, and what
-   Apply, Submit, and Discard do; consider a persistent, succinct state indicator linked to the
-   existing draft. **Question:** where should that indicator appear without competing with page actions?
-   Do not suggest that the Start/Stop control determines whether mutations are remembered.
-
-74. **Give the Story overview one clear next action.**
-
-   [`stories/show`](../app/views/stories/show.html.erb) puts Sections, Plots, Scenes, and Appearances
-   in the header, repeats three destinations in the structure card, and has both **Open sections** and
-   **Add section** pointing to the same list. Prototype a quieter header with one context-appropriate
-   primary action and group secondary destinations in the page body. **Question:** should the default
-   action favor outlining or writing, and should it differ for an empty Story? Check that a label
-   promising creation actually starts it or clearly says it opens the list; preserve reader access.
-
 75. **Make the first Story-building step self-explanatory.**
 
    The Story overview offers starting structures only when an empty Story is in direct mode, and

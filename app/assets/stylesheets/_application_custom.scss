@@ -1949,6 +1949,15 @@ $um-search-match: #ffc107;
   font-variant-numeric: tabular-nums;
 }
 
+// The top bar's pending-work count, in the same actions row and at the same size
+// as the bell. The number is tabular for the bell's reason: a draft going 9 → 10
+// must not shift the button beside it. It wears `text-bg-light` rather than the
+// bell's danger red because pending work is the reader's own, waiting to be
+// applied, not an alert about something that happened.
+.draft-indicator-count {
+  font-variant-numeric: tabular-nums;
+}
+
 .notification-menu {
   min-width: 20rem;
   max-width: 22rem;

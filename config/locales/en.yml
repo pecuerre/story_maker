@@ -950,10 +950,17 @@ en:
     # pending count is one button rather than a badge because the number is only
     # interesting as a way into the changes it is counting — so it reads
     # `drafts.pending.count`, which is the one sentence for "how much is waiting on
-    # this reader's draft" and is shared with the sidebar panel.
+    # this reader's draft" and is shared with the sidebar panel and the top bar's
+    # indicator.
     editing:
       start: "Start editing"
       stop: "Stop editing"
+    # The top bar's standing answer to "is anything of mine waiting here?" — one
+    # word, and a count when there is one. Only the word lives here: the number is
+    # read from `drafts.pending.count`, the same sentence the universe page and the
+    # sidebar panel use, so the three surfaces cannot say different things.
+    indicator:
+      label: "Draft"
     # What the reader's open draft would do to the lists around it. Three states,
     # because three different things are true — and a row is never changed to match
     # one: a pending edit shows the values that are stored today, and a pending
@@ -1338,10 +1345,8 @@ en:
     show:
       default_description: "Plan the plot and structure for this story."
       open_sections: "Open sections"
-      open_plots: "Open plots"
       open_scenes: "Open scenes"
       open_appearances: "Open appearance grid"
-      add_section: "Add section"
       actions_aria: "Story actions"
       structure_eyebrow: "Story structure"
       structure_heading: "Story structure"

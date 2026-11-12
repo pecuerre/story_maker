@@ -26,11 +26,11 @@ class DraftWikipediaJourneyTest < ApplicationSystemTestCase
     # only entry point an author has to find deliberately — everything after it
     # works without it.
     visit universe_path(universe_slug: @universe.slug)
-    assert_selector ".page-actions", text: "No pending changes yet", count: 0
+    assert_selector ".page-actions", text: "No pending changes yet"
     click_button "Start editing"
     assert_selector ".page-actions", text: "Stop editing"
-    # Entering the session opens the draft, so the count is honest from the first
-    # moment rather than appearing only once something has been remembered.
+    # The count is the draft's standing state rather than a property of the
+    # session, so the control changes without what is waiting changing.
     assert_selector ".page-actions", text: "No pending changes yet"
 
     # **Make changes of every kind**, in one workspace and one session.

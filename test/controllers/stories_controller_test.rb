@@ -38,12 +38,30 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".page-header h1", text: story.name
     assert_select ".page-eyebrow", text: I18n.t("sidebar.story_workspace")
+    assert_select ".page-actions a.btn-primary", count: 1
+    assert_select ".page-actions a.btn-primary", text: I18n.t("stories.show.open_scenes")
+    assert_select ".page-actions a", text: I18n.t("stories.show.open_sections"), count: 0
     assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
-      text: I18n.t("stories.show.open_sections")
+      text: I18n.t("stories.show.manage_sections")
     assert_select "a[href=?]", universe_story_plots_path(universe_slug: @universe.slug, story_id: story),
-      text: I18n.t("stories.show.open_plots")
+      text: I18n.t("stories.show.manage_plots")
+    assert_select "a[href=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.manage_scenes")
+    assert_select "a[href=?]", universe_story_appearances_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.open_appearances")
     assert_select "a[href=?]", TropeCatalog.find("red-herring").source_url, text: "Red Herring"
     assert_includes response.body, "The clue is introduced fairly and resolved later."
+  end
+
+  test "an empty story points its one primary action at sections" do
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".page-actions a.btn-primary", count: 1
+    assert_select ".page-actions a.btn-primary", text: I18n.t("stories.show.open_sections")
+    assert_select ".page-actions a", text: I18n.t("stories.show.open_scenes"), count: 0
   end
 
   test "should get new story" do
@@ -345,6 +363,18 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form[action=?]",
       apply_structure_universe_story_path(universe_slug: @universe.slug, id: story), count: 0
+  end
+
+  test "a guest sees the same primary destination as a writer" do
+    story = stories(:story_one)
+    sign_out
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".page-actions a.btn-primary", count: 1
+    assert_select ".page-actions a.btn-primary", text: I18n.t("stories.show.open_scenes")
+    assert_select ".page-actions a", text: I18n.t("stories.edit"), count: 0
   end
 
   test "read-only members cannot apply a structure" do

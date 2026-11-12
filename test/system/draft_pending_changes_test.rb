@@ -15,6 +15,13 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     @universe.update!(collaboration_mode: "wikipedia")
   end
 
+  teardown do
+    # Capybara keeps one browser window for the whole process, so the case that
+    # narrows it to check the tools drawer has to put it back or every test after
+    # it runs narrow.
+    page.driver.browser.manage.window.resize_to(1400, 1400) if page.driver.browser
+  end
+
   test "a remembered create appears in the list it was typed into, badged, and is gone once applied" do
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)
@@ -146,6 +153,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     visit universe_characters_path(universe_slug: @universe.slug)
 
     assert_no_selector ".draft-pending-badge"
+    assert_no_selector ".draft-indicator"
     within "aside.right-sidebar" do
       assert_no_selector ".draft-pending-panel"
       assert_no_selector "a.sidebar-link", text: "Pending changes"
@@ -177,9 +185,38 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
 
     assert_no_selector ".draft-pending-badge"
     assert_no_selector ".draft-pending-row"
+    assert_no_selector ".draft-indicator"
     within "aside.right-sidebar" do
       assert_no_selector ".draft-pending-panel"
     end
+  end
+
+  test "the top bar states pending work while the tools drawer is closed" do
+    # Between `lg` and `xl` the navbar is expanded while the right sidebar is still
+    # an offcanvas drawer. That is the viewport the top-bar indicator exists for:
+    # the reader sees what is waiting without opening anything, and the indicator
+    # is the way in to apply it.
+    sign_in_via_form(@user)
+    page.driver.browser.manage.window.resize_to(1024, 900)
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    click_button "Add character"
+    within ".modal.show" do
+      fill_in "Name", with: "Waiting in the top bar"
+      click_button "Save character"
+    end
+
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    assert_no_selector ".draft-pending-panel"
+    within "nav.navbar" do
+      assert_selector ".draft-indicator .draft-indicator-count", text: "1"
+      find(".draft-indicator").click
+    end
+
+    assert_current_path universe_drafts_path(universe_slug: @universe.slug), wait: REFRESH_WAIT
+    assert_selector "h1", text: "Pending changes"
+    assert_selector ".entity-row", text: "1 remembered change"
   end
 
   test "a remembered create shows the photo the author gave it" do

@@ -811,6 +811,13 @@ es:
     editing:
       start: "Empezar a editar"
       stop: "Dejar de editar"
+    # La respuesta permanente de la barra superior a «¿hay algo mío esperando
+    # aquí?»: una palabra y, cuando lo hay, un recuento. Aquí solo vive la palabra:
+    # el número se lee de `drafts.pending.count`, la misma frase que usan la página
+    # del universo y el panel de la barra lateral, para que las tres superficies no
+    # digan cosas distintas.
+    indicator:
+      label: "Borrador"
     # Lo que el borrador abierto del lector haría con las listas que lo rodean.
     # Tres estados porque son tres cosas distintas las que son ciertas, y una fila
     # nunca se cambia para coincidir con uno: una edición pendiente muestra los
@@ -1273,10 +1280,8 @@ es:
     show:
       default_description: "Planifica la trama y la estructura de esta historia."
       open_sections: "Abrir las secciones"
-      open_plots: "Abrir las tramas"
       open_scenes: "Abrir las escenas"
       open_appearances: "Abrir la cuadrícula de apariciones"
-      add_section: "Añadir sección"
       actions_aria: "Acciones de la historia"
       structure_eyebrow: "Estructura de la historia"
       structure_heading: "Estructura de la historia"

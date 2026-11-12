@@ -40,6 +40,11 @@ Labels used below, in the order their groups appear:
 
 ## 2026-11-12
 
+### changed
+
+- **Story overview action hierarchy.** The Story overview now has one context-aware primary action — **Open sections** for an empty Story and **Open scenes** once it has content — while the other destinations stay in the body cards.
+- **Top-bar draft indicator.** Pending work now appears in the navbar as a **Draft** link with a count on every page, and the universe page states that count before an editing session starts instead of only during one.
+
 ### fixed
 
 - **Draft-mode creation feedback.** A remembered change now lands on a page-level alert that names what was remembered and links to its draft, instead of relying on a four-second toast over a blank creation form.

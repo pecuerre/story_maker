@@ -5,7 +5,7 @@ column in narrative order, and two layers that are never merged. It is **read-on
 result. The page is at
 `GET /u/:universe_slug/s/:story_id/appearances` (`AppearancesController#show`), reached from the
 **Appearances** entry in the Story analytics block of the left sidebar and the **Open appearance
-grid** button on the Story overview.
+grid** button on the Story overview's scenes-per-character card.
 
 The prose layer is produced by [Prose mentions](mentions.md) and the presence layer by the same union
 [Scenes](scenes.md#participation-is-a-union-never-a-sum) uses everywhere else. This page combines

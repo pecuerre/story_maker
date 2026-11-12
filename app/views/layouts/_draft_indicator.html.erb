@@ -1,0 +1,50 @@
+<%# The reader's own pending work, in the top bar.
+    #
+    # The right sidebar's panel answers "what is waiting" in detail, and the
+    # **Pending changes** entry beside it answers "where are they". Both live in
+    # the tools column, which is a drawer below `xl` — so on a tablet or a phone
+    # the reader has to open something to learn whether anything is waiting at
+    # all. This is the one statement of that state which is on every page and
+    # needs nothing opened: one word, and a count when there is one.
+    #
+    # **It is deliberately not beside the page's own actions.** A page header's
+    # row of buttons is about the page in front of the reader (slice, rename,
+    # create); pending work belongs to the universe and outlives the page, which
+    # is why it sits with the other global answers in `.navbar-actions` — before
+    # the bell, because it is workspace state while a notification is addressed
+    # to the person.
+    #
+    # **It renders at zero as well as at any count.** The entry is also the way
+    # into the drafts list and its history, and a control that appears and
+    # disappears with a count is a control whose absence needs explaining. The
+    # same rule and the same gate are the sidebar panel's; what differs is only
+    # where the answer is visible.
+    #
+    # **It counts, and does not decide.** The count is `draft_preview.count`,
+    # which the sidebar panel and the universe page's own button also read, so
+    # the three cannot disagree. Nothing here says an editing session is on or
+    # off: a draft-based universe remembers every mutation whether the reader
+    # pressed **Start editing** or not (ADR 0022), and an indicator that implied
+    # otherwise would be the second answer to a question the mode already
+    # answers.
+    #
+    # It is offered only where a draft can exist — a signed-in reader in a
+    # universe that remembers changes rather than writing them — and follows the
+    # drafts page's own `.active` / `aria-current="page"` rule, so it never claims
+    # a page the reader is not on. %>
+<% if draft_preview.available? %>
+  <% pending_count = draft_preview.count %>
+  <% on_drafts_page = controller_name == "drafts" %>
+  <% indicator_aria = { label: [ t("drafts.indicator.label"), t("drafts.pending.count", count: pending_count) ].join(": ") } %>
+  <% indicator_aria[:current] = "page" if on_drafts_page %>
+  <%= link_to universe_drafts_path,
+    class: "btn btn-outline-light btn-sm draft-indicator#{' active' if on_drafts_page}",
+    title: t("drafts.pending.count", count: pending_count),
+    aria: indicator_aria do %>
+    <i class="bi bi-journal-text" aria-hidden="true"></i>
+    <span><%= t("drafts.indicator.label") %></span>
+    <% if pending_count.positive? %>
+      <span class="badge rounded-pill text-bg-light draft-indicator-count"><%= pending_count %></span>
+    <% end %>
+  <% end %>
+<% end %>

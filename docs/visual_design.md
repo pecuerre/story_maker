@@ -176,7 +176,7 @@ heading uppercase.
 5. a skip link, one shared floating toast region for flash messages, and one floating notice for a
    held live update.
 
-The navbar is intentionally small: three links, one search box, and two actions. **What each
+The navbar is intentionally small: three links, one search box, and up to three actions. **What each
 entry contains and links to is in [features/navigation.md](features/navigation.md)** — read that for
 the entries; this is only the shell.
 
@@ -205,6 +205,21 @@ are the white overlay composited onto the bar's color in Sass, because CSS canno
 onto the surface beneath it. What the browser still owns is left to the browser: a dropdown styled in
 every detail would be a custom listbox, which would cost the plain GET form that works without
 scripting.
+
+### The draft indicator
+
+The painted treatment only. What it states, where it sits, and why it is not in a page header are in
+[features/navigation.md](features/navigation.md) — read that for *why*; this is what it looks like.
+
+The indicator wears the bell's own shape: a `btn-outline-light` at the same small size, in the same
+actions row. The journal icon is followed by the word **Draft** and, when something is waiting, its
+count as a `badge` **inside the button's flex row** rather than pinned to a corner, for the bell's
+reason: the navbar is too small for a corner badge and a count the reader can read beats a dot. The
+number uses tabular numerals so 9 → 10 does not shift the bell beside it. It is `text-bg-light` rather
+than the bell's danger red, because pending work is the reader's own, waiting to be applied, and not
+an alert about something that happened. At zero the badge is absent and the word stays, so the button
+neither changes size nor disappears with its count. It is a plain link, not a dropdown: there is
+nothing to choose between, and the drafts page is the list.
 
 ### The notifications bell
 
@@ -336,6 +351,12 @@ copy. From `md` up, the copy keeps a readable basis and the action area takes at
 folding its own controls onto more lines when they do not fit; a long title, a long description, or
 a translated action label never widens the document or reaches the right sidebar. Avoid placing a
 title and its primary button in unrelated vertical sections.
+
+The **Story overview** chooses its one primary action from the Story's state rather than its record
+type: an empty Story leads to **Open sections**, and a Story with a Section or Scene leads to
+**Open scenes**. Sections, Plots, and Scenes remain in the structure card below, and the appearance
+grid opens from the scenes-per-character card, so the header does not repeat the body's destinations
+or offer a second creation label beside the list it opens.
 
 The header's `description` is for a page that **is** the thing it describes. A workspace that has a
 **tab strip** states what it holds in `shared/_content_intro` instead, rendered *below* the strip and

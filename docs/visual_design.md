@@ -27,13 +27,14 @@ The **public front door** at `/` is the one guest-facing introductory surface. I
 band with a soft primary tint, a small fact card, and a grid of bordered cards. It introduces no
 palette and borrows no sidebar scope hue; every other page stays a workspace surface.
 
-The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its
-**Configuration** section contains the real Tags entry and the Members access manager, while the
-remaining Collaboration, Analytics,
-and AI entries are deliberate `aria-disabled` placeholders rendered in the flat disabled gray.
-They should become real destinations as the underlying product areas are defined. Below the `xl`
-breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the main writing surface keeps priority
-on smaller screens.
+The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. It is one
+continuous tools scope, opening with the green **Universe tools** context block and then the
+**Configuration** and **Collaboration** sections, with the **Inspector** closing the column when the
+current page has rows to show. Every entry there is a real destination: this is not where future
+product areas are reserved as disabled rows. Which entry belongs to which section, and the gates that
+decide whether it appears, are owned by [features/navigation.md](features/navigation.md). Below the
+`xl` breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the main writing surface keeps
+priority on smaller screens.
 
 ## Theme tokens
 
@@ -270,9 +271,11 @@ color, kind badges and titles in a row, and `Previous` / `Next` with a `Page N` 
 truncated list always says "Showing 12 of 40 matches" — a short list that looks complete is how a
 reader concludes a universe is smaller than it is.
 
-The navbar does not render placeholder links. The right utility sidebar is the one intentional
-exception: its `aria-disabled` entries reserve space for future Collaboration, Analytics, and AI
-features without presenting them as implemented routes.
+The navbar renders no placeholder links, and neither does the right utility sidebar: every entry
+there is a real destination. A destination that does not exist yet is an `aria-disabled` span painted
+in the flat disabled gray, never a link to a missing route; which entries are currently waiting, and
+the rules that keep navigation honest, are in
+[features/navigation.md](features/navigation.md#navigation-entries-are-honest-about-what-exists).
 
 ### Responsive behavior
 
@@ -495,9 +498,10 @@ The painted shape:
   narrative-position pill, with its reason badges (**Linked**, **Speaks in N element(s)**,
   **Depicted**) listed and never collapsed.
 - The **Find scenes** filter surface (`scenes/_filter`) is a full-width `search` field, a **Section**
-  select, a **Scene Tag** select, two `date` fields labelled **In-world from** and **In-world to**, a
-  **Filter scenes** submit, and a **Clear filters** link that appears only while a filter is in
-  effect. The fields fold into one column below `sm` with the two date fields side by side. One
+  select, a **Scene Tag** select, a **Status** select, two `date` fields labelled **In-world from**
+  and **In-world to**, a **Filter scenes** submit, and a **Clear filters** link that appears only
+  while a filter is in effect. The fields fold into one column below `sm` with the two date fields
+  side by side. One
   sentence states the two rules an author needs: filtering does not change the narrative order, and a
   Scene without an in-world time is not in a date range. Every access level sees it, because
   filtering is reading. While a filter is active the surface adds `Showing N scenes of M scenes.`

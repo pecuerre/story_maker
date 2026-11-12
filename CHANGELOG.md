@@ -49,6 +49,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Visual shell guidance.** Corrected the visual-design and manual-verification descriptions of the right sidebar to match its live Configuration, Collaboration, and Inspector sections, and added the Scene filter's Status control.
 - **Project review.** Recorded verified security, backup, interchange, and test-suite findings, and corrected the affected operational documentation.
 - **Visual baseline triage.** Closed the initial walkthrough and added separate backlog items for its findings and remaining validation.
 - **Visual and task baseline.** Recorded a partial browser walkthrough, measured Story-header and dark-theme contrast issues, and identified the checks still needed.

@@ -195,13 +195,6 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-### Browser baseline follow-ups — 2026-11-12
-
-The observed readability, layout, focus, and draft-feedback problems have been addressed; the item
-below is the remaining validation. The [browser walkthrough](delivery_history.md#2026-11-12) records
-the evidence and its limitations, and it does not claim that participants experienced the same
-problems.
-
 96. **Complete participant and accessibility validation.**
 
    Follow up the initial browser walkthrough with real participants and record where they hesitate.
@@ -224,15 +217,6 @@ visible keyboard/touch controls, meaningful empty states, and accessible alterna
 The main opportunity is to make the next task easier to find and reduce competing controls without
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
-
-72. **Reconcile visual guidance with the current shell.**
-
-   [`visual_design.md`](visual_design.md) still describes Collaboration, Analytics, and AI as disabled
-   right-sidebar placeholders, while [`navigation.md`](features/navigation.md) and
-   [`_right_sidebar`](../app/views/layouts/_right_sidebar.html.erb) describe and render live
-   collaboration links and an Inspector. The visual Scene-filter description also omits its status
-   control. Verify the current rendering, then correct the owning documentation without duplicating
-   navigation behavior. This is documentation work, separate from a visual redesign.
 
 73. **Make draft state and outcomes easier to understand.**
 

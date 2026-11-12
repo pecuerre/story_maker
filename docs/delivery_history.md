@@ -136,6 +136,18 @@ are linked rather than repeated, so there is one place to keep them current.
     the same case reproduces the baseline's 2.45:1. The CSS build, the full Minitest suite, the
     system suite, and RuboCop were run.
 
+- **[docs]** **Visual shell guidance matches the rendered right sidebar.**
+  - **The drift.** `visual_design.md` still called Collaboration, Analytics, and AI disabled
+    placeholders after the right sidebar had gained live Configuration and Collaboration sections and
+    an Inspector, and it omitted the Scene filter's Status control. `development.md` repeated the same
+    stale chain in its manual walkthrough.
+  - **The change.** The visual document now states the shell's painted structure and points at
+    [features/navigation.md](features/navigation.md) for which entry belongs where and which gates
+    apply, rather than keeping a second copy of that inventory. The walkthrough now reads
+    Configuration → Collaboration → Inspector and includes the Status filter.
+  - **Verification.** `bin/rails test test/docs_test.rb` passes, including its link, anchor, and
+    heading-ownership checks. Documentation only; no application behavior changed.
+
 - **[docs]** **Visual baseline follow-up triage.** The owner closed the initial walkthrough as a
   partial baseline and deferred its observed issues and the remaining participant and accessibility
   checks as separate pending work; no unperformed testing was claimed as complete.

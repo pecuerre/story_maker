@@ -728,7 +728,8 @@ assignment on a Scene's editor, then return and verify the linked Scene list cha
 the Scene or changing its Section.
 
 On the same page check the **Find scenes** area: it narrows the list by title/description text, by
-Section (including **Ungrouped**), by Scene Tag, and by an inclusive in-world date range; the active
+Section (including **Ungrouped**), by Scene Tag, by writing status, and by an inclusive in-world date
+range; the active
 filters stay in the URL and **Clear filters** restores the full list; a narrowed row still shows its
 real narrative position and story total, and Move up/Move down stay enabled whenever the scene
 really has a neighbour; a filter that matches nothing says **No scenes match these filters** and is
@@ -743,14 +744,15 @@ list where **New universe** lives; the universe page lists the universe's storie
 action and keeps **New story** and **All stories** in the header, so it is where stories are switched
 and created; the left sidebar reads current universe → Universe Bible → current story →
 Story workspace with one hue per scope, and the right utility sidebar reads its green **Universe
-tools** context block → Configuration → Collaboration → Analytics → AI, with **Tags** (and, for an
-admin, **Members**) in Configuration; every list row — the left sidebar's Universe Bible lists aside,
+tools** context block → Configuration → Collaboration, closing with the **Inspector** when the page
+has details to show, with **Tags** (plus **Members** and **Backup** for an admin) in Configuration;
+every list row — the left sidebar's Universe Bible lists aside,
 the left column's Sections, and every `_tag` row — shows a plain name with its tags and a count
 pill on the left that names what it counts ("(4 characters)") and an always-visible **Details** link
 plus an always-visible `[…]` menu on the
 right, and following Details lands on the record's own read-only page (a tag lists
-the records carrying it, a Section lists the scenes grouped under it). Placeholder navigation in the
-right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
+the records carrying it, a Section lists the scenes grouped under it). Placeholder navigation stays
+flat gray with no hover emphasis, and a guest or read-only member sees
 the same pages with no mutation controls.
 
 Open **Settings** from the top bar's account menu (it is rendered for a guest too, and it is not a

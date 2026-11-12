@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-12
+
+### planned
+
+- **UI and UX review.** Added source-based design observations and numbered, independently reviewable improvement ideas to the backlog in a suggested order.
+
 ## 2026-11-11
 
 ### added

@@ -3,7 +3,9 @@
 This is the one place for **pending** work, rough ideas, and things we may want
 to do in the future. The owner can append ideas without worrying about format.
 
-## How finished work leaves this file
+## Instructions for Agents
+
+### How finished work leaves this file
 
 This file follows the same discipline as [known_quirks.md](known_quirks.md), where a fixed
 finding is no longer an open item. When work is finished it does not stay here as a
@@ -16,7 +18,7 @@ The changelog is the durable record of delivered work, so nothing else has to tr
 here. Do not archive finished items under a separate heading, and do not leave a
 completion summary behind.
 
-## How AI assistants should use this file
+### How AI assistants should use this file
 
 When you notice another worthwhile improvement while working on a task, ask
 the owner whether to do it NOW, LATER, or NEVER.
@@ -43,7 +45,7 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 70. The list below keeps the numbers it already had and never
+The highest number this file has used is 86. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
@@ -51,9 +53,9 @@ depends on. The competitor survey on 2026-10-27 turned the four `check <site>` n
 highlighting into the mention index. Loose notes still belong under FUTURE WORK until they are
 triaged into this list.
 
-38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
+### Wait for Deployment
 
-   NOTE: Wait until deployment
+38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
 
    Serve a universe at `<universe_slug>.<host>` rather than under a path. **Needs an ADR before any
    code**, because the blast radius is the whole request boundary: `config.hosts` and `APP_HOST`
@@ -63,18 +65,18 @@ triaged into this list.
    wildcard TLS certificate. Keep `/u/...` redirecting to the new host so existing links and the
    smoke test survive, and keep the browser-owned start page working before a universe is chosen.
 
-41. **Structured Scene roles from free-text annotations.**
+48. **The deployment-secret permissions test can pass with no assertions.**
 
-   NOTE: Leave for later
+   The 2026-10-25 suite reports "Test is missing assertions" for
+   `test/deployment/deployment_secrets_test.rb:52`: it skips each key file that is absent, so a
+   checkout with neither file runs no assertion at all. **Can be done now:** `skip` with a named
+   reason when there is nothing to inspect, or assert the expected presence/absence explicitly. This
+   was noticed during the triage, not carried from the old notes.
 
-   `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
-   against a vocabulary. **Blocked on evidence:** analyze existing annotations first, then promote
-   only recurring values to controlled role types. That needs a scope (Universe or Story) and a
-   migration decision; until then the free text is correct behavior, not debt.
+
+### Wait until the tcs story is more mature
 
 42. **Scene character-knowledge analyzer.**
-
-   NOTE: Wait until the story is more advanced
 
    A Character's knowledge is prose in the description's `## Knowledge` section and is entered by
    hand; a Scene is not attributed as the place or occasion where something was learned. **Needs
@@ -82,8 +84,6 @@ triaged into this list.
    must not imply knowledge, so this is a design decision before it is a query.
 
 43. **Scene causality and temporal analyzer.**
-
-   NOTE: Wait until the story is more advanced
 
    **Needs a design and a definition of evidence.** Compare Scene order, linked Events, independent
    Scene datetimes, and Element chronology to explain likely contradictions rather than resolve
@@ -93,36 +93,12 @@ triaged into this list.
 
 44. **Scene prose-contradiction analyzer.**
 
-   NOTE: Wait until the story is more advanced
-
    Analyze Element prose for claims that conflict with recorded Universe facts. **Largest and least
    defined:** it needs a text-analysis layer (likely an external model), an evidence/citation
    surface, and a privacy decision about sending story prose out. Keep it separate from the
    structured checks above and do not start it before them.
 
-45. **Timeline pan/zoom.**
-
-   `timeline_controller.js` only draws edges between nodes; the pan/zoom the early docs described
-   was never built, and the docs were corrected on 2026-09-29 to say so. **Needs UI design, not a
-   defect fix:** a draggable/zoomable viewport changes how layer markers and node circles read,
-   needs a keyboard and touch path, and the SVG edges must stay aligned under the transform. Worth
-   doing only when a universe's event count makes the wrapped layout genuinely hard to read.
-
-   NOTE: Leave for later
-
-48. **The deployment-secret permissions test can pass with no assertions.**
-
-   NOTE: Wait until deployment
-
-   The 2026-10-25 suite reports "Test is missing assertions" for
-   `test/deployment/deployment_secrets_test.rb:52`: it skips each key file that is absent, so a
-   checkout with neither file runs no assertion at all. **Can be done now:** `skip` with a named
-   reason when there is nothing to inspect, or assert the expected presence/absence explicitly. This
-   was noticed during the triage, not carried from the old notes.
-
 49. **Continuity findings inbox with cited evidence.**
-
-   NOTE: Wait until the story is more advanced
 
    The analyzers in items 42–44 are specified as analyses but not as a place their results live: the
    only continuity report today is the read-only narrative comparison, whose one conflict type is
@@ -134,9 +110,34 @@ triaged into this list.
    than the finding deleted. It is the surface items 42–44 write into, so it should land before them,
    and it must never rewrite prose.
 
-54. **Scene archive and custom status labels.**
+56. **Scene tension and pacing curve.**
 
-   NOTE: Wait until the story is more advanced
+   The narrative-order tab compares a Scene's own time with its Event and reports conflicts; nothing
+   measures how a Story reads. `Novilot` visualizes tension and pacing with genre-aware feedback, and
+   `Sudowrite` sells pacing through expansion. **Needs a rating before a chart:** a Scene-level tension
+   value on a small worded scale rather than a free number, entered in the Scene form, then a curve on
+   the Story page or the narrative tab whose points are Scenes in narrative order. Feedback text is a
+   separate and much later decision, and the chart needs a table equivalent for keyboard and screen
+   readers.
+
+### Next Items
+
+41. **Structured Scene roles from free-text annotations.**
+
+   `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
+   against a vocabulary. **Blocked on evidence:** analyze existing annotations first, then promote
+   only recurring values to controlled role types. That needs a scope (Universe or Story) and a
+   migration decision; until then the free text is correct behavior, not debt.
+
+45. **Timeline pan/zoom.**
+
+   `timeline_controller.js` only draws edges between nodes; the pan/zoom the early docs described
+   was never built, and the docs were corrected on 2026-09-29 to say so. **Needs UI design, not a
+   defect fix:** a draggable/zoomable viewport changes how layer markers and node circles read,
+   needs a keyboard and touch path, and the SVG edges must stay aligned under the transform. Worth
+   doing only when a universe's event count makes the wrapped layout genuinely hard to read.
+
+54. **Scene archive and custom status labels.**
 
    Scenes now carry a fixed draft/revised/final status, shown on the list and details page, filterable,
    and available to the export's final-only choice. The competitor **Scene archive** pulls scenes from
@@ -153,18 +154,6 @@ triaged into this list.
    the obvious start, while a per-user-per-universe goal crosses into preferences and needs the
    timezone-day boundary the app already has to define. The first slice is a target on the Story page
    with a progress bar that reads `WordCounts` rather than storing a count.
-
-56. **Scene tension and pacing curve.**
-
-   NOTE: Wait until the story is more advanced
-
-   The narrative-order tab compares a Scene's own time with its Event and reports conflicts; nothing
-   measures how a Story reads. `Novilot` visualizes tension and pacing with genre-aware feedback, and
-   `Sudowrite` sells pacing through expansion. **Needs a rating before a chart:** a Scene-level tension
-   value on a small worded scale rather than a free number, entered in the Scene form, then a curve on
-   the Story page or the narrative tab whose points are Scenes in narrative order. Feedback text is a
-   separate and much later decision, and the chart needs a table equivalent for keyboard and screen
-   readers.
 
 57. **Manuscript import into Scene Elements.**
 
@@ -206,13 +195,167 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-## FUTURE WORK
+### UI and UX review — 2026-11-12
 
-Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
-analyzed like the list above, given the next number, and moved under PENDING WORK.
+This is a **source-based design review**, not a browser, accessibility, or user-testing audit.
+It examined the shell, navigation, Story overview, lists, Scene editor and board, analytics,
+drafts, and export views, alongside the design and navigation documents. The recommendations below
+are hypotheses to validate, not claims that users struggle or that a contrast check has failed.
+No UI changes are approved by recording them here. Each item is a separate decision for later.
+
+The existing direction is worth keeping: a calm, scope-aware Bootstrap workspace, theme tokens,
+visible keyboard/touch controls, meaningful empty states, and accessible alternatives for diagrams.
+The main opportunity is to make the next task easier to find and reduce competing controls without
+losing the information writers need. The suggested order starts with evidence and accurate guidance,
+then draft clarity and the core Story-writing journey, followed by navigation and less frequent views.
+Reorder after the baseline if findings warrant it; each item remains an independent decision.
+
+71. **Establish a visual and task baseline.**
+
+   Walk through choosing a Universe and Story, creating a Character, writing a Scene, finding it again,
+   and submitting or applying a draft. Capture screens and note where participants hesitate; compare
+   new and populated workspaces at desktop, tablet, and phone widths, in both themes and English/Spanish,
+   including guest, writer, and admin states. Test keyboard, screen-reader labels, zoom, focus, contrast,
+   long names, and reduced motion. **Question:** which journeys and real-world viewport sizes matter most
+   to the owner? Record findings before ranking the hypotheses below; source review is not proof of a
+   usability or accessibility failure.
+
+72. **Reconcile visual guidance with the current shell.**
+
+   [`visual_design.md`](visual_design.md) still describes Collaboration, Analytics, and AI as disabled
+   right-sidebar placeholders, while [`navigation.md`](features/navigation.md) and
+   [`_right_sidebar`](../app/views/layouts/_right_sidebar.html.erb) describe and render live
+   collaboration links and an Inspector. The visual Scene-filter description also omits its status
+   control. Verify the current rendering, then correct the owning documentation without duplicating
+   navigation behavior. This is documentation work, separate from a visual redesign.
+
+73. **Make draft state and outcomes easier to understand.**
+
+   The [Universe page](../app/views/universes/show.html.erb) exposes Start/Stop editing, while the
+   [draft page](../app/views/drafts/show.html.erb) offers different actions by collaboration mode and
+   includes a workflow guide. Test whether authors understand what is live, what is pending, and what
+   Apply, Submit, and Discard do; consider a persistent, succinct state indicator linked to the
+   existing draft. **Question:** where should that indicator appear without competing with page actions?
+   Do not suggest that the Start/Stop control determines whether mutations are remembered.
+
+74. **Give the Story overview one clear next action.**
+
+   [`stories/show`](../app/views/stories/show.html.erb) puts Sections, Plots, Scenes, and Appearances
+   in the header, repeats three destinations in the structure card, and has both **Open sections** and
+   **Add section** pointing to the same list. Prototype a quieter header with one context-appropriate
+   primary action and group secondary destinations in the page body. **Question:** should the default
+   action favor outlining or writing, and should it differ for an empty Story? Check that a label
+   promising creation actually starts it or clearly says it opens the list; preserve reader access.
+
+75. **Make the first Story-building step self-explanatory.**
+
+   The Story overview offers starting structures only when an empty Story is in direct mode, and
+   otherwise shows several empty sections and destinations ([`stories/show`](../app/views/stories/show.html.erb)).
+   Consider a compact, dismissible next-step guide that distinguishes choosing a starting structure
+   from adding a Section or Scene manually, explains the draft-mode limitation, and never requires a
+   template or tags. **Question:** what is the smallest successful first session? Validate separately
+   for writers and read-only users.
+
+76. **Improve the prose-writing loop.**
+
+   Scene Details places Elements after identity facts, and each Element's edit action is inside a row
+   menu; narration uses a five-row textarea in a modal ([`scenes/_elements`](../app/views/scenes/_elements.html.erb)).
+   Prototype a more prominent writing entry point and more comfortable long-form editing without
+   assuming a new editor is needed. Compare narration and dialogue, preserve ordering and mention cues,
+   and explicitly test unsaved text, errors, focus, mobile keyboards, and draft-mode feedback.
+   **Question:** do writers primarily compose here or import prose from elsewhere?
+
+77. **Streamline the Scene editing form.**
+
+   [`scenes/_form`](../app/views/scenes/_form.html.erb) exposes photo, description, drafting contract,
+   status, tags, plots, grouping, time, events, and point of view in one long form; tags and plots use
+   native multiple selects while Events uses a searchable picker. Test grouped progressive disclosure
+   and a consistent, accessible selection experience for long lists. Preserve all existing selections,
+   error recovery, no-JavaScript behavior where applicable, and the preference that hides the drafting
+   contract. **Question:** which fields must be immediately visible during initial creation?
+
+78. **Make list navigation more discoverable.**
+
+   On the [Characters list](../app/views/characters/index.html.erb) and other shared lists, record names
+   are plain text and a separate **Details** link opens the record; the
+   [Scene board](../app/views/scene_boards/show.html.erb) instead links the title. Test whether readers
+   try the names first, and compare linked titles with the existing explicit Details action. Any change
+   must be consistent across relevant list/tree patterns, retain distinct accessible link names and
+   visible actions, and not interfere with the tree's inline rename control.
+
+79. **Clarify what moving a Scene on the board does.**
+
+   [`scene_boards/show`](../app/views/scene_boards/show.html.erb) groups cards into Section columns,
+   but its arrows change the Story-wide narrative sequence while **Move to section** changes grouping.
+   Test concise visible guidance and labels that distinguish those operations, especially when adjacent
+   narrative Scenes are in different columns. Keep keyboard/touch alternatives and do not imply that
+   changing a Section automatically changes narrative order.
+
+80. **Give filters less visual weight without hiding their state.**
+
+   The [Scene filter](../app/views/scenes/_filter.html.erb) displays search, Section, tag, status, and
+   two dates before the list, even when none is active. Compare an always-visible search plus an
+   **Advanced filters** disclosure against the current layout, particularly on phones. Active criteria,
+   result counts, a clear path, shareable URLs, and the difference between no records and no matches must
+   remain visible; preserve filtering and narrative-order semantics.
+
+81. **Keep a reader oriented between Scenes.**
+
+   Scene Details shows its narrative position and an **All scenes** link, but
+   [`scenes/show`](../app/views/scenes/show.html.erb) has no previous/next navigation. Explore labelled
+   neighboring-Scene links to support sequential reading and editing. Define whether a filtered-list
+   visit should carry its filter or navigate the whole narrative order; keep boundary states,
+   permissions, and direct links understandable.
+
+82. **Rebalance the workspace at constrained widths.**
+
+   The [application shell](../app/views/layouts/application.html.erb) has left and right navigation
+   panels, a collapsed navbar, and a separate mobile Menu/Tools bar; at wide sizes the panels reserve
+   30rem together. Test usable content width, panel scrolling, long scope names, and the discoverability
+   of search and Tools around the `lg`/`xl` breakpoints and at 200% zoom. Consider a compact or
+   collapsible tools panel only if the comparison shows a benefit; retain scope, keyboard access, and
+   pending-work visibility.
+
+83. **Reduce friction switching scope.**
+
+   The [navbar](../app/views/layouts/_navbar.html.erb) links to the current Universe and Story, while
+   changing them means returning to the Universe chooser or Universe page. Test whether frequent
+   switching warrants a clearly labelled, keyboard-accessible shortcut or whether the existing two-step
+   route is sufficient. Keep explicit Universe/Story context, access boundaries, and the rule that no
+   Story is selected implicitly; compare mobile and desktop.
+
+84. **Distinguish export scopes before download.**
+
+   The Story's [Export page](../app/views/story_exports/show.html.erb) offers a scoped printable Story
+   and a Universe-wide interchange download. Prototype stronger scope labels and concise inclusion/
+   exclusion summaries next to each action, so the two similarly prominent buttons cannot be mistaken
+   for the same output. Confirm the wording against the export and interchange contracts; preserve their
+   access rules and avoid promising a complete backup.
+
+85. **Help readers navigate large analytics views.**
+
+   The [Appearance grid](../app/views/appearances/show.html.erb) and
+   [Scene matrix](../app/views/scene_matrices/show.html.erb) already have accessible tables and
+   scrollable regions, but wide Stories can require substantial horizontal exploration. Test visible
+   scroll cues and a way to narrow or jump to a Character, Scene, or Section. Decide whether a narrowed
+   view should share the list's filters; keep the full-table equivalent, explicit layer meanings, and
+   print behavior. Assess with realistic data before choosing a control.
+
+86. **Audit the visual system's hierarchy and feedback.**
+
+   Review real rendered screens for repeated bordered pills, equal-weight outline buttons, narrow
+   metadata, touch targets, theme contrast, and toast persistence. Prototype changes using existing
+   Bootstrap and theme tokens rather than a new framework; make status and actions distinguishable
+   without color alone. Verify success, failure, loading, long text, focus, reduced motion, and both
+   themes rather than assuming these are broken.
 
 - **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
   post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),
   and Rails stores flash in the cookie session, so the confirmation can raise `CookieOverflow` after
   the import has committed. The preview and the rake task need no change; the page flash should
   summarize counts per slice instead of every id, or move the detail to a redirect target.
+
+## FUTURE WORK
+
+Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
+analyzed like the list above, given the next number, and moved under PENDING WORK.

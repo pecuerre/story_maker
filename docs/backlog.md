@@ -45,7 +45,7 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 86. The list below keeps the numbers it already had and never
+The highest number this file has used is 91. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
@@ -200,7 +200,8 @@ triaged into this list.
 This is a **source-based design review**, not a browser, accessibility, or user-testing audit.
 It examined the shell, navigation, Story overview, lists, Scene editor and board, analytics,
 drafts, and export views, alongside the design and navigation documents. The recommendations below
-are hypotheses to validate, not claims that users struggle or that a contrast check has failed.
+are hypotheses to validate, except where the [browser baseline](delivery_history.md#2026-11-12)
+records a specific observation; they are not claims about user struggles.
 No UI changes are approved by recording them here. Each item is a separate decision for later.
 
 The existing direction is worth keeping: a calm, scope-aware Bootstrap workspace, theme tokens,
@@ -212,13 +213,11 @@ Reorder after the baseline if findings warrant it; each item remains an independ
 
 71. **Establish a visual and task baseline.**
 
-   Walk through choosing a Universe and Story, creating a Character, writing a Scene, finding it again,
-   and submitting or applying a draft. Capture screens and note where participants hesitate; compare
-   new and populated workspaces at desktop, tablet, and phone widths, in both themes and English/Spanish,
-   including guest, writer, and admin states. Test keyboard, screen-reader labels, zoom, focus, contrast,
-   long names, and reduced motion. **Question:** which journeys and real-world viewport sizes matter most
-   to the owner? Record findings before ranking the hypotheses below; source review is not proof of a
-   usability or accessibility failure.
+   Finish the baseline described in the [browser walkthrough](delivery_history.md#2026-11-12): observe
+   real participants and their hesitations, and cover a writer-only account, actual screen-reader use,
+   browser zoom, and the remaining theme/language/role combinations and accessibility checks. The
+   owner chose desktop as the primary reference, while retaining tablet and phone comparisons. Use the
+   recorded observations to rank the hypotheses below; an automated walkthrough is not user testing.
 
 72. **Reconcile visual guidance with the current shell.**
 
@@ -354,6 +353,54 @@ Reorder after the baseline if findings warrant it; each item remains an independ
   and Rails stores flash in the cookie session, so the confirmation can raise `CookieOverflow` after
   the import has committed. The preview and the rake task need no change; the page flash should
   summarize counts per slice instead of every id, or move the detail to a redirect target.
+
+### Visual design initiative — 2026-11-12
+
+The earlier UI/UX review is primarily about workflows; this initiative develops a coherent, more
+modern visual direction. The stages are in suggested order, with owner decisions before a direction
+is prototyped and before it is rolled out. These are pending ideas, not approval for a redesign.
+Coordinate with the existing visual/task baseline and visual hierarchy audit rather than repeating
+the same observations; use their findings to inform the other UI/UX items.
+
+87. **Define the visual design brief.**
+
+   Agree with the owner on the desired character of the workspace, its intended users and priorities,
+   and what "modern" should mean for this product. Gather a few reference products or screenshots
+   and identify the specific qualities worth borrowing, such as density, typography, navigation, or
+   color. Record constraints and representative screens before exploring directions; a calm writing
+   studio is one possible direction, not a predetermined choice.
+
+88. **Audit the rendered interface for visual design.**
+
+   Inspect the running app in a browser and capture the shell, empty and populated Story overviews,
+   a list, and Scene details and editor. Compare desktop and mobile, light and dark themes, and long
+   English and Spanish labels. Assess color, typography, spacing, hierarchy, component consistency,
+   content width, navigation placement, responsive behavior, contrast, keyboard focus, and zoom.
+   Document concrete observations and screenshots, building on the existing baseline and hierarchy
+   audit rather than presenting source-based hypotheses as verified problems.
+
+89. **Explore and recommend visual directions.**
+
+   Present two or three distinct directions using representative screens, screenshots or prototypes,
+   with an explanation of tradeoffs and a recommended choice. For each, propose light/dark neutral,
+   accent, and semantic colors; font candidates, sizes, weights, line heights, and prose readability;
+   navigation and menu placement, page headers, content widths, and mobile layout; component treatments;
+   and a spacing and density scale. Check contrast and font licensing, loading, and fallbacks rather
+   than assuming they are suitable. Ask the owner to choose a direction before implementation.
+
+90. **Prototype the chosen design on representative screens.**
+
+   Apply the selected direction to the workspace shell and a small set of representative screens,
+   not the entire application. Review actual screenshots at useful desktop and mobile sizes, in both
+   themes, with zoom and keyboard focus; check translations and preserve existing workflows. Refine
+   the direction with the owner and obtain approval before a site-wide rollout.
+
+91. **Roll out the approved visual system in slices.**
+
+   Translate the approved prototype into the existing Bootstrap and theme-token system, then update
+   related screens in manageable groups. Validate accessibility, responsive behavior, translations,
+   and existing workflows as each slice lands. Keep changes reversible, avoid a new framework or
+   other dependencies unless justified, and update the owning design documentation as behavior changes.
 
 ## FUTURE WORK
 

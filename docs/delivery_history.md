@@ -27,6 +27,38 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-11-12
+
+- **[docs]** **Partial visual and task baseline.**
+  - **Scope.** An agent walked the local development app, not a usability-test participant. It viewed
+    the public Dark universe as a guest and created a separate private, Wikipedia-mode `UI Baseline
+    2026-11-12` universe for the signed-in owner. In that sandbox it created and applied a Story, a
+    Character, a Scene, and a narration Element, then reopened the Scene and confirmed the prose was
+    live. No existing Story content was changed. A duplicate Story draft caused by a repeated submit
+    was dropped with the owner's explicit approval; the sandbox remains in the development database.
+  - **Coverage.** Screens were captured under `/tmp/opencode/story-maker-baseline/` (temporary, not
+    committed): guest and signed-in states, empty and populated content, desktop, tablet and phone
+    widths, and selected light/dark and English/Spanish combinations. The populated signed-in Story
+    was checked at 1440, 768, and 390 CSS pixels; Chromium reported device pixel ratio 0.75. A
+    synthetic long title wrapped at 390 CSS pixels without document overflow. A reduced-motion
+    mobile-menu check found a labelled dialog, Escape dismissal, and focus returned to Menu; the
+    Character modal focused its Name field, but after Escape focus was on `body` in two checks.
+    Accessibility-tree inspection is not a screen-reader test.
+  - **Observed.** At 1440 CSS pixels the populated signed-in Story header's actions extended into the
+    right sidebar and its description was compressed to a zero-width box; at 768 CSS pixels in Spanish
+    the document was 1278 pixels wide. In dark mode, the Story header's outline-primary text was
+    `rgb(52, 84, 209)` on `rgb(33, 37, 41)` (about 2.45:1), and outline-secondary text was
+    `rgb(102, 112, 133)` on the same background (about 3.10:1), below 4.5:1 for normal-size text.
+    After draft-mode Story and Scene creation the blank creation form reappeared while the remembered
+    change was shown in the pending sidebar; the agent mistakenly submitted the Story twice. These are
+    observations of this run, not evidence that users hesitated or an exhaustive contrast audit.
+  - **Next.** The owner chose desktop as the primary reference, while retaining tablet and phone.
+    Address the verified header layout and dark-theme contrast before less consequential visual polish,
+    and investigate draft feedback and modal focus in their existing review work. Real participant
+    sessions, a writer-only account, actual screen-reader and browser-zoom checks, and the remaining
+    role/theme/language combinations are still needed; the baseline stays pending. The known Spanish
+    draft-page translation quirk was left for later at the owner's request.
+
 ### 2026-11-01
 
 - **[added]** **A record's own details page opens its workspace editor in place.**

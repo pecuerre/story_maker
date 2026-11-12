@@ -40,8 +40,13 @@ Labels used below, in the order their groups appear:
 
 ## 2026-11-12
 
+### docs
+
+- **Visual and task baseline.** Recorded a partial browser walkthrough, measured Story-header and dark-theme contrast issues, and identified the checks still needed.
+
 ### planned
 
+- **Visual design initiative.** Added a staged backlog plan for a design brief, browser audit, alternative directions, prototype, and approved rollout.
 - **UI and UX review.** Added source-based design observations and numbered, independently reviewable improvement ideas to the backlog in a suggested order.
 
 ## 2026-11-11

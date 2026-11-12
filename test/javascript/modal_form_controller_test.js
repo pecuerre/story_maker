@@ -864,6 +864,115 @@ describe("modal form opening focus", () => {
 })
 
 
+// Bootstrap 5.3 restores focus only for a dialog opened by its `data-bs-toggle`
+// data API; every editor here is shown programmatically, so the controller has
+// to hand focus back itself. The target is the control the reader used, or the
+// row menu's toggle when that control was a menu item Bootstrap has since
+// closed.
+describe("modal form closing focus", () => {
+  function connectedEditor({ menuTrigger = false } = {}) {
+    const built = build(`
+      <div class="dropdown">
+        <button id="row-menu" type="button" class="dropdown-toggle" data-bs-toggle="dropdown"></button>
+        <ul class="dropdown-menu">
+          <li><button id="edit-row" type="button" class="dropdown-item">Edit</button></li>
+        </ul>
+      </div>
+      <button id="add-record" type="button">Add character</button>
+      <div class="modal fade" data-modal-form-target="modal">
+        <form data-modal-form-target="form">
+          <input id="character_name" name="character[name]">
+        </form>
+      </div>
+    `)
+    built.hidden = stubBootstrapModal()
+    built.controller.connect()
+    built.controller.titleTarget = document.createElement("h5")
+    built.trigger = document.querySelector(menuTrigger ? "#edit-row" : "#add-record")
+    built.returnTo = document.querySelector(menuTrigger ? "#row-menu" : "#add-record")
+    return built
+  }
+
+  function openAndClose(built) {
+    built.trigger.focus()
+    built.controller.open({ preventDefault() {}, currentTarget: built.trigger })
+    document.querySelector("#character_name").focus()
+    built.controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+  }
+
+  test("focus goes back to the control that opened the editor", () => {
+    const built = connectedEditor()
+
+    openAndClose(built)
+
+    expect(document.activeElement).toBe(built.returnTo)
+  })
+
+  test("a row menu's Edit returns focus to the menu's toggle", () => {
+    const built = connectedEditor({ menuTrigger: true })
+
+    openAndClose(built)
+
+    // The menu item is inside a menu Bootstrap closed, so it can no longer hold
+    // focus; the toggle is the control the reader used to reach the row's
+    // actions.
+    expect(document.activeElement).toBe(built.returnTo)
+  })
+
+  test("a successful save's refresh is left to the page it navigates to", () => {
+    const built = connectedEditor()
+    let visits = 0
+    globalThis.Turbo = { visit: () => { visits += 1 } }
+
+    built.trigger.focus()
+    built.controller.open({ preventDefault() {}, currentTarget: built.trigger })
+    document.querySelector("#character_name").focus()
+    built.controller.refresh()
+    built.controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(visits).toBe(1)
+    expect(document.activeElement).not.toBe(built.trigger)
+    delete globalThis.Turbo
+  })
+
+  test("a refused save that is then cancelled still returns focus", () => {
+    const built = connectedEditor()
+    built.trigger.focus()
+    built.controller.open({ preventDefault() {}, currentTarget: built.trigger })
+    built.controller.showSummary([ [ "name", [ "can't be blank" ] ] ], "Fix this and try again.")
+    expect(document.activeElement).toBe(built.controller.errorsTarget)
+
+    built.controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).toBe(built.returnTo)
+  })
+
+  test("a control that is no longer on the page is not focused", () => {
+    const built = connectedEditor()
+
+    built.trigger.focus()
+    built.controller.open({ preventDefault() {}, currentTarget: built.trigger })
+    built.trigger.remove()
+    built.controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).not.toBe(built.trigger)
+  })
+
+  test("the next row's editor replaces the control the previous one returns to", () => {
+    const built = connectedEditor()
+    const other = document.createElement("button")
+    other.id = "add-other"
+    built.host.append(other)
+
+    built.trigger.focus()
+    built.controller.open({ preventDefault() {}, currentTarget: built.trigger })
+    built.controller.open({ preventDefault() {}, currentTarget: other })
+    built.controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).toBe(other)
+  })
+})
+
 // The Event editor's three temporal selects are the one place a record must not
 // be offered as one of its own references. The server cannot do it — one modal
 // form serves every row — so the control declares it and the row's id travels on

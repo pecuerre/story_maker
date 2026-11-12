@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Editor focus on close.** Closing a shared flat-list or taxonomy tree editor now returns focus to the control that opened it, or to the row's menu toggle, instead of leaving the reader on the page body.
 - **Story header layout.** The Story overview's actions wrap inside the header at desktop and tablet widths instead of running into the right sidebar, and translated actions no longer widen the document.
 - **Dark-theme outline buttons.** Outline button text, borders, hover, and pressed states now use the dark theme's re-tinted colors, so the Story header's controls meet the AA contrast targets.
 
@@ -50,6 +51,10 @@ Labels used below, in the order their groups appear:
 - **Project review.** Recorded verified security, backup, interchange, and test-suite findings, and corrected the affected operational documentation.
 - **Visual baseline triage.** Closed the initial walkthrough and added separate backlog items for its findings and remaining validation.
 - **Visual and task baseline.** Recorded a partial browser walkthrough, measured Story-header and dark-theme contrast issues, and identified the checks still needed.
+
+### chore
+
+- **Faction editor browser test.** The expected field list now includes the Background color and Foreground color controls the editor renders.
 
 ### planned
 

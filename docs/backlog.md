@@ -202,14 +202,6 @@ then focus and draft feedback, followed by the remaining validation. The
 [browser walkthrough](delivery_history.md#2026-11-12) records the evidence and its limitations;
 these items do not claim that participants experienced the same problems.
 
-94. **Restore focus after closing the Character editor.**
-
-   In two baseline checks, the Character modal focused its Name field when opened but focus landed on
-   the page body after Escape closed it. Reproduce the behavior and determine whether the shared modal
-   contract is affected. Restore focus to the initiating control where appropriate, including after
-   cancellation and error recovery; verify with keyboard and browser tests without disturbing other
-   modal flows.
-
 95. **Clarify feedback after draft-mode creation.**
 
    In the baseline, creating a Story or Scene in a draft-based Universe returned to a blank creation

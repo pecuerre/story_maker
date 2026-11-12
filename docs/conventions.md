@@ -1619,6 +1619,10 @@ subsystems it shares helpers and Stimulus controllers with.
   focus trap before Bootstrap does**, because the trap's own activation at the end of the fade focuses
   the dialog: that would close a native select's popup mid-gesture and can commit an option nobody
   chose. The flat-list editor also leaves alone a control the reader already reached during the fade.
+  **Closing either editor returns focus to the control that opened it**, which Bootstrap's
+  programmatic `Modal.show()` does not do; a row menu's Edit resolves to the menu's own toggle because
+  Bootstrap has already closed that menu, and a successful save's refresh is left to the navigation
+  that replaces the page.
 - `photo_crop_controller.js` — the square photo editor, which serves all three page patterns from one
   implementation. It is described in [features/photos.md](features/photos.md), including the rule
   that it must stay a **named** class export.

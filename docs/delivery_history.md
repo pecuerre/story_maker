@@ -29,6 +29,35 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[fixed]** **A closed modal editor gives focus back to the control that opened it.**
+  - **The failure.** The baseline opened the Character editor from the list, saw its Name field
+    focused, and after Escape found focus on `body`. Bootstrap 5.3 restores focus only for a dialog
+    opened through `data-bs-toggle`; both shared editors call `Modal#show()` from Stimulus, so the
+    focus trap deactivates without a restorer. The taxonomy tree's browser-built editor had the same
+    gap.
+  - **The decision.** Each controller records the initiating control as the editor opens and focuses
+    it again on `hidden.bs.modal`. A row's Edit action is a `.dropdown-menu` item that Bootstrap has
+    already closed, so the item resolves to its menu's toggle; a control that has left the page is
+    skipped; a successful save's same-URL refresh is left to the navigation rather than pulling focus
+    onto a row that is about to be replaced.
+  - **Rejected alternatives.** Relying on the data API's restorer (neither editor is opened by a
+    toggler), focusing the menu item directly (it sits inside a closed menu, so the call lands
+    nowhere), and restoring on `hide` rather than `hidden` (focus would move outside while the dialog
+    and backdrop are still fading out).
+  - **Verification.** The flat-list and tree controller cases cover a plain trigger, a row-menu
+    trigger, a trigger replaced by a later open, a trigger removed from the page, and a successful
+    save. Browser cases close the Character editor from the list and the details page, and the tree
+    editor from a row, then assert focus on the expected control.
+
+- **[chore]** **The faction editor browser test matches the editor's fields.**
+  - **The failure.** The case still expected Name, Faction tags, Photo, Short summary, and
+    Description, while the editor renders Background color and Foreground color after Name. It
+    failed the 2026-11-12 baseline run and would fail CI's system-test job.
+  - **The change.** The expected list now names the two color controls in their rendered order. The
+    editor was not changed, and the step that fills the form still touches only the fields it needs.
+  - **Verification.** The faction editor case passes with the rest of
+    `test/system/modal_json_flow_test.rb`.
+
 - **[fixed]** **The Story header wraps its actions inside the page header.**
   - **The failure.** `shared/_page_header` put the copy and the actions in one flex row, but the
     action area carried `flex-shrink: 0`. The Story overview is its widest user — a title, a

@@ -61,6 +61,8 @@ export default class extends Controller {
   connect() {
     if (!this.editableValue) return
 
+    this.returnFocusTo = null
+    this.refreshing = false
     this.handleOutsideClick = this.handleOutsideClick.bind(this)
     this.handleTurboRender = this.handleTurboRender.bind(this)
     document.addEventListener("pointerdown", this.handleOutsideClick)
@@ -205,6 +207,8 @@ export default class extends Controller {
     const modal = this.buildModal(node)
     document.body.append(modal)
     this.modalElement = modal
+    this.returnFocusTo = this.returnFocusTarget(event.currentTarget)
+    this.refreshing = false
     this.populateModalFields(modal, node)
     modal.querySelectorAll("select[multiple]").forEach((select) => {
       new window.TomSelect(select, { plugins: [ "remove_button" ], create: false })
@@ -222,6 +226,7 @@ export default class extends Controller {
       modal.remove()
       this.modal = null
       this.modalElement = null
+      this.restoreFocus()
     }, { once: true })
     modal.addEventListener("shown.bs.modal", () => {
       this.openingEditor = false
@@ -271,6 +276,27 @@ export default class extends Controller {
   // `Modal` keeps its focus trap on; a build without it keeps the old behaviour.
   claimFocusTrap() {
     this.modal?._focustrap?.activate()
+  }
+
+  // The editor is built here and shown programmatically, so Bootstrap's data
+  // API is not involved and nothing restores focus after the dialog closes. The
+  // control that opened the editor is focused again once the editor has gone;
+  // a row menu's Edit item resolves to the menu's own toggle because Bootstrap
+  // has already closed that menu, and a save's page refresh leaves the control
+  // alone rather than competing with the navigation that replaces it.
+  returnFocusTarget(trigger) {
+    if (typeof trigger?.closest !== "function") return null
+    const menu = trigger.closest(".dropdown-menu")
+    if (!menu) return trigger
+    return menu.closest(".dropdown")?.querySelector("[data-bs-toggle='dropdown']") || trigger
+  }
+
+  restoreFocus() {
+    const target = this.returnFocusTo
+    this.returnFocusTo = null
+    if (!target || this.refreshing) return
+    if (!target.isConnected || target.disabled) return
+    target.focus()
   }
 
   buildModal(node) {
@@ -580,6 +606,7 @@ export default class extends Controller {
       return
     }
 
+    this.refreshing = true
     this.modal?.hide()
     this.refreshAndFocus(node.dataset.nodeId, "name")
   }

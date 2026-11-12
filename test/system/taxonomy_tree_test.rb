@@ -344,6 +344,30 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_equal tag.name, tag.reload.name
   end
 
+  test "closing the tree editor returns focus to the row's action control" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+    within ".modal.show" do
+      assert_field "Name", with: tag.name
+      find("input[data-taxonomy-field='name']").send_keys(:escape)
+    end
+
+    assert_no_selector ".modal.show"
+    # The editor is built and shown programmatically, so nothing but this
+    # controller can hand focus back; the menu item that opened it is inside a
+    # menu Bootstrap has already closed, which makes the row's toggle the
+    # control the reader returns to. The assertion waits because Bootstrap
+    # removes the `show` class before it dispatches `hidden`.
+    assert_selector "li[data-node-id='#{tag.id}'] > .taxonomy-row [data-bs-toggle='dropdown']:focus"
+  end
+
   test "a rejected edit keeps the modal open and renders the server's field errors" do
     user = users(:user_one)
     universe = universes(:universe_one)

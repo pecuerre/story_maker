@@ -36,6 +36,8 @@ export default class extends Controller {
     this.shown = false
     this.opening = false
     this.dismissOnShow = false
+    this.returnFocusTo = null
+    this.refreshing = false
     this.handleShown = () => {
       this.shown = true
       this.opening = false
@@ -73,6 +75,7 @@ export default class extends Controller {
       // deferred-dismiss window either.
       this.shown = false
       this.dismissOnShow = false
+      this.restoreFocus()
     }
     this.modalTarget.addEventListener("shown.bs.modal", this.handleShown)
     this.modalTarget.addEventListener("hidden.bs.modal", this.handleHidden)
@@ -122,6 +125,8 @@ export default class extends Controller {
     event.preventDefault()
     const trigger = event.currentTarget
     const values = this.parseJson(trigger.dataset.modalFormValuesValue, {})
+    this.returnFocusTo = this.returnFocusTarget(trigger)
+    this.refreshing = false
 
     this.titleTarget.textContent = trigger.dataset.modalFormTitle || this.createTitleValue
     this.formTarget.action = trigger.dataset.modalFormUrl
@@ -178,6 +183,34 @@ export default class extends Controller {
     )
 
     this.modal.show()
+  }
+
+  // Bootstrap restores focus only for a dialog opened by its `data-bs-toggle`
+  // data API, which registers a restorer of its own. This editor shows the same
+  // dialog programmatically, so closing it would leave the reader on the page
+  // body with no way back to the row they were editing except the mouse. The
+  // initiating control is therefore remembered and focused again once the
+  // dialog has gone.
+  //
+  // A record's Edit action is a menu item, and Bootstrap has already closed
+  // that menu by the time the dialog hides, so the menu's own toggle is the
+  // control the reader returns to: focusing the item would land nowhere.
+  returnFocusTarget(trigger) {
+    if (typeof trigger?.closest !== "function") return null
+    const menu = trigger.closest(".dropdown-menu")
+    if (!menu) return trigger
+    return menu.closest(".dropdown")?.querySelector("[data-bs-toggle='dropdown']") || trigger
+  }
+
+  // A successful save starts a navigation, and a refresh may replace the row
+  // that opened the editor, so a control that has left the page is left alone
+  // rather than being handed focus it can no longer keep.
+  restoreFocus() {
+    const target = this.returnFocusTo
+    this.returnFocusTo = null
+    if (!target || this.refreshing) return
+    if (!target.isConnected || target.disabled) return
+    target.focus()
   }
 
   // Bootstrap activates its focus trap only when the opening transition ends,
@@ -688,6 +721,10 @@ export default class extends Controller {
   }
 
   refresh() {
+    // The dialog and the row it was opened from are being replaced by the
+    // navigation, so focus is not handed back to a control that is on its way
+    // out.
+    this.refreshing = true
     if (window.Turbo?.visit) window.Turbo.visit(window.location.href, { action: "replace" })
     else window.location.reload()
   }

@@ -609,6 +609,87 @@ describe("taxonomy editor opening focus", () => {
   })
 })
 
+// The editor is built in `document.body` and shown programmatically, so
+// Bootstrap registers no focus restorer of its own. Closing it used to leave the
+// reader on the page body; the control that opened it is focused again, and a
+// row menu's Edit resolves to the menu's toggle because Bootstrap has already
+// closed that menu.
+describe("taxonomy editor closing focus", () => {
+  const rowHtml = `
+    <ul class="taxonomy-list" data-drop-parent-id="">
+      <li class="taxonomy-node" data-node-id="1" data-name="Factions" data-update-url="/u/dark/character_tags/1" data-taxonomy-values='{"name":"Factions"}'>
+        <div class="taxonomy-row">
+          <div class="dropdown">
+            <button id="row-menu" type="button" class="dropdown-toggle" data-bs-toggle="dropdown"></button>
+            <ul class="dropdown-menu">
+              <li><button id="edit-row" type="button" class="dropdown-item" data-action="taxonomy-tree#edit">Edit</button></li>
+            </ul>
+          </div>
+          <button id="edit-details" type="button" data-action="taxonomy-tree#edit">Edit location</button>
+        </div>
+      </li>
+    </ul>
+  `
+
+  function openEditor(triggerSelector) {
+    class FakeModal {
+      show() {}
+      hide() {}
+    }
+    globalThis.window.bootstrap = { Modal: FakeModal }
+
+    const { controller, host } = build({
+      elementHtml: rowHtml,
+      modalFields: [ { name: "name", label: "Name", type: "text", required: true } ]
+    })
+    const trigger = host.querySelector(triggerSelector)
+    trigger.focus()
+    controller.edit({ preventDefault() {}, currentTarget: trigger })
+    return { controller, host, trigger, modal: controller.modalElement }
+  }
+
+  test("closing an edit opened from the row menu returns focus to its toggle", () => {
+    const { host, modal } = openEditor("#edit-row")
+
+    modal.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).toBe(host.querySelector("#row-menu"))
+  })
+
+  test("closing an edit opened from a details-page control returns focus to it", () => {
+    const { trigger, modal } = openEditor("#edit-details")
+
+    modal.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).toBe(trigger)
+  })
+
+  test("a successful save's refresh is left to the page it navigates to", async () => {
+    const { controller, trigger, modal } = openEditor("#edit-details")
+    globalThis.Turbo = { visit: () => {} }
+    controller.request = async () => ({ ok: true, status: 200 })
+    modal.querySelector("input").focus()
+
+    await controller.updateDetails(
+      { preventDefault() {}, currentTarget: modal.querySelector("form") },
+      { dataset: { nodeId: "1" } }
+    )
+    modal.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).not.toBe(trigger)
+    delete globalThis.Turbo
+  })
+
+  test("a control that is no longer on the page is not focused", () => {
+    const { trigger, modal } = openEditor("#edit-details")
+
+    trigger.remove()
+    modal.dispatchEvent(new Event("hidden.bs.modal"))
+
+    expect(document.activeElement).not.toBe(trigger)
+  })
+})
+
 describe("taxonomy announcements", () => {
   test("a failure is visible and a progress note is not", () => {
     const { controller, host } = build({ elementHtml: '<div data-taxonomy-tree-status></div>' })

@@ -26,14 +26,14 @@ separate the kinds, and the label says how far the finding is from being a reach
 
 **A number is a position in this list, not an identity.** Findings leave when they are fixed and the
 list is renumbered from 1, so a number is reused: `3` today is not the finding `3` was yesterday, and
-the list was last renumbered on 2026-10-15. **Never cite one from another document** — reference a finding
+the list was last renumbered on 2026-11-12. **Never cite one from another document** — reference a finding
 by its name, and cite the change that closed one through [`../CHANGELOG.md`](../CHANGELOG.md) or
 [delivery_history.md](delivery_history.md). Entries in those two historical files keep the number a
 finding had at the time and are not rewritten.
 
 The findings were first gathered by an audit on 2026-09-24 against commit `8fcf4d4`, with the
 DataFactor follow-ups checked against the tree on 2026-09-25; the list has been renumbered since
-without being re-gathered, most recently on 2026-10-25. Entries are not re-verified by being written down, so **re-read a finding
+without being re-gathered, most recently on 2026-11-12. Entries are not re-verified by being written down, so **re-read a finding
 against the code before acting on it** — see [Audit baseline and evidence](#audit-baseline-and-evidence)
 for what that pass actually ran. The entries added on 2026-11-12 state their own evidence; that
 review sampled important paths and did not prove the absence of other issues.
@@ -145,27 +145,21 @@ review sampled important paths and did not prove the absence of other issues.
     Decide whether to fail clearly or produce a partial archive with an explicit missing-file entry;
     do not call a partial result complete.
 
-14. **Medium — the faction editor browser test is out of sync with its fields.**
-    `test/system/modal_json_flow_test.rb:51` expects Name, Faction tags, Photo, Short summary, and
-    Description, but the live editor also renders Background color and Foreground color after Name.
-    It failed both in the full 2026-11-12 browser run and when run alone. The same behavior would fail
-    CI's system-test job; the failure alone does not establish that the additional fields are unwanted.
-
-15. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
+14. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
     `PARALLEL_WORKERS=1 bin/rails test:system` also failed the dark-theme Map and Settings cases and
     two Scene Element dropdown cases. All four passed when rerun together serially. The full run's
     theme assertions saw light colors and the dropdown assertions did not find an open menu; the
     cause and whether a user-visible race exists remain unverified. Separate simultaneous reruns
     also hit SQLite locks, so concurrent system-test processes are not a valid isolation check.
 
-16. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
+15. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
     `COVERAGE_GATE` solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
     `CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
     2 for low coverage. Recent SimpleCov results may also be merged locally, so the resulting partial
     coverage is not necessarily that run's own. The GitHub full-suite job is a separate clean runner;
     this finding does not claim that its gate was bypassed.
 
-17. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
+16. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
     `StoryInterchangeExportsController#show` permits guests in a public Universe and invokes
     `StoryInterchange::Export#to_s`, which builds the complete file map and compressed archive in
     memory on each request. The mutation throttle excludes GETs and the read throttle applies only to

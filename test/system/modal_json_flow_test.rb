@@ -56,8 +56,8 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     click_button "Add faction"
     within ".modal.show" do
       assert_selector ".modal-dialog.modal-lg"
-      assert_equal [ "Name", "Faction tags", "Photo", "Short summary", "Description" ],
-        all(".modal-body label").map(&:text)
+      assert_equal [ "Name", "Background color", "Foreground color", "Faction tags", "Photo",
+        "Short summary", "Description" ], all(".modal-body label").map(&:text)
       # The description is the last field of a scrolling body, so the footer's
       # Save must stay above the bottom of the dialog rather than being pushed
       # past it by the form.
@@ -165,6 +165,42 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
       assert_selector self_option("event_before_event_id", events(:event_one)), visible: :all
       assert_selector self_option("event_before_event_id", events(:event_two)), visible: :all
     end
+  end
+
+  test "closing the character editor returns focus to the row's action control" do
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+    character = characters(:character_one)
+
+    click_row_menu_action within_row(character.name), "Edit"
+    within ".modal.show" do
+      assert_field "Name", with: character.name
+      find("input[name='character[name]']").send_keys(:escape)
+    end
+
+    assert_no_selector ".modal.show"
+    # The Edit action lives in the row's menu, which Bootstrap closes before the
+    # dialog hides, so the menu's own toggle is the control the reader returns to
+    # rather than an item that is no longer visible. The focus assertion waits,
+    # because Bootstrap removes the `show` class before it dispatches `hidden`.
+    within_row(character.name) do
+      assert_selector ".dropdown-toggle:focus"
+    end
+  end
+
+  test "closing the details page's editor returns focus to its Edit control" do
+    sign_in_via_form(@user)
+    character = characters(:character_one)
+    visit universe_character_path(universe_slug: @universe.slug, id: character)
+
+    click_button "Edit character"
+    within ".modal.show" do
+      find("input[name='character[name]']").send_keys(:escape)
+    end
+
+    assert_no_selector ".modal.show"
+    assert_selector ".page-header [data-action='modal-form#open']:focus"
   end
 
   test "a dismissed editor hands the list back, so the next row's editor opens on its own options" do

@@ -202,14 +202,6 @@ then focus and draft feedback, followed by the remaining validation. The
 [browser walkthrough](delivery_history.md#2026-11-12) records the evidence and its limitations;
 these items do not claim that participants experienced the same problems.
 
-93. **Keep the Story header readable at constrained widths.**
-
-   The signed-in Story overview's actions encroached on the sidebar while the description collapsed
-   at desktop width, and the Spanish tablet view overflowed horizontally. Investigate the shared page
-   header and Story action layout, allowing content and controls to wrap without overlap or document
-   overflow. Check desktop, tablet, phone, long names, both languages, zoom, and other users of the
-   shared header. Keep this layout fix distinct from choosing the overview's primary action.
-
 94. **Restore focus after closing the Character editor.**
 
    In two baseline checks, the Character modal focused its Name field when opened but focus landed on

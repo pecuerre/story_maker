@@ -998,8 +998,27 @@ $um-search-match: #ffc107;
 }
 
 .page-actions {
-  flex-shrink: 0;
   gap: .5rem;
+}
+
+// The header becomes a row at Bootstrap's `md` breakpoint, and the Story
+// overview is the widest user of it: a title, a description, and up to eight
+// controls. Leaving the actions at their natural width let that cluster run past
+// the header and into the right sidebar while the copy was squeezed to one word
+// per line, and in Spanish it widened the whole document at tablet width. The
+// copy keeps a readable basis and the actions get at most half the row, where
+// their own `flex-wrap` folds them onto more lines instead of overflowing.
+@media (min-width: 768px) {
+  .page-header-copy {
+    flex: 1 1 18rem;
+  }
+
+  .page-actions {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
+    max-width: 50%;
+  }
 }
 
 .content-tabs {

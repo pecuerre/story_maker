@@ -29,6 +29,29 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-12
 
+- **[fixed]** **The Story header wraps its actions inside the page header.**
+  - **The failure.** `shared/_page_header` put the copy and the actions in one flex row, but the
+    action area carried `flex-shrink: 0`. The Story overview is its widest user — a title, a
+    description, and up to eight controls — so the actions kept their intrinsic width, ran past the
+    header and into the right sidebar, and squeezed the description to roughly one word per line.
+    At 768 CSS pixels the Spanish labels made the same cluster widen the document to 1278 pixels.
+  - **The decision.** From `md` up, the copy gets a flexible `18rem` basis and the action area may
+    take at most half the row; its existing `flex-wrap` then folds controls onto further lines,
+    right-aligned against the same edge. Below `md` the header is already a column, so the
+    established stacked arrangement is unchanged.
+  - **Rejected alternatives.** Letting the header itself wrap the action area onto its own row
+    would have fixed the overlap but moved the whole cluster below the description on every wide
+    Story, changing the side-by-side page pattern rather than making it hold. A fixed action width
+    would wrap the same controls differently on every page and break the shared pattern for a
+    single page's header.
+  - **Verification.** `test/system/page_header_layout_test.rb` drives the signed-in Story at
+    desktop, tablet, phone, and 720-CSS-pixel (a 1440-pixel window at 200 percent zoom) widths,
+    including Spanish and a long title and description, and also checks a second page using the
+    shared header. It asserts the actions stay inside the header and main column, the copy does not
+    run under them, the description keeps at least 240 pixels, and the document does not scroll
+    sideways. Before the change the desktop case measured actions ending at 1338.75 pixels in a
+    header ending at 1169.
+
 - **[fixed]** **The dark theme re-tints the outline buttons.**
   - **The failure.** Bootstrap's `button-outline-variant` mixin writes the light theme's color into
     every `--bs-btn-*` variable at compile time, so `.btn-outline-primary` kept `#3454d1` as its

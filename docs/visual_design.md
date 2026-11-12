@@ -329,7 +329,10 @@ Use `app/views/shared/_page_header.html.erb` for work pages. It accepts:
 - a block for page actions.
 
 The primary action belongs in the header's action area. On narrow screens actions wrap below the
-copy. Avoid placing a title and its primary button in unrelated vertical sections.
+copy. From `md` up, the copy keeps a readable basis and the action area takes at most half the row,
+folding its own controls onto more lines when they do not fit; a long title, a long description, or
+a translated action label never widens the document or reaches the right sidebar. Avoid placing a
+title and its primary button in unrelated vertical sections.
 
 The header's `description` is for a page that **is** the thing it describes. A workspace that has a
 **tab strip** states what it holds in `shared/_content_intro` instead, rendered *below* the strip and

@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Story header layout.** The Story overview's actions wrap inside the header at desktop and tablet widths instead of running into the right sidebar, and translated actions no longer widen the document.
 - **Dark-theme outline buttons.** Outline button text, borders, hover, and pressed states now use the dark theme's re-tinted colors, so the Story header's controls meet the AA contrast targets.
 
 ### docs

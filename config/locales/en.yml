@@ -1525,6 +1525,13 @@ en:
       items: "Items"
       locations: "Locations"
       events: "Events depicted"
+    interchange:
+      eyebrow: "Story interchange directory"
+      heading: "Export as Markdown files"
+      description: "Download the whole universe as a directory of Markdown files: one per character, faction, location, item, canon area, plot, chapter, and scene."
+      detail: "This is the same layout the import reads, so the archive can be imported into another Universe Maker site and rebuilt there as the same universe."
+      download: "Download Markdown directory"
+      note: "Tags, routes, tropes, relations, ownerships, events, photos, aliases, section descriptions, and scene parentheticals have no place in this format, so they stay behind. Adjacent scene blocks of the same kind become one block, and a scene in several plots carries one of them."
     manuscript:
       document_title: "%{story} — manuscript"
       print_hint: "Use the browser's print command to print this page or save it as a PDF."

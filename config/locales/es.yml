@@ -1455,6 +1455,13 @@ es:
       items: "Objetos"
       locations: "Lugares"
       events: "Sucesos representados"
+    interchange:
+      eyebrow: "Directorio de intercambio de historias"
+      heading: "Exportar como archivos Markdown"
+      description: "Descarga todo el universo como un directorio de archivos Markdown: uno por personaje, facción, lugar, objeto, área de canon, trama, capítulo y escena."
+      detail: "Es el mismo formato que lee la importación, así que el archivo se puede importar en otro sitio de Universe Maker y reconstruir allí el mismo universo."
+      download: "Descargar directorio Markdown"
+      note: "Las etiquetas, rutas, tropos, relaciones, propiedad, sucesos, fotos, alias, descripciones de sección y acotaciones de escena no tienen cabida en este formato, así que se quedan atrás. Los bloques contiguos del mismo tipo en una escena se unen en uno, y una escena que pertenece a varias tramas conserva una."
     manuscript:
       document_title: "%{story} — manuscrito"
       print_hint: "Usa el comando de impresión del navegador para imprimir esta página o guardarla como PDF."

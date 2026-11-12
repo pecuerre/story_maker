@@ -76,8 +76,10 @@ archive without a database and so a future round trip has a starting point.
 
 **It is not import-ready.** The database does not store every field the interchange layout asks for: a
 Character has no `role` or `status`, a Plot has no `type` or `owner_pov`, and a Scene has no `branch`.
-A Canon Rule does store a slug, name, category, and canon type, and the projection writes them in the
-ledger's own shape: one file per category, each item as `**<id> — <name>.** <statement>`, with the
+The Export page's story interchange directory is the importable direction, and
+[exports.md](exports.md#the-story-interchange-directory) owns it. A Canon Rule does store a slug,
+name, category, and canon type, and the projection writes them in the ledger's own shape: one file
+per category, each item as `**<id> — <name>.** <statement>`, with the
 stored slug uppercased when it is a ledger id and the database id under the type's prefix otherwise.
 The projection writes `— TBD` for a missing field, and it therefore deliberately does not promise to
 pass `StoryInterchange::Validator`; `data/` is the copy that must not be lossy.

@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-11
+
+### added
+
+- **Story interchange download.** The Export page now offers the whole Universe as a `.tar.gz` of story-interchange Markdown files that the importer reads back, and the printable section now carries its own "About the export" notes.
+
 ## 2026-11-10
 
 ### added

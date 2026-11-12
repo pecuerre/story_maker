@@ -8,11 +8,11 @@
 <% end %>
 
 <div class="row g-3">
-  <div class="col-lg-8">
-    <%# The one output this page offers today. A second format is a second
-        section beside this one, not a second page: the scope choice is the
-        document's, and every future format reads the same assembled Story. %>
-    <section class="surface-card h-100 p-4" aria-labelledby="printable-html-title">
+  <div class="col-12">
+    <%# The printable document. Its own notes sit inside this card: they
+        describe this output, not the page as a whole. A second format is a
+        second section below, and every format reads the same Story. %>
+    <section class="surface-card p-4" aria-labelledby="printable-html-title">
       <div class="page-eyebrow"><%= t("story_exports.printable.eyebrow") %></div>
       <h2 class="h5" id="printable-html-title"><%= t("story_exports.printable.heading") %></h2>
       <p class="text-body-secondary"><%= t("story_exports.printable.description") %></p>
@@ -51,14 +51,30 @@
 
         <%= submit_tag t("story_exports.printable.submit"), name: nil, class: "btn btn-primary" %>
       <% end %>
+
+      <div class="border-top mt-4 pt-4" id="export-notes">
+        <h3 class="h6" id="export-notes-title"><%= t("story_exports.notes.heading") %></h3>
+        <p class="text-body-secondary"><%= t("story_exports.notes.print") %></p>
+        <p class="text-body-secondary mb-0"><%= t("story_exports.notes.pending") %></p>
+      </div>
     </section>
   </div>
 
-  <div class="col-lg-4">
-    <section class="surface-card h-100 p-4" aria-labelledby="export-notes-title">
-      <h2 class="h6" id="export-notes-title"><%= t("story_exports.notes.heading") %></h2>
-      <p class="text-body-secondary"><%= t("story_exports.notes.print") %></p>
-      <p class="text-body-secondary mb-0"><%= t("story_exports.notes.pending") %></p>
+  <div class="col-12">
+    <%# The same assembled Universe in the directory layout the import reads.
+        The download is Universe-wide even though this page is Story-scoped,
+        because the importer replaces a Universe rather than one Story. %>
+    <section class="surface-card p-4" aria-labelledby="interchange-export-title">
+      <div class="page-eyebrow"><%= t("story_exports.interchange.eyebrow") %></div>
+      <h2 class="h5" id="interchange-export-title"><%= t("story_exports.interchange.heading") %></h2>
+      <p class="text-body-secondary"><%= t("story_exports.interchange.description") %></p>
+      <p class="text-body-secondary"><%= t("story_exports.interchange.detail") %></p>
+
+      <%= link_to t("story_exports.interchange.download"),
+        universe_story_export_interchange_path(story_id: @story),
+        class: "btn btn-primary" %>
+
+      <p class="form-text mt-3 mb-0"><%= t("story_exports.interchange.note") %></p>
     </section>
   </div>
 </div>

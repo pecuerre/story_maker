@@ -1,10 +1,14 @@
 # Story export
 
-A Story can be read as a book. The feature is one Story-scoped **Export** page and the printable HTML
-manuscript it produces; there is no persisted export record, and nothing about the Story changes.
+A Story can be read as a book or carried to another site as a universe. The feature is one
+Story-scoped **Export** page, the printable HTML manuscript it produces, and the story-interchange
+directory it downloads. There is no persisted export record on either output, and nothing about the
+Story changes.
 
-This is not a Universe backup. The export reads one Story's prose and appendices; a
-[Universe backup](universe_backup.md) copies the Universe's data behind every Story.
+The printable document is not a Universe backup. It reads one Story's prose and appendices; a
+[Universe backup](universe_backup.md) copies the Universe's data behind every Story. The directory
+export is the interchange format described in
+[story_interchange.md](story_interchange.md), not the backup's archive.
 
 ## Routes and access
 
@@ -12,29 +16,34 @@ This is not a Universe backup. The export reads one Story's prose and appendices
 |---|---|
 | Export options | `/u/:universe_slug/s/:story_id/export` |
 | Printable manuscript | `/u/:universe_slug/s/:story_id/export/manuscript` |
+| Story interchange directory | `/u/:universe_slug/s/:story_id/export/interchange` |
 
-Both are reads of the Story and follow the Story page's access rules: a guest may export a public
+All three are reads of the Story and follow the Story page's access rules: a guest may export a public
 universe, a private universe needs its owner or a member, and another universe's Story is a `404`.
 The Story is resolved through the request's already-authorized Universe by the shared `set_story`
-callback, never by `Story.find`. The manuscript is its own controller (`StoryManuscriptsController`)
-rather than a second action on `StoryExportsController` so that the shared authorization sees a
-`show` and grants the same `:read` it grants the Story page.
+callback, never by `Story.find`. The manuscript and the directory download are their own controllers
+(`StoryManuscriptsController` and `StoryInterchangeExportsController`) rather than further actions on
+`StoryExportsController`, so that the shared authorization sees a `show` and grants the same `:read`
+it grants the Story page.
 
 ## The export page
 
 Export is a link in the left sidebar's **Story workspace** block, beside Sections, Plots, and Scenes,
-so it is one click from any story-scoped page. The page states the Story, offers the one format that
-exists today, and returns to the Story overview.
+so it is one click from any story-scoped page. The page states the Story, offers both formats, and
+returns to the Story overview.
 
-**Printable HTML page** is the only format. Its form is a `GET` to the manuscript URL, so choosing a
-scope never writes anything and the chosen document is a shareable address. The submit control opens
-the manuscript in a new tab, so the export options stay beside the document; the reader prints it or
-saves it as a PDF with the browser's own print command. The page deliberately adds no PDF or EPUB
-dependency: the browser already owns that step, and a printable document is the same HTML a future
-download would assemble.
+**Printable HTML page** is the first section, and its **About the export** notes sit inside that same
+card: they describe that output rather than the page. Its form is a `GET` to the manuscript URL, so
+choosing a scope never writes anything and the chosen document is a shareable address. The submit
+control opens the manuscript in a new tab, so the export options stay beside the document; the reader
+prints it or saves it as a PDF with the browser's own print command. The page deliberately adds no PDF
+or EPUB dependency: the browser already owns that step, and a printable document is the same HTML a
+future download would assemble.
 
-A second format is a second section on this page plus one `get` route, reading the same assembled
-Story. It is not a second page, and it does not add a scope of its own.
+**Story interchange directory** is the second section, below the printable card. It is one `GET`
+link, not a form: the download has no options, and a plain address keeps it shareable. The same rule
+as above applies to a third format: it is a third section on this page plus one `get` route, never a
+second page.
 
 ## The three scopes
 
@@ -151,11 +160,62 @@ inherits a book's leading.
 The browser's print command is the export. There is no in-page print button, which keeps the document
 free of JavaScript and of a Stimulus controller that would exist only to call `window.print()`.
 
+## The story interchange directory
+
+The second section downloads one `.tar.gz` whose single top-level directory is the Universe's slug.
+That directory is a **story-interchange source** in the layout
+[story_interchange.md](story_interchange.md) owns, so extracting it and importing the folder gives
+another site the Universe again. The file is assembled in memory by `StoryInterchange::Export` and is
+never written into the repository.
+
+The download is **Universe-wide even though the page is Story-scoped**. A source describes one
+Universe and its Stories, and the import replaces a Universe, so a Story-only slice would be a
+different format. The Story only resolves the request's Universe and carries the page's access rules;
+every live Story, Character, Faction, Location, Item, canon Rule, Section, Scene, and Plot of that
+Universe is in the archive.
+
+The export is **validator-clean**: the directory it writes passes `StoryInterchange.validate`, so the
+import page can read it without an error. What the interchange layout cannot describe stays in the
+database rather than being invented: tags, Routes, tropes, relations, ownerships, Events, photos,
+Character aliases, Section descriptions, Scene parentheticals, and a canon Rule's optional Story owner
+do not travel. The page names that boundary beside the button rather than implying a full backup.
+
+Writing a source is not copying the database, so a few values have a canonical export form:
+
+- A Scene needs the format's `B-###` id and its `main` branch. The Universe stores neither, so the id
+  is derived from the Scene's database id and the branch is `main`; the import reads both as source
+  facts and writes neither.
+- A Scene's prose becomes alternating `## Narration` and `## Dialog` blocks. Adjacent Elements of the
+  same kind merge into one block, and a Scene that opens with Dialogue gets an empty Narration before
+  it, because that is the block grammar the validator accepts. The prose and its order survive; the
+  Element boundary and the Element titles do not.
+- A Scene in more than one Plot carries the first Plot in its `plot` key, because the format names one
+  thread per Scene. The other assignments stay behind.
+- A Scene with no Section, or one whose Section is not in the Story's tree, is written in a chapter
+  named **Ungrouped** after the Story's sections. The manuscript already groups those Scenes the same
+  way, and without the chapter the import would have no Section to attach them to.
+- A Character's `affiliation` is its Faction links joined by `·`; a Character in no Faction writes the
+  source's `— TBD`. A canon Rule whose slug is not a ledger id is numbered under the prefix its canon
+  type implies, so the ledger keeps globally unique ids.
+- A Location and an Item have no summary column in the import. Their summary is written as a
+  `Short summary` section, so the sentence survives in the description instead of being dropped.
+- A Story with no source-ready prose still writes each Scene with a Narration block, and a Scene with
+  no Elements writes an empty one. A Universe with no Stories cannot be imported at all: the
+  interchange requires at least one Story directory, and the archive says so by being empty of
+  `stories/` children.
+
+The download is a `GET` that writes nothing. It carries `Cache-Control: no-store`, and the filename is
+`<universe slug>-story-interchange-<timestamp>.tar.gz`.
+
 ## Files
 
-- `app/controllers/story_exports_controller.rb`, `app/controllers/story_manuscripts_controller.rb`
+- `app/controllers/story_exports_controller.rb`, `app/controllers/story_manuscripts_controller.rb`,
+  `app/controllers/story_interchange_exports_controller.rb`
 - `app/models/manuscript.rb`, `app/helpers/story_exports_helper.rb`
+- `lib/story_interchange/export.rb`
 - `app/views/story_exports/`, `app/views/story_manuscripts/`, `app/views/layouts/manuscript.html.erb`
 - `app/assets/stylesheets/_manuscript.scss`
 - `test/models/manuscript_test.rb`, `test/helpers/story_exports_helper_test.rb`,
-  `test/controllers/story_exports_controller_test.rb`
+  `test/controllers/story_exports_controller_test.rb`,
+  `test/controllers/story_interchange_exports_controller_test.rb`,
+  `test/lib/story_interchange/export_test.rb`

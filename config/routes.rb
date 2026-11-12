@@ -130,6 +130,7 @@ Rails.application.routes.draw do
       # read the Story page grants, without teaching that policy this feature.
       resource :export, only: :show, controller: "story_exports"
       get "export/manuscript", to: "story_manuscripts#show", as: :export_manuscript
+      get "export/interchange", to: "story_interchange_exports#show", as: :export_interchange
     end
     get "tags", to: "tags#index", as: :tags
     resources :item_tags, only: %i[ index show create update destroy ]

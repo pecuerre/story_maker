@@ -42,8 +42,24 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /Only saved records are exported/
   end
 
-  test "the export page is on the story sidebar" do
-    get universe_path(universe_slug: @universe.slug)
+  test "the printable notes belong to the printable section and the directory export sits below" do
+    get export_url
+
+    assert_response :success
+    assert_select "section[aria-labelledby=printable-html-title]" do
+      assert_select "h3#export-notes-title", text: "About the export"
+      assert_select "p", text: /Only saved records are exported/
+    end
+
+    assert_select "section[aria-labelledby=interchange-export-title]" do
+      assert_select "h2", text: "Export as Markdown files"
+      assert_select "a[href=?]",
+        universe_story_export_interchange_path(story_id: @story),
+        text: "Download Markdown directory"
+    end
+  end
+
+  test "the export page is on the story sidebar" do    get universe_path(universe_slug: @universe.slug)
     assert_select "a[href=?]", export_path, count: 0
 
     get universe_story_url(universe_slug: @universe.slug, id: @story)
@@ -282,6 +298,7 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Exportar"
     assert_select "input[type=submit][value=?]", "Abrir la página imprimible"
     assert_select "input[type=radio][value=front_matter]"
+    assert_select "a", text: "Descargar directorio Markdown"
 
     get manuscript_url
     assert_response :success

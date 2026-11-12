@@ -136,6 +136,8 @@ triaged into this list.
 
 54. **Scene archive and custom status labels.**
 
+   NOTE: Wait until the story is more advanced
+
    Scenes now carry a fixed draft/revised/final status, shown on the list and details page, filterable,
    and available to the export's final-only choice. The competitor **Scene archive** pulls scenes from
    the manuscript without deleting them, and custom per-Story labels are still undecided. **Needs a
@@ -153,6 +155,8 @@ triaged into this list.
    with a progress bar that reads `WordCounts` rather than storing a count.
 
 56. **Scene tension and pacing curve.**
+
+   NOTE: Wait until the story is more advanced
 
    The narrative-order tab compares a Scene's own time with its Event and reports conflicts; nothing
    measures how a Story reads. `Novilot` visualizes tension and pacing with genre-aware feedback, and

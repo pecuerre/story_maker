@@ -12,6 +12,10 @@ frontmatter, the section-to-profile mapping, the reference forms, what the valid
 what an import writes. It is **not** a second storage format: the database stays the source of truth,
 and the source is read in place and never modified.
 
+The reverse direction is `StoryInterchange::Export`, which writes one Universe back out as a
+validator-clean source for another site. [exports.md](exports.md#the-story-interchange-directory) owns
+that download and the records it cannot carry.
+
 The app's code-owned starting shapes are a different subject: [Story structures](story_structures.md).
 
 ## A source is a directory

@@ -107,6 +107,16 @@ module ScenesHelper
     raw.is_a?(String) ? raw : nil
   end
 
+  # Whether one of the Scene editor's optional groups must start open because a
+  # field inside it was rejected. A group's summary is the only control that
+  # reveals the field, so recovery opens it rather than hiding the control the
+  # error summary sent the author to. The attributes are the model's own error
+  # keys, not the form's `_id` names: `Scene` reports a rejected reference under
+  # `section`, `pov_character`, `plots`, `events`, and `scene_tags`.
+  def scene_form_group_open?(scene, *attributes)
+    attributes.any? { |attribute| scene.errors.include?(attribute) }
+  end
+
   # "Label: value" descriptions of the filters currently in effect, in the order
   # the search area lists them. The result set of a long story is otherwise
   # ambiguous, and an empty result has to be able to say what caused it.

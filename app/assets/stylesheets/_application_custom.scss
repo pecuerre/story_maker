@@ -1395,6 +1395,25 @@ $um-search-match: #ffc107;
   padding: clamp(1.25rem, 3vw, 2rem);
 }
 
+// A Scene editor group whose optional fields stay closed until the author asks
+// for them. It is a real <details>, so the disclosure works without JavaScript
+// and the browser's own marker and expanded state stay in place; the summary's
+// state text is what the closed group still reports. A hairline separates groups
+// instead of a card each, so a form with six of them stays calm.
+.form-disclosure {
+  padding-block: .75rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.form-disclosure > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-disclosure[open] > summary {
+  margin-bottom: .75rem;
+}
+
 .auth-shell {
   max-width: 28rem;
   margin-inline: auto;

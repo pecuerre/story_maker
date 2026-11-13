@@ -29,17 +29,6 @@
     <div class="form-text"><%= t("scenes.form.description_hint") %></div>
   </div>
 
-  <%# The drafting contract is a browser display preference. Hiding it removes
-      the editor field too, so a reader who has turned it off cannot see or change
-      the note; an absent field leaves the stored value alone on update. %>
-  <% if drafting_contract_visible? %>
-    <div class="mb-3">
-      <%= form.label :drafting_contract, t("scenes.form.drafting_contract"), class: "form-label" %>
-      <%= form.text_area :drafting_contract, class: "form-control", rows: 8 %>
-      <div class="form-text"><%= t("scenes.form.drafting_contract_hint") %></div>
-    </div>
-  <% end %>
-
   <div class="mb-3">
     <%= form.label :status, t("scenes.form.status"), class: "form-label" %>
     <%= form.select :status, Scene::STATUSES.map { |status| [ scene_status_label(status), status ] },
@@ -47,66 +36,121 @@
     <div class="form-text"><%= t("scenes.form.status_hint") %></div>
   </div>
 
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.tags_legend") %></legend>
+  <%# Section stays beside the fields above because it is the one optional
+      choice a new Scene usually makes at creation, and it is organization rather
+      than prose. Every other optional field sits in a native disclosure below,
+      so the first view of the editor is name, description, status, and Section. %>
+  <div class="mb-3">
+    <%= form.label :section_id, t("scenes.form.section"), class: "form-label" %>
+    <%# The selector's first option is the Ungrouped group, whose *value* is the
+        empty string the form stores and whose label is translated through
+        `SectionPaths`. %>
+    <%= form.select :section_id, section_paths.grouping_options, {}, class: "form-select" %>
+    <div class="form-text"><%= t("scenes.form.section_hint") %></div>
+  </div>
+
+  <%# The optional fields are native disclosures: they work without JavaScript,
+      and each summary names the stored answer while the group is closed. A group
+      opens itself when one of its fields was rejected, so error recovery never
+      hides the control the error summary names. The form's rules are in
+      features/scenes.md and its painted shape in visual_design.md. %>
+
+  <%# The drafting contract is a browser display preference. Hiding it removes
+      the editor field too, so a reader who has turned it off cannot see or change
+      the note; an absent field leaves the stored value alone on update. %>
+  <% if drafting_contract_visible? %>
+    <%= content_tag :details, class: "form-disclosure",
+      open: scene_form_group_open?(scene, :drafting_contract) do %>
+      <summary>
+        <%= t("scenes.form.groups.drafting_contract.summary",
+          state: scene.drafting_contract.present? ?
+            t("scenes.form.groups.drafting_contract.state_written") :
+            t("scenes.form.groups.drafting_contract.state_blank")) %>
+      </summary>
+      <div class="mb-3">
+        <%= form.label :drafting_contract, t("scenes.form.drafting_contract"), class: "form-label" %>
+        <%= form.text_area :drafting_contract, class: "form-control", rows: 8 %>
+        <div class="form-text"><%= t("scenes.form.drafting_contract_hint") %></div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% tag_count = scene.scene_tags.size %>
+  <%= content_tag :details, class: "form-disclosure",
+    open: scene_form_group_open?(scene, :scene_tags) do %>
+    <summary>
+      <%# The count is the tags this Scene carries, not the catalogue's size, so
+          the summary answers what is stored without opening the group. %>
+      <%= t("scenes.form.groups.tags.summary",
+        state: tag_count.positive? ?
+          t("scenes.form.groups.tags.state", count: tag_count) :
+          t("scenes.form.groups.tags.state_blank")) %>
+    </summary>
     <div class="mb-3">
       <%= form.label :scene_tag_ids, t("scenes.form.tags_label"), class: "form-label" %>
       <% if @scene_tags.any? %>
         <%= form.select :scene_tag_ids,
           scene_tag_choices(@taggable_scene_tags, @scene_tag_paths),
           { include_hidden: true },
-          { multiple: true, class: "form-select", size: [ @taggable_scene_tags.size, 6 ].min } %>
+          { multiple: true, class: "form-select", size: [ @taggable_scene_tags.size, 6 ].min,
+            data: { controller: "tom-select" } } %>
         <div class="form-text"><%= t("scenes.form.tags_hint") %></div>
       <% else %>
         <p class="text-body-secondary mb-2"><%= t("scenes.form.tags_empty") %></p>
         <%= link_to t("scenes.form.manage_tags"), universe_tags_path(scope: "story", taxonomy: "scene"), class: "btn btn-sm btn-outline-secondary" %>
       <% end %>
     </div>
-  </fieldset>
+  <% end %>
 
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.plots_legend") %></legend>
+  <% plot_count = scene.plots.size %>
+  <%= content_tag :details, class: "form-disclosure",
+    open: scene_form_group_open?(scene, :plots) do %>
+    <summary>
+      <%= t("scenes.form.groups.plots.summary",
+        state: plot_count.positive? ?
+          t("scenes.form.groups.plots.state", count: plot_count) :
+          t("scenes.form.groups.plots.state_blank")) %>
+    </summary>
     <div class="mb-3">
       <%= form.label :plot_ids, t("scenes.form.plots_label"), class: "form-label" %>
       <% if @plot_options.any? %>
         <%= form.select :plot_ids, @plot_options.map { |plot| [ plot.name, plot.id ] },
           { include_hidden: true },
-          { multiple: true, class: "form-select", size: [ @plot_options.size, 6 ].min } %>
+          { multiple: true, class: "form-select", size: [ @plot_options.size, 6 ].min,
+            data: { controller: "tom-select" } } %>
         <div class="form-text"><%= t("scenes.form.plots_hint") %></div>
       <% else %>
         <p class="text-body-secondary mb-2"><%= t("scenes.form.plots_empty") %></p>
         <%= link_to t("scenes.form.manage_plots"), universe_story_plots_path(story_id: scene.story), class: "btn btn-sm btn-outline-secondary" %>
       <% end %>
     </div>
-  </fieldset>
+  <% end %>
 
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.organization_legend") %></legend>
-    <div class="mb-3">
-      <%= form.label :section_id, t("scenes.form.section"), class: "form-label" %>
-      <%# The selector's first option is the Ungrouped group, whose *value* is the
-          empty string the form stores and whose label is translated through
-          `SectionPaths`. %>
-      <%= form.select :section_id, section_paths.grouping_options, {}, class: "form-select" %>
-      <div class="form-text"><%= t("scenes.form.section_hint") %></div>
-    </div>
-  </fieldset>
-
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.in_world_time_legend") %></legend>
+  <%= content_tag :details, class: "form-disclosure",
+    open: scene_form_group_open?(scene, :datetime) do %>
+    <summary>
+      <%= t("scenes.form.groups.in_world_time.summary",
+        state: scene_in_world_time(scene) || t("scenes.form.groups.in_world_time.state_blank")) %>
+    </summary>
     <div class="mb-3">
       <%= form.label :datetime, t("scenes.form.datetime"), class: "form-label" %>
       <%# `step: 1` matches `ApplicationHelper::DATETIME_LOCAL_FORMAT`, which is what
             `scene_datetime_field_value` formats this control with: a whole-minute
             step could not hold stored seconds and would drop them on save. %>
-        <%= form.datetime_local_field :datetime, value: scene_datetime_field_value(scene), class: "form-control", step: 1 %>
+      <%= form.datetime_local_field :datetime, value: scene_datetime_field_value(scene), class: "form-control", step: 1 %>
       <div class="form-text"><%= t("scenes.form.datetime_hint") %></div>
     </div>
+  <% end %>
 
-  </fieldset>
-
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.events_legend") %></legend>
+  <% event_count = scene.events.size %>
+  <%= content_tag :details, class: "form-disclosure",
+    open: scene_form_group_open?(scene, :events) do %>
+    <summary>
+      <%= t("scenes.form.groups.events.summary",
+        state: event_count.positive? ?
+          t("scenes.form.groups.events.state", count: event_count) :
+          t("scenes.form.groups.events.state_blank")) %>
+    </summary>
     <div class="mb-3">
       <%= form.label :event_ids, t("scenes.form.events_label"), class: "form-label" %>
       <% if @event_options.any? %>
@@ -137,17 +181,21 @@
             universe_story_scene_scene_events_path(story_id: scene.story, scene_id: scene))) %>
       </p>
     <% end %>
-  </fieldset>
+  <% end %>
 
-  <fieldset class="mb-3">
-    <legend class="h6"><%= t("scenes.form.point_of_view_legend") %></legend>
+  <%= content_tag :details, class: "form-disclosure",
+    open: scene_form_group_open?(scene, :pov_character) do %>
+    <summary>
+      <%= t("scenes.form.groups.point_of_view.summary",
+        state: scene.pov_character&.name || t("scenes.form.groups.point_of_view.state_blank")) %>
+    </summary>
     <div class="mb-3">
       <%= form.label :pov_character_id, t("scenes.form.pov_character"), class: "form-label" %>
       <%= form.select :pov_character_id, scene_pov_character_choices(@character_options),
         { include_blank: t("shared.none") }, class: "form-select" %>
       <div class="form-text"><%= t("scenes.form.pov_hint") %></div>
     </div>
-  </fieldset>
+  <% end %>
 
   <%# One sentence with a link in it, so it is an `_html` key. The two control
       names are interpolated from the Scenes list's own keys rather than written

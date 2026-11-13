@@ -1927,18 +1927,46 @@ en:
       drafting_contract_hint: "Optional. The scene's one place, one beat of time, one point of view, and dramatic question, kept as a note for the writer. It is not part of the prose."
       status: "Status"
       status_hint: "An author-chosen writing state. New scenes start as draft; the export can be narrowed to final scenes without changing the narrative order."
-      tags_legend: "Scene tags"
+      # The editor's optional groups are native disclosures, so the first view is
+      # the title, description, status, and Section. Each summary states what is
+      # stored while its group stays closed; `state` is one of the keys below.
+      groups:
+        drafting_contract:
+          summary: "Drafting contract (%{state})"
+          state_written: "written"
+          state_blank: "empty"
+        tags:
+          summary: "Scene tags (%{state})"
+          state:
+            one: "%{count} assigned"
+            other: "%{count} assigned"
+          state_blank: "none assigned"
+        plots:
+          summary: "Plot arcs (%{state})"
+          state:
+            one: "%{count} assigned"
+            other: "%{count} assigned"
+          state_blank: "none assigned"
+        in_world_time:
+          summary: "In-world time (%{state})"
+          state_blank: "not set"
+        events:
+          summary: "Events (%{state})"
+          state:
+            one: "%{count} linked"
+            other: "%{count} linked"
+          state_blank: "none linked"
+        point_of_view:
+          summary: "Point of view (%{state})"
+          state_blank: "none"
       tags_label: "Scene tags"
-      tags_hint: "Optional. Assign any labels that describe this scene. Tags belong to this story and can be managed under Configuration → Tags → Story Tags → Scene tags."
+      tags_hint: "Optional. Assign any labels that describe this scene. Type to narrow the list. Tags belong to this story and can be managed under Configuration → Tags → Story Tags → Scene tags."
       tags_empty: "No scene tags are defined for this story yet."
       manage_tags: "Manage Scene Tags"
-      organization_legend: "Organization"
       section: "Section"
       section_hint: "Optional. A Section groups this scene, for example under a book, chapter, season, or episode. Grouping changes organization only: it never changes this scene's narrative position, and a nested Section also places the scene inside its ancestor path."
-      in_world_time_legend: "In-world time"
       datetime: "In-world time"
       datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the events linked here and on the Events tab: changing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
-      events_legend: "Events"
       events_label: "Events this scene depicts"
       events_hint: "Optional. Link any of this universe's events. The search box narrows the list. A link's role and order are edited on the Events tab."
       events_empty: "This universe has no events yet. Create one from this scene below, then link more from the Events tab."
@@ -1946,10 +1974,8 @@ en:
       create_event_hint: "Optional, only when creating. Saves a new event named after this scene, timed by the in-world time above when one is set, and linked to it."
       events_note_html: "Each link's role and order are edited from the %{events}."
       events_link: "Events tab"
-      point_of_view_legend: "Point of view"
-      plots_legend: "Plot arcs"
       plots_label: "Plots"
-      plots_hint: "Optional. A scene may belong to several story-level plots that can cross sections. This does not change narrative order or section grouping."
+      plots_hint: "Optional. A scene may belong to several story-level plots that can cross sections. Type to narrow the list. This does not change narrative order or section grouping."
       plots_empty: "This story has no plot arcs yet."
       manage_plots: "Manage plots"
       pov_character: "Point of view"

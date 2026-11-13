@@ -190,7 +190,7 @@ class ScenesController < ApplicationController
   end
 
   def set_scene
-    @scene = @story.scenes.includes(:scene_tags, :scene_tropes, :pov_character).find(params.expect(:id))
+    @scene = @story.scenes.includes(:scene_tags, :plots, :scene_tropes, :pov_character).find(params.expect(:id))
   end
 
   # The grouping form posts the chosen scene next to the chosen group, so the

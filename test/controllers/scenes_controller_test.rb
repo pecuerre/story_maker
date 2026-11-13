@@ -838,6 +838,44 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=datetime-local][name='scene[datetime]'][step='1']"
   end
 
+  test "the editor keeps optional fields in disclosures that state what is stored" do
+    get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    # The title, description, status, and Section are the only choices visible
+    # before a group is opened; every remaining answer is one summary away.
+    assert_select "details.form-disclosure", count: 6
+    assert_select "details.form-disclosure[open]", count: 0
+    assert_select "details.form-disclosure summary", text: "Drafting contract (empty)"
+    assert_select "details.form-disclosure summary", text: "Scene tags (none assigned)"
+    assert_select "details.form-disclosure summary", text: "Plot arcs (none assigned)"
+    assert_select "details.form-disclosure summary", text: "In-world time (not set)"
+    assert_select "details.form-disclosure summary", text: "Events (none linked)"
+    assert_select "details.form-disclosure summary", text: "Point of view (none)"
+    # Tags and plots use the same searchable picker as Events rather than the
+    # browser's native multiple list.
+    assert_select "select[name='scene[scene_tag_ids][]'][multiple][data-controller=tom-select]"
+    assert_select "select[name='scene[plot_ids][]'][multiple][data-controller=tom-select]"
+
+    @scene.update!(datetime: Time.utc(2019, 11, 5, 21))
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_select "details.form-disclosure summary", text: "Scene tags (2 assigned)"
+    assert_select "details.form-disclosure summary", text: "Plot arcs (1 assigned)"
+    assert_select "details.form-disclosure summary", text: "In-world time (2019-11-05 21:00)"
+    assert_select "details.form-disclosure summary", text: "Events (1 linked)"
+    assert_select "details.form-disclosure summary", text: "Point of view (none)"
+  end
+
+  test "a rejected optional field opens its disclosure group" do
+    post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+      params: { scene: { name: "Bad hidden time", datetime: "not-a-datetime" } }
+
+    assert_response :unprocessable_content
+    assert_select "details.form-disclosure[open]", count: 1
+    assert_select "details.form-disclosure[open] summary", text: "In-world time (not set)"
+  end
+
   test "a stored second survives an open-and-save round trip through the form" do
     @scene.update!(datetime: Time.utc(2026, 9, 11, 9, 30, 45))
 

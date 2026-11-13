@@ -47,6 +47,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Scene editor disclosures.** The Scene form keeps the title, description, status, and Section visible and folds tags, plots, in-world time, Events, point of view, and the drafting contract into state-reporting disclosure groups that open on error.
 - **Element editor comfort.** The Content field is a tall, growing textarea rather than a five-row box, and the Element dialog is full-screen on phones.
 
 ### fixed

@@ -1844,18 +1844,47 @@ es:
       drafting_contract_hint: "Opcional. El lugar, el momento, el punto de vista y la pregunta dramática de la escena, guardados como nota para quien escribe. No forma parte de la prosa."
       status: "Estado"
       status_hint: "Un estado de escritura elegido por quien escribe. Las escenas nuevas empiezan como borrador; la exportación se puede limitar a las escenas finales sin cambiar el orden narrativo."
-      tags_legend: "Etiquetas de escena"
+      # Los grupos opcionales del editor son divulgaciones nativas, así que la
+      # primera vista es el título, la descripción, el estado y la Sección. Cada
+      # resumen dice qué hay guardado mientras su grupo sigue cerrado; `state` es
+      # una de las claves de abajo.
+      groups:
+        drafting_contract:
+          summary: "Contrato de escritura (%{state})"
+          state_written: "escrito"
+          state_blank: "vacío"
+        tags:
+          summary: "Etiquetas de escena (%{state})"
+          state:
+            one: "%{count} asignada"
+            other: "%{count} asignadas"
+          state_blank: "ninguna asignada"
+        plots:
+          summary: "Arcos argumentales (%{state})"
+          state:
+            one: "%{count} asignado"
+            other: "%{count} asignados"
+          state_blank: "ninguno asignado"
+        in_world_time:
+          summary: "Tiempo en el mundo (%{state})"
+          state_blank: "sin definir"
+        events:
+          summary: "Sucesos (%{state})"
+          state:
+            one: "%{count} enlazado"
+            other: "%{count} enlazados"
+          state_blank: "ninguno enlazado"
+        point_of_view:
+          summary: "Punto de vista (%{state})"
+          state_blank: "ninguno"
       tags_label: "Etiquetas de escena"
-      tags_hint: "Opcional. Asigna las etiquetas que describan esta escena. Las etiquetas pertenecen a esta historia y se pueden gestionar en Configuración → Etiquetas → Etiquetas de historia → Etiquetas de escenas."
+      tags_hint: "Opcional. Asigna las etiquetas que describan esta escena. Escribe para filtrar la lista. Las etiquetas pertenecen a esta historia y se pueden gestionar en Configuración → Etiquetas → Etiquetas de historia → Etiquetas de escenas."
       tags_empty: "Todavía no hay etiquetas de escena definidas para esta historia."
       manage_tags: "Gestionar etiquetas de escena"
-      organization_legend: "Organización"
       section: "Sección"
       section_hint: "Opcional. Una Sección agrupa esta escena, por ejemplo bajo un libro, un capítulo, una temporada o un episodio. La agrupación solo cambia la organización: nunca cambia la posición narrativa de esta escena, y una Sección anidada también sitúa la escena dentro de la ruta de sus ancestros."
-      in_world_time_legend: "Tiempo en el mundo"
       datetime: "Tiempo en el mundo"
       datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente de los sucesos enlazados aquí y en la pestaña Sucesos: cambiar o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
-      events_legend: "Sucesos"
       events_label: "Sucesos que representa esta escena"
       events_hint: "Opcional. Enlaza cualquiera de los sucesos de este universo. El buscador filtra la lista. La función y el orden de un enlace se editan en la pestaña Sucesos."
       events_empty: "Este universo todavía no tiene sucesos. Crea uno desde esta escena abajo y enlaza más desde la pestaña Sucesos."
@@ -1863,10 +1892,8 @@ es:
       create_event_hint: "Opcional, solo al crear. Guarda un suceso nuevo con el nombre de esta escena, fechado con el tiempo en el mundo de arriba cuando lo haya, y enlazado a ella."
       events_note_html: "La función y el orden de cada enlace se editan en la %{events}."
       events_link: "pestaña Sucesos"
-      point_of_view_legend: "Punto de vista"
-      plots_legend: "Arcos argumentales"
       plots_label: "Tramas"
-      plots_hint: "Opcional. Una escena puede pertenecer a varias tramas de la historia que crucen secciones. Esto no cambia el orden narrativo ni la agrupación por sección."
+      plots_hint: "Opcional. Una escena puede pertenecer a varias tramas de la historia que crucen secciones. Escribe para filtrar la lista. Esto no cambia el orden narrativo ni la agrupación por sección."
       plots_empty: "Esta historia todavía no tiene tramas."
       manage_plots: "Gestionar tramas"
       pov_character: "Punto de vista"

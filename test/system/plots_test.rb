@@ -19,7 +19,12 @@ class PlotsTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "Browser through-line"
 
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
-    select "Browser through-line", from: "Plots"
+    find("summary", text: "Plot arcs (none assigned)").click
+    within "details.form-disclosure", text: "Plot arcs" do
+      find(".ts-control").click
+      find(".ts-control input").set("Browser through-line")
+      find(".ts-dropdown .option", text: "Browser through-line").click
+    end
     click_button "Update Scene"
 
     assert_selector "h1", text: scene.name

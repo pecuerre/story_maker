@@ -769,9 +769,9 @@ surfaces are dark rather than near-white, and tag badges keep the colors stored 
 Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
 **Locations** are live links rather than dead links; Details shows the Section
 group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and
-the editor's **Scene tags**, **Organization**, and **In-world time** fieldsets let you assign or
-clear optional tags, set a Section, set an Event, and set a `datetime-local` value without the
-narrative position changing. On the Scenes list, the row's title is plain text and the **Details**
+the editor keeps **Section** in view and folds **Scene tags**, **Plot arcs**, **In-world time**, and
+**Events** into disclosure groups, so you can assign or clear optional tags, set a Section, set an
+Event, and set a `datetime-local` value without the narrative position changing. On the Scenes list, the row's title is plain text and the **Details**
 link is the way into that page. Each row also shows an Element count and a Characters-taking-part
 count; the second is the union of stored participants and dialogue speakers, so a character who
 both participates and speaks is counted once.

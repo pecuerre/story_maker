@@ -62,6 +62,9 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
 
     assert_selector "nav.content-tabs[aria-label='Scene workspace'] a.active", text: "Scene Details"
     select "Section one", from: "Section"
+    # In-world time is one of the editor's disclosure groups, so it is opened
+    # before the field is used; the summary already states the stored value.
+    find("summary", text: "In-world time (2026-09-11 10:00)").click
     # A datetime-local input is typed in the browser's own locale, which is not
     # the test environment's to control, so the value is set the way a real edit
     # delivers it. The round trip through the editor and back to Details is what

@@ -10,6 +10,7 @@ class ScenePointOfViewTest < ApplicationSystemTestCase
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
 
     assert_selector "h1", text: "Edit scene"
+    find("summary", text: "Point of view (none)").click
     select "Character two", from: "Point of view"
     click_button "Update Scene"
 
@@ -23,6 +24,7 @@ class ScenePointOfViewTest < ApplicationSystemTestCase
     # Visiting the edit URL directly: the create/update flash sits on the details
     # page and would intercept a click on its "Edit scene" link.
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
+    find("summary", text: "Point of view (Character two)").click
     select "None", from: "Point of view"
     click_button "Update Scene"
 

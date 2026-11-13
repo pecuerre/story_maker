@@ -561,13 +561,19 @@ through `shared/_content_tabs`: **Scene Details**, **Events**, **Characters**, *
 and **Tropes** are all live links, each its own canonical page. A tab is never a link to a route that
 does not exist and never an in-document Bootstrap pane.
 
-The Scene form offers the fixed **Status** selector beside the title and description, and, while the
-browser's drafting contract preference is **Show**, a **Drafting contract** textarea that keeps the
-author's scene note as written; neither field changes the narrative position. When the preference is
-**Hide** the textarea is absent, so the note can be neither seen nor edited there, and an update
-leaves the stored column untouched. **Scene tags**
-holds the optional native multi-select with root-first tag paths, **Organization** holds the Section
-selector (with **Ungrouped** and depth-indented Section names), and **In-world time** holds the
+The Scene form opens on the title, photo, short description, the fixed **Status** selector, and the
+**Section** selector (with **Ungrouped** and depth-indented Section names), because grouping is the
+one optional choice a new Scene usually makes at creation. Every other optional field sits in a
+native `<details>` disclosure whose summary names the field and states what is stored — a tag count,
+the in-world time, the point-of-view character — so a closed group still answers the question. A
+group opens itself when one of its fields was rejected, so the error summary never points at a
+control hidden inside a closed group. The disclosures work without JavaScript, and each searchable
+picker keeps the native multiple `<select>` underneath, so the same form still submits when the
+script does not run. While the browser's drafting contract preference is **Show**, the **Drafting
+contract** textarea is the first group and keeps the author's scene note as written; when the
+preference is **Hide** the group is absent, so the note can be neither seen nor edited there, and an
+update leaves the stored column untouched. **Scene tags** holds the searchable multi-select with
+root-first tag paths, **Plot arcs** holds the Story's plots, and **In-world time** holds the
 `datetime-local` field. Each field has copy stating what it does *not* do. **Events** holds a
 searchable multi-select of every Event in the Universe, so a Scene can link the Events it depicts
 directly from the editor; a blank choice removes the Scene's links without deleting the Events. The
@@ -581,7 +587,7 @@ only the references the Scene carries and offers the rest through its editor's p
 `Scene` itself) so it never overwrites `menu_section_count`; `Scene` declares
 `invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE`.
 
-The editor's **Point of view** fieldset holds the optional selector — the universe's characters plus
+The editor's **Point of view** group holds the optional selector — the universe's characters plus
 **None** — and names the character whose perspective presents this scene. It is separate from who
 takes part and who speaks: choosing one does not make them a participant, and it does not say which
 lines belong to whom. Clearing it records no point of view rather than choosing nobody.

@@ -211,16 +211,7 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-77. **Streamline the Scene editing form.**
-
-   [`scenes/_form`](../app/views/scenes/_form.html.erb) exposes photo, description, drafting contract,
-   status, tags, plots, grouping, time, events, and point of view in one long form; tags and plots use
-   native multiple selects while Events uses a searchable picker. Test grouped progressive disclosure
-   and a consistent, accessible selection experience for long lists. Preserve all existing selections,
-   error recovery, no-JavaScript behavior where applicable, and the preference that hides the drafting
-   contract. **Question:** which fields must be immediately visible during initial creation?
-
-78. **Make list navigation more discoverable.**
+77. **Make list navigation more discoverable.**
 
    On the [Characters list](../app/views/characters/index.html.erb) and other shared lists, record names
    are plain text and a separate **Details** link opens the record; the

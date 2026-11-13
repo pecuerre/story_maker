@@ -20,8 +20,18 @@ class SceneTagsTest < ApplicationSystemTestCase
     assert_selector ".taxonomy-name-trigger", text: "Browser scene tag"
 
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
-    assert_field "Scene tags", type: "select"
-    select "Browser scene tag", from: "Scene tags"
+    # The optional fields sit in disclosure groups, so the picker is opened
+    # before it can be used; the summary says the Scene carries no tag yet.
+    find("summary", text: "Scene tags (2 assigned)").click
+    within "details.form-disclosure", text: "Scene tags" do
+      # The control already holds two tags, and clicking a pill would select it
+      # for keyboard removal instead of focusing the search field, so the empty
+      # end of the control is clicked.
+      control = find(".ts-control")
+      control.click(x: control.rect.width - 20, y: control.rect.height / 2)
+      find(".ts-control input").set("Browser scene tag")
+      find(".ts-dropdown .option", text: "Browser scene tag").click
+    end
     click_button "Update Scene"
 
     assert_selector "h1", text: scene.name

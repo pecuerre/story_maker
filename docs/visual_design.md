@@ -527,6 +527,10 @@ The painted shape:
   Scene without an in-world time is not in a date range. Every access level sees it, because
   filtering is reading. While a filter is active the surface adds `Showing N scenes of M scenes.`
   followed by the active filters as neutral badges.
+- The Scene editor keeps the title, short description, status, and Section in view and folds every
+  other optional field into a `.form-disclosure` native `<details>`: a hairline, a bold summary, and
+  a group that expands in place rather than navigating. Tags, plots, and Events share one searchable
+  picker rather than mixing a native multiple list with a richer control.
 - A recognized Character name in Element prose is a `.mention` link with a solid hairline underline.
   A name the Scene does not record as present adds `.mention--suggested` and a dashed underline; the
   difference is a line pattern rather than a hue, so it survives light, dark, and print. The matching

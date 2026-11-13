@@ -45,7 +45,7 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 96. The list below keeps the numbers it already had and never
+The highest number this file has used is 99. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
@@ -202,7 +202,8 @@ This is a **source-based design review**, not a browser, accessibility, or user-
 It examined the shell, navigation, Story overview, lists, Scene editor and board, analytics,
 drafts, and export views, alongside the design and navigation documents. The recommendations below
 are hypotheses to validate, except where the [browser baseline](delivery_history.md#2026-11-12)
-records a specific observation; they are not claims about user struggles.
+records a specific observation; they are not claims about user struggles. A later
+[rendered audit](delivery_history.md#2026-11-13) supplies measured evidence where it covers them.
 No UI changes are approved by recording them here. Each item is a separate decision for later.
 
 The existing direction is worth keeping: a calm, scope-aware Bootstrap workspace, theme tokens,
@@ -278,13 +279,16 @@ its own alongside the browser baseline follow-ups.
    view should share the list's filters; keep the full-table equivalent, explicit layer meanings, and
    print behavior. Assess with realistic data before choosing a control.
 
-86. **Audit the visual system's hierarchy and feedback.**
+86. **Prototype the hierarchy and feedback fixes the rendered audit found.**
 
-   Review real rendered screens for repeated bordered pills, equal-weight outline buttons, narrow
-   metadata, touch targets, theme contrast, and toast persistence. Prototype changes using existing
-   Bootstrap and theme tokens rather than a new framework; make status and actions distinguishable
-   without color alone. Verify success, failure, loading, long text, focus, reduced motion, and both
-   themes rather than assuming these are broken.
+   The 2026-11-13 audit supplies the rendered evidence this item used to ask for: two solid primaries
+   on the filter pages, a header primary whose position changes between pages, three equal-weight
+   outline buttons in the Story structure card, Character rows at 98px beside Scene rows at 65px, and
+   focus rings in two visual languages. Prototype changes with the existing Bootstrap and theme
+   tokens rather than a new framework; make status and actions distinguishable without color alone.
+   Keep the observations the audit did not prove — repeated bordered pills, narrow metadata, touch
+   targets, theme contrast, and toast persistence — as checks rather than assumed defects. Verify
+   success, failure, loading, long text, focus, reduced motion, and both themes.
 
 - **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
   post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),
@@ -299,16 +303,9 @@ modern visual direction. The stages are in suggested order, with owner decisions
 is prototyped and before it is rolled out. These are pending ideas, not approval for a redesign.
 Coordinate with the existing visual/task baseline and visual hierarchy audit rather than repeating
 the same observations; use their findings to inform the other UI/UX items. The agreed starting point
-is [visual_design_brief.md](visual_design_brief.md).
-
-88. **Audit the rendered interface for visual design.**
-
-   Inspect the running app in a browser and capture the shell, empty and populated Story overviews,
-   a list, and Scene details and editor. Compare desktop and mobile, light and dark themes, and long
-   English and Spanish labels. Assess color, typography, spacing, hierarchy, component consistency,
-   content width, navigation placement, responsive behavior, contrast, keyboard focus, and zoom.
-   Document concrete observations and screenshots, building on the existing baseline and hierarchy
-   audit rather than presenting source-based hypotheses as verified problems.
+is [visual_design_brief.md](visual_design_brief.md). The rendered interface has been audited, and its
+measured findings and screenshots are recorded in
+[delivery_history.md](delivery_history.md#2026-11-13).
 
 89. **Explore and recommend visual directions.**
 
@@ -332,6 +329,32 @@ is [visual_design_brief.md](visual_design_brief.md).
    related screens in manageable groups. Validate accessibility, responsive behavior, translations,
    and existing workflows as each slice lands. Keep changes reversible, avoid a new framework or
    other dependencies unless justified, and update the owning design documentation as behavior changes.
+
+The 2026-11-13 audit also found three defects that do not depend on the direction. They are local
+inconsistencies with controls the pages already use, not approval to restyle a screen.
+
+97. **Theme the photo field's file input.**
+
+   The Scene and Story forms build their picture control in `photo_crop_controller.js`, and the file
+   input is the browser's native picker. It carries `.form-control`, but **Choose File / No file
+   chosen** keeps the browser's light chrome, so in the dark theme it is the brightest control on the
+   form. Add a `::file-selector-button` treatment from the theme tokens, keep the existing focus ring,
+   and check the empty and chosen states at desktop and phone widths in both themes.
+
+98. **Give the row Details link a same-page icon.**
+
+   `record_details_link` renders `bi-box-arrow-up-right`, which conventionally means "opens in a new
+   tab", while the link stays in the same tab; the collaborators list hand-builds the same icon. Use
+   a same-page affordance, or no icon, and keep the accessible name that repeats the record name.
+   Check the row's other icon-only controls for one vocabulary rather than mixed metaphors.
+
+99. **Separate the Tags scope switch from the tag-type switch.**
+
+   Scene tags renders two identical tab bars — **Universe Tags / Story Tags**, then **Section tags /
+   Scene tags**. The first changes scope and the second changes the type, but they share the same
+   underline treatment, so the second reads as a nested page. Give the scope switch a different
+   treatment, such as a segmented control or a labelled select, or combine both choices into one
+   control; keep the current URLs and the empty state in both languages.
 
 ## FUTURE WORK
 

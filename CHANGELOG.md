@@ -60,6 +60,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Rendered visual audit.** The running workspace was walked at 1440, 768, 390, and 720 CSS pixels in both themes and in Spanish, and its measured findings are recorded in `docs/delivery_history.md`; its three independent defects became backlog follow-ups and its hierarchy review a fix task.
 - **Visual design brief.** The owner's aim is a denser reference atlas for a solo writer, with Novelcrafter, Wikipedia, and Wikidata as references, recorded with constraints and representative screens in `docs/visual_design_brief.md`.
 - **Scene role vocabulary.** Closed the structured-roles idea after checking every stored role: 66 of 96 Scene links carry one, 65 are distinct, and none recurs across Scenes, so free-text roles stay the design.
 

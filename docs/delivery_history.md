@@ -29,6 +29,89 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-13
 
+- **[docs]** **Rendered-interface visual audit.**
+  - **Scope.** A browser pass over the running development app as the signed-in writer
+    `dark@dark`, who owns Dark and Meridian, not a participant session and not a screen-reader
+    test. The reference products were not reviewed; the brief's borrowed qualities stand as
+    stated there.
+  - **Coverage.** Meridian / The Fifth Cabinet (19 sections, 24 scenes, 38,232 words) for the
+    populated pages, and a temporary empty Story in Dark for the empty overview (destroyed after
+    the pass). Screens: the shell and Story overview, Characters list, Character details, Scenes
+    list, Scene details, Scene editor, and the Scene tags workspace. Widths were 1440 CSS pixels
+    (the primary reference), 768, 390, and 720 as the 200%-zoom equivalent, with light and dark
+    compared at 1440 and Spanish compared at 1440 in dark. Screenshots are in
+    `/tmp/opencode/story-maker-audit-2026-11-13/` (temporary, not committed); they are 0.75-scale
+    because this browser profile runs at 75% zoom, while the measured layout width was 1440, 768,
+    or 390 CSS pixels.
+  - **Measured.** At 1440 the left sidebar is 256px, the right tools sidebar 224px, and the main
+    column 940px wide. A Character row is 98px tall and a Scene row 65px. The populated Story
+    overview is 2,310px tall; its scenes-per-character chart is a 352px scroll box over 544px of
+    rows, so its last visible row is cut and the rest need its inner scrollbar. Sampled text
+    contrast runs from 4.64:1 to 20.07:1 in light and 5.58:1 to 20.07:1 in dark; the lowest values
+    are 13–14px helper and secondary text and the outline-secondary button. No page produced
+    document-level horizontal overflow at any tested width; the only boxes past the viewport were
+    the closed offcanvas panels.
+  - **Hierarchy and density.**
+    - Several pages show **two solid blue buttons**: the header's create action and the filter's
+      submit (Characters, Scenes, Scene tags). The filter submit is the heavier one inside the
+      content area.
+    - The header **primary action moves**: first on the Story overview, last after **All scenes**
+      and **Discuss** on Scene details, and the third control at 390 where it is full width.
+    - The Story structure card offers three equal-weight outline buttons; they wrap to two rows at
+      1440 and three in Spanish at 1440.
+    - An empty Story's header primary is **Open sections**, while the body recommends **Apply
+      structure**; the two starting paths are not aligned.
+    - Character details repeats the record name in the page title and the card heading, with
+      uppercase kickers (`CHARACTER`, `DESCRIPTION`) separating facts from prose.
+    - Character rows at 98px (two-line description) and Scene rows at 65px (one line) are peer
+      lists at very different densities.
+    - At 390 and at 768 the filter block fills the first screen of the Characters list: no record
+      is visible before scrolling. The Scene filter adds four more controls.
+  - **Component consistency.**
+    - The photo field's file input is the browser's native **Choose File / No file chosen**
+      control, so it keeps light OS chrome inside the dark form.
+    - A row's **Details** link uses `bi-box-arrow-up-right`, the "open in a new tab" icon, for
+      same-tab navigation.
+    - Edit controls carry a pencil on Character and Scene but not Story; create controls carry a
+      plus on Character and Scene.
+    - Scene tags stacks two identical tab bars (**Universe Tags / Story Tags**, then **Section
+      tags / Scene tags**) with no visual distinction between the scope switch and the type
+      switch.
+  - **Chrome and responsive.**
+    - The two sidebars take 480 of 1440 CSS pixels, one third of the desktop width, leaving 940px
+      for content.
+    - The tools panel truncates Spanish **Solicitudes de re…** at its 224px width.
+    - At 768 the two-column card grid stays side by side: the Story structure copy wraps to four
+      lines in a ~340px card and its three buttons take two rows.
+    - At 390 the scope line truncates to **Meridian · The Fifth Cab…**, Scene details' seven tabs
+      need three rows, and header actions stack with the primary full width.
+    - At 720 CSS pixels (200% zoom on a 1440 screen) the layout is a single column with no
+      overflow and the header actions still fit one row.
+  - **Focus and interaction.** Every focused control in a 34-step tab tour showed an indicator once
+    its 0.15s transition had settled: buttons and form fields draw a 4px blue glow, while plain
+    links fall back to the browser's 1.33px black outline. The skip link is first in the tab order,
+    and the search field's focus ring is a blue border plus glow. The two visual languages are
+    both visible; they are not identical.
+  - **What held up.** Scope is explicit in the top bar, the populated Story overview has one
+    primary action, the chart keeps a table alternative, the dark outline-button text sampled at
+    5.58:1 and 6.54:1 (the 2026-11-12 failure is fixed), and no sampled contrast value or tested
+    width failed.
+  - **Not verified.** Real participant behaviour, actual screen-reader use, guest and read-only
+    views beyond the shared pages, browsers other than this Chromium, print, reduced-motion
+    behaviour beyond the existing CSS, every page's tab order, modals, the Scene board, the
+    analytics grids, drafts, and export. An accessibility-tree inspection is not a screen-reader
+    test.
+  - **Process note.** The running container had booted before the day's locale change and served
+    stale Spanish, rendering "1 líneas"; `docker compose restart web` corrected it to "1 línea"
+    before the Spanish captures. The pass restarted the service for that reason, and the
+    temporary empty Story was destroyed afterwards.
+  - **Next.** These observations inform the directions exploration; they are not approval of any
+    change, and the brief's representative screens remain the comparison set. Observations already
+    named by pending ideas — filter weight, list navigation, scope switching, export scope, and
+    analytics navigation — should inform those ideas rather than be recorded twice. The three
+    defects that do not depend on the direction are now pending backlog items, and the hierarchy
+    item was narrowed from reviewing the screens to prototyping their fixes.
+
 - **[docs]** **Visual design brief.**
   - **The gap.** The visual design initiative listed a brief, a rendered-interface audit, a
     directions exploration, and a prototype, but nothing recorded what the workspace should aim at.

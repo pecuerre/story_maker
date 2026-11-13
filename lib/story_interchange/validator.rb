@@ -949,15 +949,38 @@ module StoryInterchange
       # point into another chapter. A Plot file can name a scene the same way a
       # Scene's own prose does. The older `[[scene:NN-slug]]` form is still
       # accepted, because the filename remains the scene's source identity.
+      #
+      # A file inside a Story resolves only within that Story. A Universe file
+      # has no Story of its own, so it may name a scene only when exactly one
+      # Story defines that address: the details page renders the link against
+      # the Universe, and two candidates would make it point at an arbitrary one.
       def check_scene_reference(entry, reference, slug)
-        if entry.story_slug.blank?
-          error(entry.document, reference.line,
-            "unknown scene `#{slug}`; only a story file can reference a scene")
-        elsif !@scene_slugs.key?([ entry.story_slug, slug ]) &&
-            !@scene_files.include?([ entry.story_slug, slug ])
-          error(entry.document, reference.line,
-            "unknown scene `#{slug}` in story #{entry.story_slug}")
+        if entry.story_slug.present?
+          unless @scene_slugs.key?([ entry.story_slug, slug ]) ||
+              @scene_files.include?([ entry.story_slug, slug ])
+            error(entry.document, reference.line,
+              "unknown scene `#{slug}` in story #{entry.story_slug}")
+          end
+          return
         end
+
+        stories = stories_defining_scene(slug)
+        if stories.empty?
+          error(entry.document, reference.line, "unknown scene `#{slug}`")
+        elsif stories.size > 1
+          error(entry.document, reference.line,
+            "ambiguous scene `#{slug}`; it is defined in stories #{stories.sort.join(', ')}, " \
+            "and a universe file cannot choose one")
+        end
+      end
+
+      # The Stories whose scenes carry this address, in either the story-wide
+      # bare-slug form or the older full-filename form. A Universe file compares
+      # them instead of assuming a Story.
+      def stories_defining_scene(slug)
+        stories = @scene_slugs.keys.filter_map { |(story_slug, scene_slug)| story_slug if scene_slug == slug }
+        stories.concat(@scene_files.filter_map { |(story_slug, filename)| story_slug if filename == slug })
+        stories.uniq.sort
       end
 
       # A typed reference must name a record of the kind its prefix declares.

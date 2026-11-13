@@ -128,7 +128,8 @@ turn it into a record by accident.
   scene key; the filename is the scene's identity inside its chapter. Its story-wide address is that
   filename without the two-digit sequence (`01-the-gate` → `the-gate`); it must be unique within the
   Story and is frozen once the file exists. The imported Scene takes that address as its slug, so a
-  `[[scene:slug]]` link resolves from any file in the Story.
+  `[[scene:slug]]` link resolves from any file in the Story, and from a Universe file when exactly one
+  Story in the source defines that address.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
   `README.md` is its human index and is not a Plot.
 
@@ -398,7 +399,7 @@ a reference inside inline code is real, because the source writes rule citations
 | `[[plot:slug]]` | a Plot in the same source |
 | `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source, by slug alone |
 | `[[rule:ID]]` or `[[canon:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
-| `[[scene:slug]]` | a scene in the same Story, by its story-wide bare slug; it may cross chapters |
+| `[[scene:slug]]` | a scene by its story-wide bare slug; a story file resolves in its own Story, a Universe file only when exactly one Story defines it; it may cross chapters |
 | `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
 
 A Scene's `## Dialog` block names each line's speaker with an `@` form:
@@ -414,8 +415,10 @@ record kind, which the layout already requires.
 
 A `moment` relation is not a `[[bracket]]` reference: it names its target by the scene's path under
 `chapters/` without `.md` (`06-the-meeting/02-the-page`), so it is checked by the moment rules above
-rather than by the reference scanner. A `[[scene:slug]]` names the same Story's scene by its
-story-wide bare slug instead. Both forms may cross chapters; only the bracket form is a reference.
+rather than by the reference scanner. A `[[scene:slug]]` names a scene by its story-wide bare slug
+instead: a file inside a Story resolves within that Story, and a Universe file only when exactly one
+Story in the source defines the address. Both forms may cross chapters; only the bracket form is a
+reference.
 
 A work-item id is not a link: the source writes `B-###` as plain prose, so the scanner ignores it
 rather than treating it as a reference. A bracketed `[[B-###]]` is still accepted as the same
@@ -466,8 +469,9 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
 - a slug does not match its filename, two records share a slug, or two scenes in one Story share a
   story-wide scene slug;
 - a canon id is duplicated;
-- a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:slug]]` does not resolve, or a bracket
-  reference has an unknown form;
+- a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:slug]]` does not resolve, a Universe
+  file's scene reference is defined by more than one Story, or a bracket reference has an unknown
+  form;
 - a Scene's id, branch, point of view, location, or `plot` does not match the contract above;
 - a Scene's `moment` does not parse, names no scene, or names its own scene;
 - a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or

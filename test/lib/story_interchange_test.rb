@@ -276,6 +276,54 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/unknown scene `the-missing` in story synthetic-story/, errors(report))
   end
 
+  test "accepts a scene link from a universe file when one story defines the scene" do
+    replace("universe/characters/ada.md", "Leaves the lantern on the ground.",
+      "Leaves the lantern on the ground, as in [[scene:the-gate]].")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "reports a scene link from a universe file that names no scene" do
+    replace("universe/characters/ada.md", "Leaves the lantern on the ground.",
+      "Leaves the lantern on the ground, as in [[scene:the-missing]].")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/unknown scene `the-missing`/, errors(report))
+  end
+
+  test "refuses a scene link from a universe file when two stories define the scene" do
+    write("stories/another-story/README.md", "# Another Story\n")
+    write("stories/another-story/chapters/01-arrival/01-the-gate.md", <<~MARKDOWN)
+      ---
+      id: B-201
+      title: The other gate
+      pov: ada
+      location: keep
+      timeline: "the gate in another story"
+      moment: ""
+      branch: main
+      ---
+
+      # The other gate
+
+      ## Narration
+
+      Another gate, in another story.
+    MARKDOWN
+    replace("universe/characters/ada.md", "Leaves the lantern on the ground.",
+      "Leaves the lantern on the ground, as in [[scene:the-gate]].")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/ambiguous scene `the-gate`/, errors(report))
+    assert_match(/another-story/, errors(report))
+  end
+
   test "refuses two scenes in one story that share a story-wide slug" do
     write("stories/synthetic-story/chapters/02-winter/01-the-gate.md", <<~MARKDOWN)
       ---

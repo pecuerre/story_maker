@@ -48,6 +48,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Scene links from universe profiles.** A `[[scene:slug]]` in a Universe file now imports when exactly one Story defines the scene, and is refused as ambiguous when two Stories share that address.
 - **Draft-mode creation feedback.** A remembered change now lands on a page-level alert that names what was remembered and links to its draft, instead of relying on a four-second toast over a blank creation form.
 - **Editor focus on close.** Closing a shared flat-list or taxonomy tree editor now returns focus to the control that opened it, or to the row's menu toggle, instead of leaving the reader on the page body.
 - **Story header layout.** The Story overview's actions wrap inside the header at desktop and tablet widths instead of running into the right sidebar, and translated actions no longer widen the document.

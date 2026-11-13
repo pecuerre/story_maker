@@ -111,6 +111,18 @@ are linked rather than repeated, so there is one place to keep them current.
     is closed and follows it into the draft. This change does not claim participant testing: whether
     authors understand live, pending, Apply, Submit, and Discard remains item 96's work.
 
+- **[fixed]** **A universe profile may link a scene when one Story defines it.**
+  - **The failure.** `[[scene:the-window]]` in a Character profile was refused with "only a story
+    file can reference a scene" even though the Scene exists, and the character page already renders
+    scene links against the Universe's scenes. The validator was stricter than the app it feeds.
+  - **The decision.** A file inside a Story still resolves a scene link only within that Story. A
+    Universe file has no Story of its own, so it resolves the address across the source and accepts
+    it when exactly one Story defines it. Two Stories sharing the address are refused as ambiguous,
+    because the details page's lookup could otherwise pick either Scene.
+  - **Verification.** `test/lib/story_interchange_test.rb` covers the accepted Universe file, the
+    unknown address, and the two-Story ambiguity; the full Rails suite, `bin/rubocop`, and
+    `story_interchange:validate` against the real `tcs` source pass.
+
 - **[fixed]** **A remembered change states its result on the page the author returns to.**
   - **The failure.** A draft-based universe remembers a create instead of writing it, so there is no
     record to redirect to; the HTML flow returns the author to the page they submitted from. From the

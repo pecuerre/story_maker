@@ -40,6 +40,19 @@ Labels used below, in the order their groups appear:
 
 ## 2026-11-13
 
+### added
+
+- **Scene writing entry point.** Scene Details now opens with its Element list above the identity facts, and every row carries a visible **Edit** button beside its Move controls instead of hiding the editor in the row menu.
+- **Element discard guard.** The Scene Element editor asks before dismissing changed prose, while an untouched editor still closes on Cancel.
+
+### changed
+
+- **Element editor comfort.** The Content field is a tall, growing textarea rather than a five-row box, and the Element dialog is full-screen on phones.
+
+### fixed
+
+- **Draft-mode Element feedback.** A remembered Element save now lands on the page-level draft alert, so Scene Details says the prose went into the draft instead of looking unchanged.
+
 ### chore
 
 - **Untracked database artifacts.** `.gitignore` now ignores `db/*.sqlite3` files so a stray database created there by an external tool stays out of `git status`; the application keeps its databases in `storage/`.

@@ -27,6 +27,49 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-11-13
+
+- **[added] Scene Details opens with the prose a writer came to write.**
+  - **The gap.** Scene Details put the ordered Elements below a card of a dozen identity facts, and
+    the only Edit control for a block of prose was an item in that row's overflow menu, next to
+    Delete. A writer returning to continue a scene scrolled to reach the text and then opened a menu
+    to change it. Backlog item 76 recorded the shape and asked whether writers compose here or
+    import prose from elsewhere; the writing surface this change makes is the answer for the
+    in-app path, with file import untouched.
+  - **The decision.** The Element section is now the page's first substantive block, above the
+    identity card, and the identity facts still close with the drafting contract. Each row shows a
+    visible **Edit** button beside Move up/Move down, with an accessible name that includes the
+    Element; Delete stays in the menu because it is destructive and is not the action a writer
+    reaches for mid-draft. This is the one list row in the application whose editor is not
+    menu-only, and the exception is stated in `docs/conventions.md` rather than left implicit.
+  - **The editor.** Content is rendered with ten rows, a minimum height, and `field-sizing: content`
+    where the browser supports it, so the field grows with the paragraph; the dialog is
+    `modal-fullscreen-sm-down`, so a phone's on-screen keyboard opens over a full-screen editor
+    rather than over a centred dialog it covers whole. Narration and Dialogue keep the same editor
+    and the same server-enforced split.
+  - **Unsaved prose.** The shared `modal_form` controller gained an opt-in `guardUnsaved` value. An
+    editor that opts in snapshots its submitted values when it opens and compares the live form
+    before dismissing; a difference asks in the browser's own confirm, and Cancel keeps the editor
+    and every typed character. The comparison is against the opened values, not an empty form, so
+    reading a stored Element and closing it asks nothing. No other editor opts in, because the
+    guard exists for text that cannot be retyped from the record.
+  - **Draft feedback.** `DraftMutation` now leaves `flash[:draft_change]` for JSON responses as well
+    as HTML redirects: both end on a page that renders `shared/_draft_remembered`, because a JSON
+    editor refreshes itself with a Turbo visit. Before this, a remembered Element create closed the
+    modal and returned a Scene Details page that looked unchanged — the Elements list has no pending
+    row of its own — and only the navbar count said anything had happened.
+  - **Verification.** `test/controllers/scenes_controller_test.rb` covers the page order, the visible
+    Edit control, the editor's size and guard attributes, and the absence of Edit from the menu;
+    `scene_elements_test.rb` covers the discard confirmation (declined and accepted), the untouched
+    close, mention cues surviving an edit, the remembered create's page-level alert, the phone
+    dialog, and the read-only list without controls; `modal_form_controller_test.js` covers the
+    guard's four paths; `draft_mutation_test.rb` covers the JSON flash entry and its landing page.
+    The Spanish keys are in `config/locales/es.yml`, and the generated client-strings fixture was
+    regenerated.
+  - **What it does not do.** It adds no new editor, no autosave, no draft-pending row for Elements,
+    and no change to where prose is imported. It also does not settle whether writers primarily
+    compose in the app or import; the backlog question is answered only for the in-app path.
+
 ### 2026-11-12
 
 - **[changed]** **An empty Story now explains its two starting points instead of only offering controls.**

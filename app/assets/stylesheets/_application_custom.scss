@@ -1230,6 +1230,18 @@ $um-search-match: #ffc107;
   -webkit-line-clamp: 2;
 }
 
+// Scene Details is the writing surface, and the Element editor's Content field
+// is where the prose actually lives, so it is given the height of a page rather
+// than a form field. `field-sizing: content` lets it grow as the author types in
+// the browsers that support it; everywhere else the rendered `rows` and this
+// minimum are the whole answer, and the field is still comfortable without
+// scripting. `resize: vertical` keeps the browser's own handle for adding more.
+.scene-element-body {
+  min-height: 15rem;
+  field-sizing: content;
+  resize: vertical;
+}
+
 // The imported drafting contract is a note kept as the author wrote it, but it
 // is stored as Markdown. It is rendered as Markdown so a bullet line is a real
 // list row, and the surface gives the note the weight of an aside rather than a

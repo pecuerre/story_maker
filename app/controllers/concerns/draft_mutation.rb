@@ -228,6 +228,23 @@ module DraftMutation
     end
 
     def render_draft_change(change)
+      # **The result is a datum rather than a sentence, because the page that reads
+      # it renders the sentence in flow instead of as a toast.** A create added from
+      # a full-page form is the case that matters: the author is returned to a blank
+      # form, which reads as a save that failed, and a four-second toast is easy to
+      # miss altogether. `shared/draft_remembered` prints this entry as a persistent
+      # alert naming what was remembered and carrying a link into the draft, and
+      # `shared/flash` deliberately leaves the entry alone so it is not also printed
+      # as a toast.
+      #
+      # **Both response flows leave the entry**, because both end on a page that
+      # renders it: an HTML workspace redirects there, and the JSON editors refresh
+      # themselves with a Turbo visit to the same URL. The JSON receipt alone was
+      # not enough for a list with no pending row of its own — a remembered Scene
+      # Element create left Scene Details exactly as it was, with nothing saying the
+      # prose had gone into the draft rather than the scene.
+      flash[:draft_change] = draft_change_flash(change)
+
       return render json: draft_change_json(change), status: :accepted if request.format.json?
 
       # The HTML workspaces have no record to redirect *to* for a remembered create,
@@ -237,17 +254,7 @@ module DraftMutation
       # from another host. The status follows the verb, as the documented HTML flow
       # requires: a PATCH or a DELETE answers `see_other` rather than asking the
       # browser to repeat a non-GET verb as a GET.
-      #
-      # **The result is a datum rather than a sentence, because the page that reads
-      # it renders the sentence in flow instead of as a toast.** A create added from
-      # a full-page form is the case that matters: the author is returned to a blank
-      # form, which reads as a save that failed, and a four-second toast is easy to
-      # miss altogether. `shared/draft_remembered` prints this entry as a persistent
-      # alert naming what was remembered and carrying a link into the draft, and
-      # `shared/flash` deliberately leaves the entry alone so it is not also printed
-      # as a toast.
       redirect_back_or_to(universe_path(universe_slug: Current.universe.slug),
-        flash: { draft_change: draft_change_flash(change) },
         status: draft_redirect_status)
     end
 

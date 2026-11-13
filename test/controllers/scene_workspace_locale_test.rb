@@ -220,6 +220,10 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "button[data-action='modal-form#open']", text: "Añadir elemento"
+    # The writing surface's own sentence and the visible per-row editor are
+    # chrome too, so they are proved in the language a reader would see.
+    assert_includes response.body, "La prosa de la escena, en orden de lectura."
+    assert_select ".scene-elements .entity-row button[data-action='modal-form#open']", text: "Editar"
     assert_select ".modal-title", text: "Añadir elemento"
     assert_select "label[for=scene_element_kind]", text: "Tipo de elemento de escena"
     assert_select "label[for=scene_element_name]", text: "Título"

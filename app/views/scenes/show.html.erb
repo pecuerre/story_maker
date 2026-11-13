@@ -14,9 +14,17 @@
 
 <%= render "scenes/workspace_tabs" %>
 
+<%# The Elements come first, before the identity card. Scene Details is the page a
+    writer returns to in order to write, and the identity facts are reference
+    matter around the prose rather than the prose's gateway: a page that opens
+    with twelve facts and puts the writing below them makes the next block the
+    last thing a writer scrolls to. They stay on this page, in reading order,
+    rather than moving to a second one. %>
+<%= render "scenes/elements" %>
+
 <%# Scene Details is the canonical, inspectable destination: the same content is
     shown to writers and read-only viewers, and only writers get the editor link. %>
-<div class="surface-card p-4">
+<div class="surface-card p-4 scene-identity">
   <%# The photo sits in the left column of the same row as the identity facts,
       exactly as it does on every `shared/_record_details` page. With no photo
       the facts keep the whole card, which is how this page looked before. %>
@@ -33,11 +41,6 @@
     <%= render "scenes/show_identity", scene: @scene, story: @story %>
   <% end %>
 </div>
-
-<%# Elements stay under Scene Details in this version: the scene above carries
-    its identity and references, and the ordered prose blocks belong to the same
-    page rather than to a second one. %>
-<%= render "scenes/elements" %>
 
 <%# The drafting contract closes the page: it is the writer's note about the
     scene as a whole, not one of its identity facts. It is a browser display

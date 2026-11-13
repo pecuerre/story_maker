@@ -117,6 +117,7 @@ module ClientStrings
     shared.modal_form.gone_row_refresh
     shared.modal_form.unexplained
     shared.modal_form.fix_and_retry
+    shared.modal_form.discard_unsaved
     shared.modal_form.forbidden
     shared.modal_form.rejected
     shared.modal_form.throttled

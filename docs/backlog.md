@@ -211,15 +211,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-76. **Improve the prose-writing loop.**
-
-   Scene Details places Elements after identity facts, and each Element's edit action is inside a row
-   menu; narration uses a five-row textarea in a modal ([`scenes/_elements`](../app/views/scenes/_elements.html.erb)).
-   Prototype a more prominent writing entry point and more comfortable long-form editing without
-   assuming a new editor is needed. Compare narration and dialogue, preserve ordering and mention cues,
-   and explicitly test unsaved text, errors, focus, mobile keyboards, and draft-mode feedback.
-   **Question:** do writers primarily compose here or import prose from elsewhere?
-
 77. **Streamline the Scene editing form.**
 
    [`scenes/_form`](../app/views/scenes/_form.html.erb) exposes photo, description, drafting contract,

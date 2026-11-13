@@ -285,6 +285,10 @@ en:
       gone_row_refresh: "That row no longer exists. Refreshing the list…"
       unexplained: "The server rejected the change but did not explain why. Nothing was saved."
       fix_and_retry: "The change could not be saved. Fix the following and try again."
+      # Asked only by an editor that opts in with `modal_form_guard_unsaved`, and
+      # only when the form's values have changed since it opened: closing an
+      # untouched editor, or one the author only looked at, asks nothing.
+      discard_unsaved: "Discard what you have written? It has not been saved."
       # The three refusals the mutation contract can answer with, appended to the
       # caller's own sentence so the reader is told both what failed and why.
       forbidden: "You are no longer allowed to do that; reload the page and sign in again."
@@ -1963,6 +1967,11 @@ en:
       title: "Scene elements"
       add: "Add element"
       edit: "Edit element"
+      # The visible per-row control. The accessible label names what is edited;
+      # the button itself stays short so a row of prose keeps its width.
+      edit_short: "Edit"
+      edit_row_aria: "Edit %{name}"
+      intro: "The scene's prose, in reading order. Narration is description or action; dialogue is written as spoken lines."
       position_aria: "Element %{position} of %{total}"
       empty_title: "No elements yet"
       empty_description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block is written as ordered spoken lines."

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import ModalFormController from "../../app/javascript/controllers/modal_form_controller"
 
 // The shared flat-list/HTML-flow modal editor. Every case here is a defect that
@@ -782,6 +782,124 @@ describe("modal form dismiss", () => {
 
     expect(hidden).toHaveLength(1)
     expect(focused).toBe(0)
+  })
+})
+
+// A paragraph of prose is the one thing in this editor a writer cannot retype
+// from the stored record, so the Scene Element editor opts in to a guard: a
+// dismissal after the form has changed asks first. Every other editor closes on
+// Cancel as it always has, and an editor the author only read does not ask.
+describe("modal form unsaved guard", () => {
+  const FORM = `
+    <div class="modal fade" data-modal-form-target="modal">
+      <form data-modal-form-target="form">
+        <input id="scene_element_name" name="scene_element[name]">
+        <textarea id="scene_element_body" name="scene_element[body]"></textarea>
+      </form>
+    </div>
+  `
+
+  let asked = []
+  let answer = true
+  let originalConfirm
+
+  beforeEach(() => {
+    originalConfirm = globalThis.window.confirm
+    asked = []
+    globalThis.window.confirm = (message) => {
+      asked.push(message)
+      return answer
+    }
+  })
+
+  afterEach(() => {
+    globalThis.window.confirm = originalConfirm
+  })
+
+  function guardedEditor({ guard = true } = {}) {
+    const built = build(FORM)
+    built.hidden = stubBootstrapModal()
+    built.controller.modelParamValue = "scene_element"
+    built.controller.guardUnsavedValue = guard
+    built.controller.connect()
+    return built
+  }
+
+  function openElement(controller, values = {}) {
+    openEditor(controller, {
+      modalFormUrl: "/u/dark/s/scenes/1/elements/1",
+      modalFormMethod: "patch",
+      modalFormValuesValue: JSON.stringify(values)
+    })
+    finishedOpening(controller)
+  }
+
+  test("an editor that was only read closes without asking", () => {
+    const { controller, hidden } = guardedEditor()
+    openElement(controller, { name: "The hollow tree", body: "Stored prose." })
+
+    controller.modal.hide()
+
+    expect(asked).toHaveLength(0)
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a changed form is kept when the reader declines the discard", () => {
+    const { controller, form, hidden } = guardedEditor()
+    openElement(controller, { name: "The hollow tree", body: "Stored prose." })
+    form.querySelector("textarea").value = "Prose the writer just wrote."
+
+    answer = false
+    controller.modal.hide()
+
+    expect(asked).toEqual([ "Discard what you have written? It has not been saved." ])
+    expect(hidden).toHaveLength(0)
+    expect(form.querySelector("textarea").value).toBe("Prose the writer just wrote.")
+  })
+
+  test("a confirmed discard closes the editor", () => {
+    const { controller, form, hidden } = guardedEditor()
+    openElement(controller, { name: "The hollow tree", body: "Stored prose." })
+    form.querySelector("textarea").value = "Prose the writer just wrote."
+
+    answer = true
+    controller.modal.hide()
+
+    expect(asked).toHaveLength(1)
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("an editor that did not opt in never asks", () => {
+    const { controller, form, hidden } = guardedEditor({ guard: false })
+    openElement(controller, { name: "The hollow tree", body: "Stored prose." })
+    form.querySelector("textarea").value = "Prose the writer just wrote."
+
+    answer = false
+    controller.modal.hide()
+
+    expect(asked).toHaveLength(0)
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a dismissal during the opening still asks once the dialog is up", () => {
+    const { controller, form, hidden } = guardedEditor()
+    // The dialog has not been shown yet, so an intent that arrives now is the
+    // deferred kind rather than an immediate close.
+    controller.shown = false
+    openEditor(controller, {
+      modalFormUrl: "/u/dark/s/scenes/1/elements/1",
+      modalFormMethod: "patch",
+      modalFormValuesValue: JSON.stringify({ name: "The hollow tree" })
+    })
+    form.querySelector("textarea").value = "Typed while the dialog faded in."
+    controller.modal.hide()
+    expect(asked).toHaveLength(0)
+
+    answer = false
+    finishedOpening(controller)
+
+    expect(asked).toHaveLength(1)
+    expect(hidden).toHaveLength(0)
   })
 })
 

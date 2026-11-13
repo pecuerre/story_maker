@@ -283,6 +283,7 @@ es:
       gone_row_refresh: "Esa fila ya no existe. Actualizando la lista…"
       unexplained: "El servidor rechazó el cambio pero no explicó por qué. No se guardó nada."
       fix_and_retry: "No se pudo guardar el cambio. Corrige lo siguiente e inténtalo de nuevo."
+      discard_unsaved: "¿Descartar lo que has escrito? No se ha guardado."
       # Los tres rechazos que puede contestar el contrato de mutación, añadidos a
       # la oración del propio editor para que quien lee sepa qué falló y por qué.
       forbidden: "Ya no tienes permiso para hacer eso; recarga la página e inicia sesión de nuevo."
@@ -1885,6 +1886,9 @@ es:
       title: "Elementos de la escena"
       add: "Añadir elemento"
       edit: "Editar elemento"
+      edit_short: "Editar"
+      edit_row_aria: "Editar %{name}"
+      intro: "La prosa de la escena, en orden de lectura. La narración es descripción o acción; el diálogo se escribe como líneas habladas."
       position_aria: "Elemento %{position} de %{total}"
       empty_title: "Todavía no hay elementos"
       empty_description: "Una escena puede tener cualquier número de elementos, incluido ninguno. Un bloque de narración describe lo que ocurre; un bloque de diálogo se escribe como líneas habladas ordenadas."

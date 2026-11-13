@@ -413,7 +413,10 @@ is for the list under the reader's chosen tab. Mutation controls are rendered on
 controls use `can_administer_universe?`. The shared row/taxonomy partials enforce this so read-only
 members and public guests see the same content without misleading edit affordances. Flat entity
 rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
-destructive actions marked by text/icon rather than a permanently red button. Flash messages are
+destructive actions marked by text/icon rather than a permanently red button. Scene Details' Element
+rows are the one exception: each row shows **Edit** beside its Move controls and keeps only Delete in
+the menu, because the prose is what a writer returns to change; [scenes.md](features/scenes.md#elements)
+owns that shape. Flash messages are
 rendered once by the application layout through `shared/_flash` as floating toasts fixed to the
 top-right corner. Success toasts auto-dismiss after 4 seconds; error toasts after 10 seconds. Both
 can be closed manually. The `flash_toast_controller.js` Stimulus controller manages the timers.
@@ -459,7 +462,12 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   single-select gets one searchable choice). A modal with a long form uses `modal-lg`
   `modal-dialog-scrollable`; because the body and footer sit inside the server-rendered `<form>`,
   that form is the flex column the scrollable variant sizes, so the body scrolls and the footer
-  stays visible above the bottom of the dialog. The controller's mutation contract is the one decided in
+  stays visible above the bottom of the dialog. A prose editor adds `modal-fullscreen-sm-down` and
+  opts in to the controller's discard guard with `data-modal-form-guard-unsaved-value` on the
+  element that carries `modal-form`: dismissing a changed form then confirms first, and an unchanged
+  one closes without asking. Scene Elements is the only editor that opts in — the guard compares
+  against the values the form opened with, so it is never needed on a form that is cheap to retype.
+  The controller's mutation contract is the one decided in
   [ADR 0011](adr/0011-modal-json-mutation-contract.md), and every modal page declares it with
   `data-modal-form-response-value`:
   - **`json`** (characters, factions, items, events, Scene Elements, Scene Characters): the form carries

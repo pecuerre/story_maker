@@ -1,12 +1,19 @@
 <%# The ordered Scene Element list and its modal, rendered on Scene Details.
 
-    Elements stay under Scene Details in this version: the Scene itself already
-    carries the title, references, and tags, so the prose blocks belong to the
-    same page rather than to a second one.
+    **This is the page's writing surface, and it is the first substantive block
+    on the page.** The Scene already carries the title, references, and tags, so
+    the prose blocks belong beside them rather than on a second page; what moved
+    is the order, because a writer arriving to write should not scroll past a
+    dozen identity facts to reach the text.
 
     The list is a real sequence with visible Move up/Move down controls, so it can
     be reordered with a keyboard and on a touch device; drag-and-drop is not the
     only way. The controls are boundary-aware because positions are contiguous.
+
+    **Edit is a visible control on every row**, beside those Move buttons. It used
+    to live only in the row menu, which made changing a paragraph a two-click
+    detour through a menu that also offered deletion. Delete stays in the menu: it
+    is destructive, and it is not what a writer reaches for mid-draft.
 
     Writers get the modal; guests and read-only members get the same rows without
     a single mutation control. The section owns its own editor, so a page that
@@ -22,6 +29,12 @@
     data-modal-form-model-param-value="scene_element"
     data-modal-form-response-value="json"
     data-modal-form-create-title-value="<%= t("scenes.elements.add") %>"
+    <%# A block of prose is the one thing in this editor a writer cannot retype
+        from memory, so dismissing a changed form asks first. The guard is
+        opt-in: every other modal editor keeps closing on Cancel. It is a
+        controller value, so it lives on the wrapper the controller is attached
+        to rather than on the form. %>
+    data-modal-form-guard-unsaved-value="true"
     data-scene-turns-speaker-choices-value="<%= scene_element_speaker_choices(@character_options).to_json %>"
   <% end %>
   >
@@ -45,7 +58,11 @@
       <% end %>
     </div>
 
-    <p class="form-text"><%= t("scenes.elements.mention_legend") %></p>
+    <p class="form-text"><%= t("scenes.elements.intro") %></p>
+
+    <% if @scene_elements.any? %>
+      <p class="form-text"><%= t("scenes.elements.mention_legend") %></p>
+    <% end %>
 
     <% if @scene_elements.any? %>
       <div class="content-surface">
@@ -80,6 +97,17 @@
 
               <% if editable %>
                 <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                  <button type="button" class="btn btn-sm btn-light border"
+                    data-action="modal-form#open"
+                    data-modal-form-url="<%= universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element) %>"
+                    data-modal-form-method="patch"
+                    data-modal-form-title="<%= t("scenes.elements.edit") %>"
+                    data-modal-form-values-value="<%= scene_element_fields_json(element) %>"
+                    aria-label="<%= t("scenes.elements.edit_row_aria", name: element.name) %>">
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                    <span><%= t("scenes.elements.edit_short") %></span>
+                  </button>
+
                   <div class="d-flex align-items-center gap-1">
                     <button type="button" class="btn btn-sm btn-light border"
                       data-action="modal-form#move"
@@ -111,17 +139,6 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(element) %>-actions">
                       <li>
-                        <button type="button" class="dropdown-item"
-                          data-action="modal-form#open"
-                          data-modal-form-url="<%= universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element) %>"
-                          data-modal-form-method="patch"
-                          data-modal-form-title="<%= t("scenes.elements.edit") %>"
-                          data-modal-form-values-value="<%= scene_element_fields_json(element) %>">
-                          <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("scenes.elements.edit") %>
-                        </button>
-                      </li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li>
                         <button type="button" class="dropdown-item text-danger"
                           data-action="modal-form#destroy"
                           data-modal-form-url="<%= universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element) %>"
@@ -150,7 +167,7 @@
       aria-labelledby="scene-element-modal-title"
       aria-hidden="true"
       data-modal-form-target="modal">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
         <div class="modal-content">
           <div class="modal-header">
             <h2 class="modal-title fs-5" id="scene-element-modal-title" data-modal-form-target="title"><%= t("scenes.elements.add") %></h2>
@@ -194,7 +211,7 @@
 
               <div class="mb-3" data-scene-element-form-target="body">
                 <%= form.label :body, t("scenes.elements.form.body"), class: "form-label" %>
-                <%= form.text_area :body, class: "form-control", rows: 5 %>
+                <%= form.text_area :body, class: "form-control scene-element-body", rows: 10 %>
                 <div class="form-text"><%= t("scenes.elements.form.body_hint") %></div>
               </div>
 

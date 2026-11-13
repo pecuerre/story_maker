@@ -336,16 +336,35 @@ form field: the Move controls are the only way to order Elements.
 
 The Element list and its modal render on Scene Details (`scenes/_elements`), because the Scene above
 it already carries identity, references, and tags; splitting the prose onto a second page would add
-navigation without adding meaning. Each row's kind badge is followed by that kind's own measure: a
-Narration reports its stored word count and a Dialogue reports how many spoken lines it holds. Both
-numbers come from records the page already loaded. A Scene may hold any number of Elements, including
-none, so the empty state says so instead of implying a Scene is unfinished.
+navigation without adding meaning. **It is the page's first substantive block, above the identity
+card**: Scene Details is where a writer returns to write, and prose that sits below a dozen reference
+facts is prose a writer has to scroll to. The identity facts remain on the same page, below the
+prose, and the drafting contract still closes it. Each row's kind badge is followed by that kind's
+own measure: a Narration reports its stored word count and a Dialogue reports how many spoken lines
+it holds. Both numbers come from records the page already loaded. A Scene may hold any number of
+Elements, including none, so the empty state says so instead of implying a Scene is unfinished.
+
+**Editing is a visible control on every row**, beside its Move up/Move down buttons, rather than an
+entry in the row's overflow menu; Delete stays in that menu, because it is destructive and is not
+what a writer reaches for mid-draft. The button is short and its accessible name carries the Element,
+so a reader of the page's control list hears "Edit The hollow tree" rather than six identical
+"Edit" buttons.
 
 **Narration and Dialogue are the same editor with two different sets of rules**, so the modal reads a
 required **Title**, a **Scene element type** selector, and, for Narration only, an optional **Content**
 textarea. A Dialogue has no Content field: its prose is its ordered turns, so the Dialogue-only turn
 fields are hidden for Narration and Content is hidden for Dialogue. `scene_element_form_controller.js`
 and `scene_turns_controller.js` own that presentation; the server is what enforces it.
+
+The Content field is sized for long-form prose rather than for a form value: ten rendered rows, a
+minimum height, and `field-sizing: content` where the browser supports it, so the field grows with
+the paragraph instead of scrolling inside five rows. On viewports below `sm` the dialog is
+full-screen, which gives a phone's on-screen keyboard room above the text. **Dismissing an editor
+whose values have changed asks before the text is discarded** — Scene Elements is the one editor that
+opts in to the shared controller's guard ([conventions.md](../conventions.md#views---three-patterns)).
+The comparison is against the values the editor opened with, so an author who reads a stored Element
+and closes it again is not asked, and every other modal editor still closes on Cancel without a
+confirmation. A rejected save keeps everything the author typed, in place, with the errors in the modal.
 
 `SceneDialogueTurn belongs_to :scene_element` and records one line's optional same-Universe
 `speaker`, optional plain-text `body`, optional `parenthetical`/delivery note, and flat contiguous
@@ -379,7 +398,15 @@ speaker or the controls out of place.
 
 A registered Character name written in an Element body is marked on Scene Details by the prose mention
 index, which is a separate read and never creates presence; its rules are in
-[mentions.md](mentions.md).
+[mentions.md](mentions.md). The marking survives an edit: a successfully saved Element refreshes the
+list from the server, so the same index marks the new prose.
+
+In a draft-based Universe, saving an Element is **remembered rather than written**, and the refreshed
+Scene Details page states that in its own flow and links to the draft. The Elements list has no pending
+row of its own to badge — a remembered create has no id, a body, or a position to show — so the alert
+is what tells the author their prose is waiting rather than missing. See
+[architecture.md](../architecture.md#response-formats-per-controller) for the flash entry both response
+flows leave.
 
 ## Participation is a union, never a sum
 

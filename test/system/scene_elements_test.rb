@@ -4,12 +4,21 @@ require "application_system_test_case"
 # has to prove is the interaction the request suite cannot: the modal opens with
 # the values the server stored, a rejected save stays open and explains itself in
 # the modal, a Dialogue hides Content in favour of its turns, and a successful
-# mutation refreshes the list and its counts from one server render.
+# mutation refreshes the list and its counts from one server render. The writing
+# loop adds the parts only a browser has: a visible Edit control, the discard
+# guard's two answers, mention cues surviving an edit, the draft alert a
+# remembered save lands on, and the full-screen dialog a phone gets.
 class SceneElementsTest < ApplicationSystemTestCase
   setup do
     @universe = universes(:universe_one)
     @story = stories(:story_one)
     @scene = scenes(:scene_one)
+  end
+
+  teardown do
+    # One case narrows the window to a phone to check the full-screen editor;
+    # Capybara reuses one browser for the whole process, so the size goes back.
+    page.driver.browser.manage.window.resize_to(1400, 1400) if page.driver.browser
   end
 
   test "a writer creates, reorders, edits, and deletes a narration element" do
@@ -36,7 +45,7 @@ class SceneElementsTest < ApplicationSystemTestCase
     move_element "The rain starts", "up"
     assert_element_titles [ "The hollow tree", "Michael teaches the waltz", "The rain starts", "The adults argue", "Interlude" ]
 
-    click_row_menu_action find(".scene-elements .entity-row", text: "The rain starts"), "Edit"
+    click_element_edit("The rain starts")
     within ".modal.show" do
       assert_selector ".modal-title", text: "Edit element"
       assert_field "Title", with: "The rain starts"
@@ -76,14 +85,14 @@ class SceneElementsTest < ApplicationSystemTestCase
     end
 
     within ".scene-elements" do
-      row = find(".entity-row", text: "A kitchen argument", wait: REFRESH_WAIT)
+      find(".entity-row", text: "A kitchen argument", wait: REFRESH_WAIT)
       assert_text "Dialogue"
       assert_text "0 lines"
     end
 
     # Reopening the editor brings the stored kind back and still hides Content,
     # which is the part a request test cannot see.
-    click_row_menu_action find(".scene-elements .entity-row", text: "A kitchen argument"), "Edit"
+    click_element_edit("A kitchen argument")
     within ".modal.show" do
       assert_field "Scene element type", with: "dialogue"
       assert_no_selector "[data-scene-element-form-target='body']", visible: :visible
@@ -102,8 +111,7 @@ class SceneElementsTest < ApplicationSystemTestCase
       click_button "Save element"
     end
 
-    row = find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT)
-    click_row_menu_action row, "Edit"
+    click_element_edit("A two-line exchange")
     within ".modal.show" do
       assert_selector "[data-scene-turns-target='emptyState']", visible: :visible
       assert_selector "[data-scene-turns-target='saveFirst']", visible: :hidden
@@ -135,14 +143,14 @@ class SceneElementsTest < ApplicationSystemTestCase
     end
     assert_no_selector ".modal.show", wait: REFRESH_WAIT
 
-    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    click_element_edit("A two-line exchange")
     within ".modal.show" do
       assert_selector ".turn-row", text: /Character two:\s+Edited first line\.\s+\(firmly\)/
       find(".turn-row", text: "Second line.").find("button[data-modal-form-direction='up']").click
     end
     assert_no_selector ".modal.show", wait: REFRESH_WAIT
 
-    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    click_element_edit("A two-line exchange")
     within ".modal.show" do
       assert_equal [ "Second line.", "Edited first line." ], turn_lines
       assert_selector ".turn-row", text: /Character two:\s+Edited first line\.\s+\(firmly\)/
@@ -160,8 +168,7 @@ class SceneElementsTest < ApplicationSystemTestCase
       click_button "Save element"
     end
 
-    row = find(".scene-elements .entity-row", text: "A voice through the door", wait: REFRESH_WAIT)
-    click_row_menu_action row, "Edit"
+    click_element_edit("A voice through the door")
     within ".modal.show" do
       select "Non-character speaker", from: "Speaker"
       fill_in "Line", with: "review-chair: Something"
@@ -202,6 +209,98 @@ class SceneElementsTest < ApplicationSystemTestCase
 
     assert_selector ".scene-elements .entity-row", text: element.name, wait: REFRESH_WAIT
     assert_equal SceneElement::NARRATION, element.reload.kind
+  end
+
+  test "dismissing an edited element asks before the prose is thrown away" do
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_element_edit("The hollow tree")
+    within ".modal.show" do
+      fill_in "Content", with: "A paragraph the writer does not want to lose."
+      # The first Cancel keeps the editor and its text. The reader has to say yes
+      # to lose a paragraph they have written.
+      dismiss_confirm "Discard what you have written? It has not been saved." do
+        click_button "Cancel"
+      end
+      assert_selector ".modal-title", text: "Edit element"
+      assert_field "Content", with: "A paragraph the writer does not want to lose."
+
+      accept_confirm "Discard what you have written? It has not been saved." do
+        click_button "Cancel"
+      end
+    end
+
+    assert_no_selector ".modal.show"
+    assert_equal "Jonas wedges the box into the hollow of the oak and keeps his hand on it.",
+      scene_elements(:narration_one).reload.body
+    # The editor hands focus back to the control that opened it, so a keyboard
+    # reader is on the row they were editing rather than on the page body.
+    assert_selector ".scene-elements .entity-row button[data-action='modal-form#open']:focus"
+  end
+
+  test "an editor opened and closed without a change does not ask" do
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_element_edit("Interlude")
+    within ".modal.show" do
+      # Reading the stored values is not an edit: Cancel closes at once, with no
+      # confirmation to click through.
+      click_button "Cancel"
+    end
+    assert_no_selector ".modal.show"
+  end
+
+  test "editing an element keeps its prose mention cues" do
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_element_edit("The hollow tree")
+    within ".modal.show" do
+      fill_in "Content", with: "Character one waits under the oak."
+      click_button "Save element"
+    end
+
+    row = find(".scene-elements .entity-row", text: "The hollow tree", wait: REFRESH_WAIT)
+    within row do
+      assert_selector "a.mention", text: "Character one"
+    end
+  end
+
+  test "a remembered element create says it went to the draft" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_button "Add element"
+    within ".modal.show" do
+      fill_in "Title", with: "Remembered prose"
+      fill_in "Content", with: "Not live until the draft is applied."
+      click_button "Save element"
+    end
+
+    # The save is remembered rather than written, and the page says so in its own
+    # flow: a JSON editor that only refreshed would leave Scene Details looking
+    # exactly as it did before the writer typed.
+    assert_selector ".draft-remembered", text: "New Scene element is in your draft", wait: REFRESH_WAIT
+    assert_no_selector ".scene-elements .entity-title", text: "Remembered prose"
+    assert_nil SceneElement.find_by(name: "Remembered prose")
+  end
+
+  test "the element editor uses the whole screen on a phone" do
+    sign_in_via_form(users(:user_one))
+    page.driver.browser.manage.window.resize_to(390, 844)
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_element_edit("The hollow tree")
+    within ".modal.show" do
+      # A full-screen dialog is what gives a phone's on-screen keyboard room to
+      # open over a paragraph, rather than a centred dialog it covers whole.
+      dialog = find(".modal-dialog")
+      assert_operator dialog.evaluate_script("this.getBoundingClientRect().width"), :>, 350
+      assert_operator dialog.evaluate_script("this.getBoundingClientRect().height"), :>, 500
+    end
   end
 
   test "a read-only member sees the element list without a single control" do
@@ -253,18 +352,13 @@ class SceneElementsTest < ApplicationSystemTestCase
       nil
     end
 
-    # Opening a row's menu through the page, for the initial Scene Details load.
-    # The native click on this toggle is dropped on a loaded machine even though
-    # `elementFromPoint` returns it; `ReviewWorkflowTest#press_control` documents
-    # the same measured failure. The modal flow under test still runs normally.
+    # Opening a row's editor through the visible Edit control, which is how a
+    # writer reaches it now that it is not a menu item.
     def click_element_edit(name)
-      row = find(".scene-elements .entity-row", text: name)
-      page.execute_script("arguments[0].scrollIntoView({ block: 'center' })", row.native)
-      within row do
-        page.execute_script("arguments[0].click()", find(".dropdown .dropdown-toggle", match: :first).native)
-        assert_selector ".dropdown-menu.show", visible: :visible, wait: MENU_WAIT
-        page.execute_script("arguments[0].click()", find(".dropdown-item", text: "Edit").native)
+      within find(".scene-elements .entity-row", text: name) do
+        find("button[data-action='modal-form#open']", text: "Edit").click
       end
+      assert_selector ".modal.show"
     end
 
     def turn_lines

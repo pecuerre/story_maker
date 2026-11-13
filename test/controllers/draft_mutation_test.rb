@@ -612,6 +612,30 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     )
   end
 
+  test "a json editor's refresh lands on the page that says what was remembered" do
+    collaboration_mode("wikipedia")
+
+    post universe_story_scene_scene_elements_url(
+      universe_slug: @universe.slug, story_id: @story.id, scene_id: @scene.id
+    ), params: { scene_element: { kind: "narration", name: NEW } }, as: :json
+
+    assert_response :accepted
+    # The JSON editor refreshes itself with a Turbo visit, which is the same page
+    # an HTML redirect would have landed on, so the entry is left for it too. A
+    # list with no pending row of its own — the Scene Elements list is one — then
+    # still says the prose went into the draft rather than the scene.
+    assert_equal(
+      { "draft_id" => last_change.draft_id, "action" => "create", "record_type" => "SceneElement" },
+      flash[:draft_change]
+    )
+
+    get universe_story_scene_url(
+      universe_slug: @universe.slug, story_id: @story.id, id: @scene.id
+    )
+
+    assert_select ".draft-remembered", text: /New Scene element is in your draft/
+  end
+
   test "an html workspace redirects with the remembered change and the documented status" do
     collaboration_mode("wikipedia")
 

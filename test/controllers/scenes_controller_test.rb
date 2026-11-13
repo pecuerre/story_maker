@@ -588,6 +588,34 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller='scene-element-form']", count: 0
   end
 
+  test "the element list is the page's writing surface, above the identity facts" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    # A writer arriving at Scene Details reaches the prose before the reference
+    # facts, and the drafting contract still closes the page after both.
+    assert_match(/in reading order/, response.body)
+    assert_operator response.body.index("scene-elements"), :<, response.body.index("scene-identity")
+    assert_operator response.body.index("scene-identity"), :<, response.body.index("scene-drafting-contract")
+    # Every editable row offers its editor as a visible control with its own
+    # accessible name, rather than only through the row menu.
+    assert_select ".scene-elements .entity-row button[data-action='modal-form#open']", 4
+    assert_select ".scene-elements .entity-row button[aria-label=?]",
+      "Edit #{scene_elements(:narration_one).name}", text: "Edit"
+  end
+
+  test "the element editor is sized for prose and guarded against silent dismissal" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select "textarea[name='scene_element[body]'][rows='10'].scene-element-body"
+    assert_select ".modal-dialog.modal-lg.modal-dialog-scrollable.modal-fullscreen-sm-down"
+    assert_select "[data-controller~='modal-form'][data-modal-form-guard-unsaved-value='true']", 1
+    # Delete stays in the row menu; Edit has left it.
+    assert_select ".scene-elements .entity-row .dropdown-item", text: /Delete/
+    assert_select ".scene-elements .entity-row .dropdown-item", text: /Edit/, count: 0
+  end
+
   test "scene details disables the element move controls at the sequence boundaries" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 

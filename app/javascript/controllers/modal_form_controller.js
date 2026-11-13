@@ -23,9 +23,15 @@ const JSON_RESPONSE = "json"
 //     humanizing a parameter in the browser.
 //   - **A plural.** `count` goes to `t()` and the locale file decides, so this
 //     controller contains no `count === 1`.
+//
+// One editor opts in to a **discard guard** with `guardUnsaved`. Dismissing an
+// editor whose values have changed asks before the typed text is thrown away,
+// and an editor whose values have not changed — or one that did not opt in —
+// closes exactly as it always has. Only the Scene Element editor opts in: a
+// paragraph is expensive to retype and a taxonomy rename is not.
 export default class extends Controller {
   static targets = [ "modal", "title", "form", "submit", "errors" ]
-  static values = { createTitle: String, modelParam: String, response: String }
+  static values = { createTitle: String, modelParam: String, response: String, guardUnsaved: Boolean }
 
   // The options this row's editor detached, and the sibling each one goes back
   // in front of. An empty list is the normal state, between opens.
@@ -38,6 +44,11 @@ export default class extends Controller {
     this.dismissOnShow = false
     this.returnFocusTo = null
     this.refreshing = false
+    // The guard's two pieces of state: the form's values when the editor opened,
+    // and whether a confirmed dismissal is already on its way out (the confirmed
+    // attempt re-enters the wrapped `hide`, and must not ask itself again).
+    this.snapshot = null
+    this.confirmingDiscard = false
     this.handleShown = () => {
       this.shown = true
       this.opening = false
@@ -103,12 +114,45 @@ export default class extends Controller {
   deferDismissWhileOpening() {
     const hide = this.modal.hide.bind(this.modal)
     this.modal.hide = () => {
-      if (!this.opening) {
+      // The confirmed attempt re-enters this wrapper; it is the same dismissal,
+      // not a second one to ask about.
+      if (this.confirmingDiscard) {
         hide()
         return
       }
-      this.dismissOnShow = true
+      if (this.opening) {
+        this.dismissOnShow = true
+        return
+      }
+      if (!this.confirmDiscard()) return
+      this.confirmingDiscard = true
+      try {
+        hide()
+      } finally {
+        this.confirmingDiscard = false
+      }
     }
+  }
+
+  // Whether this editor can be dismissed without asking. A page opts in with
+  // `data-modal-form-guard-unsaved-value="true"`, and only the Scene Element
+  // editor does: a block of prose is the one thing in this application a writer
+  // cannot retype from the stored record, and every other modal form closes on
+  // Cancel as it always has.
+  //
+  // **The comparison is against the values the editor opened with**, not against
+  // an empty form, so an author who opens a stored record and closes it again is
+  // not asked about text they did not write. The snapshot is the same encoding
+  // the form would submit, so a filled select, a cleared multi-select, and a
+  // typed paragraph are all just a difference in the payload.
+  confirmDiscard() {
+    if (!this.guardUnsavedValue || this.snapshot === null) return true
+    if (this.formState() === this.snapshot) return true
+    return window.confirm(t("shared.modal_form.discard_unsaved"))
+  }
+
+  formState() {
+    return this.formPayload(this.formTarget).toString()
   }
 
   // A page declares its own mutation contract. "json" means the controller
@@ -181,6 +225,11 @@ export default class extends Controller {
     this.formTarget.dispatchEvent(
       new CustomEvent("modal-form:values", { bubbles: true, detail: values })
     )
+
+    // The state the author is being handed, taken after the row is filled in, so
+    // the discard guard has something to compare against. Only an editor that
+    // opted in pays for it.
+    this.snapshot = this.guardUnsavedValue ? this.formState() : null
 
     this.modal.show()
   }

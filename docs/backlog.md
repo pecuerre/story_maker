@@ -122,13 +122,6 @@ triaged into this list.
 
 ### Next Items
 
-41. **Structured Scene roles from free-text annotations.**
-
-   `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
-   against a vocabulary. **Blocked on evidence:** analyze existing annotations first, then promote
-   only recurring values to controlled role types. That needs a scope (Universe or Story) and a
-   migration decision; until then the free text is correct behavior, not debt.
-
 45. **Timeline pan/zoom.**
 
    `timeline_controller.js` only draws edges between nodes; the pan/zoom the early docs described

@@ -38,6 +38,16 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-13
+
+### chore
+
+- **Untracked database artifacts.** `.gitignore` now ignores `db/*.sqlite3` files so a stray database created there by an external tool stays out of `git status`; the application keeps its databases in `storage/`.
+
+### docs
+
+- **Scene role vocabulary.** Closed the structured-roles idea after checking every stored role: 66 of 96 Scene links carry one, 65 are distinct, and none recurs across Scenes, so free-text roles stay the design.
+
 ## 2026-11-12
 
 ### changed

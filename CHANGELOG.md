@@ -60,6 +60,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Visual design brief.** The owner's aim is a denser reference atlas for a solo writer, with Novelcrafter, Wikipedia, and Wikidata as references, recorded with constraints and representative screens in `docs/visual_design_brief.md`.
 - **Scene role vocabulary.** Closed the structured-roles idea after checking every stored role: 66 of 96 Scene links carry one, 65 are distinct, and none recurs across Scenes, so free-text roles stay the design.
 
 ## 2026-11-12

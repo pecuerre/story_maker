@@ -10,7 +10,10 @@ in [`architecture.md`](architecture.md).
 Universe Maker stays on **Bootstrap 5.3**, Bootstrap Icons, Sass, PostCSS/autoprefixer, Hotwire,
 and Stimulus. Do not introduce a second component framework or a utility-only CSS system.
 
-The interface should feel like a calm writing workspace:
+The interface should feel like a calm writing workspace. Its aim is the denser **reference atlas**
+recorded in [visual_design_brief.md](visual_design_brief.md): facts and cross-links lead, type and
+alignment carry hierarchy, and chrome recedes. The conventions below are the implementation contract
+until that exploration chooses a direction.
 
 - content is the largest and most prominent area;
 - navigation is quiet and scoped;

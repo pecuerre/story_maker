@@ -298,15 +298,8 @@ The earlier UI/UX review is primarily about workflows; this initiative develops 
 modern visual direction. The stages are in suggested order, with owner decisions before a direction
 is prototyped and before it is rolled out. These are pending ideas, not approval for a redesign.
 Coordinate with the existing visual/task baseline and visual hierarchy audit rather than repeating
-the same observations; use their findings to inform the other UI/UX items.
-
-87. **Define the visual design brief.**
-
-   Agree with the owner on the desired character of the workspace, its intended users and priorities,
-   and what "modern" should mean for this product. Gather a few reference products or screenshots
-   and identify the specific qualities worth borrowing, such as density, typography, navigation, or
-   color. Record constraints and representative screens before exploring directions; a calm writing
-   studio is one possible direction, not a predetermined choice.
+the same observations; use their findings to inform the other UI/UX items. The agreed starting point
+is [visual_design_brief.md](visual_design_brief.md).
 
 88. **Audit the rendered interface for visual design.**
 

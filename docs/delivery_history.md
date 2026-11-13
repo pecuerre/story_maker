@@ -29,6 +29,35 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-13
 
+- **[docs]** **Visual design brief.**
+  - **The gap.** The visual design initiative listed a brief, a rendered-interface audit, a
+    directions exploration, and a prototype, but nothing recorded what the workspace should aim at.
+    The visual-design document described the built calm writing workspace, and the brief stage left
+    the character, the intended user, and the meaning of "modern" as owner decisions.
+  - **The decision.** The owner chose a **reference atlas** rather than the calm studio as the aim:
+    facts and cross-links lead, density is a feature, type and alignment carry hierarchy, and chrome
+    recedes. The primary user is the solo writer keeping one universe consistent, with collaboration
+    and public reading retained but not setting density. "Modern" means density and restraint, not
+    surface effects. The references are Novelcrafter (the codex is the workspace), Wikipedia
+    (summary-first record pages, dense tables), Wikidata (one statement shape read as rows or as a
+    table), and the PlotLens/Novilot qualities already recorded by the competitor survey.
+  - **Where it lives.** `docs/visual_design_brief.md` owns the users, character, references,
+    constraints, and the six representative screens. `visual_design.md` keeps the implementation
+    conventions and now names that aim, so the two documents do not restate each other. The backlog
+    item is gone, and the section links the brief for the audit, exploration, and prototype that
+    follow.
+  - **Rejected alternatives.** Keeping the calm writing studio as the stated aim (it describes what
+    is built, not what is wanted next), a dashboard-forward or editorial direction, and treating
+    "modern" as tactile surfaces or motion. The brief also records that its density target must not
+    shrink phone touch targets, break the three page patterns, or hide access state.
+  - **What it does not do.** It chooses no palette, type scale, spacing scale, radius, or component
+    treatment; it does not restructure the shell; it captures no new screenshots beyond the
+    2026-11-12 baseline; and it is not approval for a redesign. The directions exploration and the
+    prototype remain pending.
+  - **Verification.** `test/docs_test.rb` covers the new relative links and anchors, the single-owner
+    heading rule, the `docs/README.md` index, and the changelog length. Documentation only; no
+    application behavior changed.
+
 - **[added] Scene Details opens with the prose a writer came to write.**
   - **The gap.** Scene Details put the ordered Elements below a card of a dozen identity facts, and
     the only Edit control for a block of prose was an item in that row's overflow menu, next to

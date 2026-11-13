@@ -82,14 +82,14 @@ class SettingsThemeTest < ApplicationSystemTestCase
 
   # Bootstrap's outline-button mixin bakes the *light* theme's color into the
   # component's variables and never re-tints them for the dark theme, so this is
-  # a theme defect that only a rendered page can show. The Story header is
-  # where the baseline found it: outline-primary and outline-secondary text at
-  # 2.45:1 and 3.10:1 on the dark canvas. The ratio is asserted here rather than
-  # the color, so a palette change is free to move the value as long as the
-  # button stays legible.
-  test "dark theme keeps the Story header's outline buttons legible" do
+  # a theme defect that only a rendered page can show. The baseline found it in
+  # the Story header's outline buttons (outline-primary and outline-secondary text
+  # at 2.45:1 and 3.10:1 on the dark canvas); the Universe page now carries one
+  # control of each variant, so both are checked from that single render. The
+  # ratio is asserted rather than the color, so a palette change is free to move
+  # the value as long as the button stays legible.
+  test "dark theme keeps outline buttons legible" do
     universe = universes(:universe_one)
-    story = stories(:story_one)
 
     sign_in_via_form(users(:user_one))
     visit settings_path
@@ -101,7 +101,7 @@ class SettingsThemeTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Settings"
     assert_equal "dark", theme_attribute
 
-    visit universe_story_path(universe_slug: universe.slug, id: story)
+    visit universe_path(universe_slug: universe.slug)
     assert_equal "dark", theme_attribute
     canvas = background_color("body")
 

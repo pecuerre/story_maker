@@ -14,7 +14,6 @@
     description: t("scenes.items.description"),
     count: @scene_items.size,
     count_label: "item" do %>
-    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
     <% if editable %>
       <button type="button" class="btn btn-primary"
         data-action="modal-form#open"
@@ -26,6 +25,7 @@
         <span><%= t("scenes.items.add") %></span>
       </button>
     <% end %>
+    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
   <% end %>
 
   <%= render "scenes/workspace_tabs" %>

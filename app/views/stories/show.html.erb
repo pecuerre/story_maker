@@ -7,13 +7,22 @@
   count: @sections.size,
   count_label: "section" do %>
   <%# The overview has one context-aware primary action rather than one link per
-      workspace. An empty Story has nothing to write yet, so it leads to the
-      Sections list; once a Section or Scene exists, writing is the next task and
-      the primary action opens the Scenes list. The other destinations stay in
-      the structure card below, and the appearance grid opens from the cast card,
+      workspace. An empty Story that offers a starting structure leads to that
+      card, so the header and the body recommend the same first step; an empty
+      Story without one, and one that already has structure, leads to the
+      workspace its next task lives in. The other destinations stay in the
+      structure card below, and the appearance grid opens from the cast card,
       so the header does not repeat the same three body links. %>
-  <% primary_label = @story_structure_empty ? t("stories.show.open_sections") : t("stories.show.open_scenes") %>
-  <% primary_path = @story_structure_empty ? universe_story_sections_path(story_id: @story) : universe_story_scenes_path(story_id: @story) %>
+  <% if @story_structure_available && can_write_universe? %>
+    <% primary_label = t("stories.structures.heading") %>
+    <% primary_path = "#story-start-structure" %>
+  <% elsif @story_structure_empty %>
+    <% primary_label = t("stories.show.open_sections") %>
+    <% primary_path = universe_story_sections_path(story_id: @story) %>
+  <% else %>
+    <% primary_label = t("stories.show.open_scenes") %>
+    <% primary_path = universe_story_scenes_path(story_id: @story) %>
+  <% end %>
   <%= link_to primary_label, primary_path, class: "btn btn-primary" %>
   <% if can_write_universe? %>
     <%= link_to t("stories.edit"), edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
@@ -55,7 +64,7 @@
       card disappears as soon as the Story has either. %>
   <% if @story_structure_available && can_write_universe? %>
     <div class="col-12">
-      <div class="surface-card p-4">
+      <div class="surface-card p-4" id="story-start-structure">
         <div class="page-eyebrow"><%= t("stories.structures.eyebrow") %></div>
         <h2 class="h4"><%= t("stories.structures.heading") %></h2>
         <p class="text-body-secondary"><%= t("stories.structures.description") %></p>
@@ -110,29 +119,38 @@
         <div class="page-eyebrow"><%= t("stories.show.structure_eyebrow") %></div>
         <h2 class="h4"><%= t("stories.show.structure_heading") %></h2>
         <p class="text-body-secondary"><%= t("stories.show.structure_description") %></p>
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <%= link_to can_write_universe? ? t("stories.show.manage_sections") : t("stories.show.view_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
-          <%= link_to can_write_universe? ? t("stories.show.manage_plots") : t("stories.show.view_plots"), universe_story_plots_path(story_id: @story), class: "btn btn-outline-primary" %>
-          <%= link_to can_write_universe? ? t("stories.show.manage_scenes") : t("stories.show.view_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
-        </div>
-        <div class="d-flex flex-column gap-2">
-          <div class="d-flex justify-content-between">
-            <span class="text-body-secondary"><%= t("stories.show.sections") %></span>
-            <span><%= count_with_label(@sections.size, "section") %></span>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span class="text-body-secondary"><%= t("stories.show.plots") %></span>
-            <span><%= count_with_label(@story.menu_plot_count, "plot") %></span>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span class="text-body-secondary"><%= t("stories.show.scenes") %></span>
-            <span><%= count_with_label(@story.menu_scene_count, "scene") %></span>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span class="text-body-secondary"><%= t("stories.show.words") %></span>
-            <span><%= count_with_label(@word_counts.total, "word") %></span>
-          </div>
-        </div>
+        <ul class="list-unstyled structure-links mb-0">
+          <%# Each row is one destination and the number its page will list, so the
+              card states the structure once instead of three equal outline
+              buttons followed by the same facts as a separate list. The visible
+              count is a bare figure beside its own label; the link's accessible
+              name carries the full count phrase. %>
+          <li>
+            <%= link_to universe_story_sections_path(story_id: @story), class: "structure-link",
+              aria: { label: "#{t("stories.show.sections")}, #{count_with_label(@sections.size, "section")}" } do %>
+              <span><%= t("stories.show.sections") %></span>
+              <span class="structure-link-count" aria-hidden="true"><%= @sections.size %></span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to universe_story_plots_path(story_id: @story), class: "structure-link",
+              aria: { label: "#{t("stories.show.plots")}, #{count_with_label(@story.menu_plot_count, "plot")}" } do %>
+              <span><%= t("stories.show.plots") %></span>
+              <span class="structure-link-count" aria-hidden="true"><%= @story.menu_plot_count %></span>
+            <% end %>
+          </li>
+          <li>
+            <%= link_to universe_story_scenes_path(story_id: @story), class: "structure-link",
+              aria: { label: "#{t("stories.show.scenes")}, #{count_with_label(@story.menu_scene_count, "scene")}" } do %>
+              <span><%= t("stories.show.scenes") %></span>
+              <span class="structure-link-count" aria-hidden="true"><%= @story.menu_scene_count %></span>
+            <% end %>
+          </li>
+          <li class="structure-fact">
+            <span><%= t("stories.show.words") %></span>
+            <span class="structure-link-count"><%= count_with_label(@word_counts.total, "word") %></span>
+          </li>
+        </ul>
 
         <%# A draft-based universe cannot remember a batch of creates whose Scenes
             point at Sections the draft has not created yet, so the starting-shape
@@ -220,8 +238,9 @@
           title: t("stories.show.sections_none_title"),
           description: t("stories.show.sections_none_description"),
           icon: "diagram-3" do %>
-          <%# The header already offers Open sections while the whole Story is
-              empty. A Story with Scenes but no Sections keeps this link, because
+          <%# While the whole Story is empty the header owns the first step, and the
+              structure card already links to Sections, so this empty card does not
+              repeat it. A Story with Scenes but no Sections keeps the link, because
               its primary action is writing. %>
           <% if can_write_universe? && !@story_structure_empty %>
             <%= link_to t("stories.show.open_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>

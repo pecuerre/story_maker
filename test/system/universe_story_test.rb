@@ -24,7 +24,11 @@ class UniverseStoryTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: "System Test Story"
     assert_selector ".alert-success", text: "Story was successfully created."
-    click_link "Open sections"
+    # An empty Story's header opens its starting-structure card; the story
+    # structure card's own Sections row is the destination into that workspace.
+    within ".structure-links" do
+      click_link I18n.t("stories.show.sections"), exact: false
+    end
 
     assert_selector "h1", text: "Sections"
     assert_match %r{/u/system-test-universe/s/\d+/sections\z}, current_path
@@ -169,9 +173,16 @@ class UniverseStoryTest < ApplicationSystemTestCase
       assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
       assert_no_link I18n.t("stories.show.open_sections")
     end
-    assert_link I18n.t("stories.show.manage_sections"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
-    assert_link I18n.t("stories.show.manage_plots"), href: universe_story_plots_path(universe_slug: universe.slug, story_id: story)
-    assert_link I18n.t("stories.show.manage_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+    # The structure card is one quiet destination row per workspace, with the
+    # count beside it; the sidebar also links here, so the card is scoped.
+    within ".structure-links" do
+      assert_link I18n.t("stories.show.sections"),
+        href: universe_story_sections_path(universe_slug: universe.slug, story_id: story), exact: false
+      assert_link I18n.t("stories.show.plots"),
+        href: universe_story_plots_path(universe_slug: universe.slug, story_id: story), exact: false
+      assert_link I18n.t("stories.show.scenes"),
+        href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story), exact: false
+    end
     assert_link I18n.t("stories.show.open_appearances"), href: universe_story_appearances_path(universe_slug: universe.slug, story_id: story)
 
     # Story balance: one bar per Character, each linking to the Character, with

@@ -73,9 +73,12 @@ The manual path links to the Sections and Scenes workspaces.
 
 The guide is dismissible for the current view with the alert's own close control. It is rendered only
 while the Story has no live Sections or Scenes and only to a reader who can write, so it disappears
-permanently once the Story has structure and a read-only member is never told to build one. In a
-draft-based universe the guide replaces the structure invitation with a short statement that a
-structure is unavailable there; the structure card below keeps the detailed reason.
+permanently once the Story has structure and a read-only member is never told to build one. When the
+structure card is available, the page header's primary action opens that card rather than the
+Sections list, so the two invitations recommend the same first step. In a draft-based universe the
+guide replaces the structure invitation with a short statement that a structure is unavailable
+there, the header keeps its **Open sections** action, and the structure card below keeps the
+detailed reason.
 
 ## The apply route and its responses
 

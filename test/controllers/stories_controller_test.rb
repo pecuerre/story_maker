@@ -41,27 +41,48 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a.btn-primary", count: 1
     assert_select ".page-actions a.btn-primary", text: I18n.t("stories.show.open_scenes")
     assert_select ".page-actions a", text: I18n.t("stories.show.open_sections"), count: 0
-    assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
-      text: I18n.t("stories.show.manage_sections")
-    assert_select "a[href=?]", universe_story_plots_path(universe_slug: @universe.slug, story_id: story),
-      text: I18n.t("stories.show.manage_plots")
-    assert_select "a[href=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: story),
-      text: I18n.t("stories.show.manage_scenes")
+    # The structure card is one quiet row per destination, not three equal
+    # outline buttons followed by the same facts as a separate list.
+    assert_select ".structure-links a.structure-link", count: 3
+    assert_select ".structure-links a.btn", count: 0
+    assert_select "a.structure-link[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
+      text: /#{I18n.t("stories.show.sections")}/
+    assert_select "a.structure-link[href=?]", universe_story_plots_path(universe_slug: @universe.slug, story_id: story),
+      text: /#{I18n.t("stories.show.plots")}/
+    assert_select "a.structure-link[href=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: story),
+      text: /#{I18n.t("stories.show.scenes")}/
     assert_select "a[href=?]", universe_story_appearances_path(universe_slug: @universe.slug, story_id: story),
       text: I18n.t("stories.show.open_appearances")
     assert_select "a[href=?]", TropeCatalog.find("red-herring").source_url, text: "Red Herring"
     assert_includes response.body, "The clue is introduced fairly and resolved later."
   end
 
-  test "an empty story points its one primary action at sections" do
+  test "an empty story points its primary action at the starting structure" do
     story = empty_story
 
     get universe_story_url(universe_slug: @universe.slug, id: story)
 
     assert_response :success
+    # The header and the body recommend the same first step: the card that
+    # applies a structure, in the direct universe this fixture is in.
+    assert_select "#story-start-structure"
     assert_select ".page-actions a.btn-primary", count: 1
-    assert_select ".page-actions a.btn-primary", text: I18n.t("stories.show.open_sections")
+    assert_select ".page-actions a.btn-primary[href=?]", "#story-start-structure",
+      text: I18n.t("stories.structures.heading")
     assert_select ".page-actions a", text: I18n.t("stories.show.open_scenes"), count: 0
+  end
+
+  test "an empty story without a starting structure still opens sections" do
+    story = empty_story
+    @universe.update!(collaboration_mode: "wikipedia")
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".page-actions a.btn-primary", count: 1
+    assert_select ".page-actions a.btn-primary[href=?]",
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.open_sections")
   end
 
   test "should get new story" do

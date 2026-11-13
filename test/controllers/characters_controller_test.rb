@@ -55,6 +55,16 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-filter", text: /Showing 1 character of 4 characters/
   end
 
+  test "the list's one solid primary is the create action, not the filter submit" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".page-actions a.btn-primary, .page-actions button.btn-primary", count: 1
+    assert_select ".character-filter input[type=submit].btn-outline-secondary[value=?]",
+      I18n.t("characters.filter.submit")
+    assert_select ".character-filter input[type=submit].btn-primary", count: 0
+  end
+
   test "index orders the whole list by the reader's choice" do
     characters(:character_one).update!(created_at: Time.utc(2026, 1, 1))
     characters(:character_two).update!(created_at: Time.utc(2026, 3, 1))

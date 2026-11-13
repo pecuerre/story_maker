@@ -107,6 +107,17 @@ body {
   box-shadow: var(--bs-box-shadow);
 }
 
+// Plain links and summaries have no component focus style of their own, so
+// without this they fall back to the browser's thin black outline while every
+// button, field, and diagram control draws a blue indicator. One vocabulary:
+// the 2px primary outline those controls already use, offset so it clears the
+// text. A `.btn` keeps its own glow and is excluded rather than given two rings.
+a:not(.btn):focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
 .navbar {
   min-height: var(--um-navbar-height);
 }
@@ -1230,6 +1241,16 @@ $um-search-match: #ffc107;
   -webkit-line-clamp: 2;
 }
 
+// A flat list row's second line is a glance, not the record, so every peer row
+// is one clamped line tall: the Character and Scene lists measured 98px and
+// 65px beside each other, a difference that was only how much summary the row
+// happened to carry. The record's own page has the full text. The rule is
+// scoped to `.entity-list` because `.entity-description` is also the prose
+// excerpt on Scene Elements, which is content rather than a glance.
+.entity-list .entity-description {
+  -webkit-line-clamp: 1;
+}
+
 // Scene Details is the writing surface, and the Element editor's Content field
 // is where the prose actually lives, so it is given the height of a page rather
 // than a form field. `field-sizing: content` lets it grow as the author types in
@@ -1767,6 +1788,48 @@ $um-search-match: #ffc107;
   background: var(--um-primary-soft);
   color: var(--um-primary-strong);
   text-decoration: none;
+}
+
+// The Story structure card lists its three workspaces as rows rather than
+// three equal outline buttons that wrap. A row states the destination and the
+// number its page will list once, instead of a button cluster followed by the
+// same facts as a separate list.
+.structure-links {
+  margin-top: 1rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.structure-link,
+.structure-fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 2.5rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+.structure-links > :last-child {
+  border-bottom: 0;
+}
+
+.structure-link {
+  text-decoration: none;
+}
+
+.structure-link:hover,
+.structure-link:focus-visible {
+  color: var(--um-primary-strong);
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+.structure-link-count {
+  flex-shrink: 0;
+  color: var(--bs-body-secondary-color);
+  font-size: .875rem;
 }
 
 .status-dot {

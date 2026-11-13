@@ -132,7 +132,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       end
       assert_select "input[type=date][name=from]"
       assert_select "input[type=date][name=to]"
-      assert_select "input[type=submit][value=?]", "Filter scenes"
+      assert_select "input[type=submit][value=?].btn-outline-secondary", "Filter scenes"
     end
   end
 
@@ -668,6 +668,15 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav.content-tabs[aria-label=?] a.active[aria-current=page]", "Scene workspace",
       text: "Scene Details"
+  end
+
+  test "the scene header leads with its primary edit action" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".page-actions > a.btn-primary", count: 1
+    assert_select ".page-actions > .btn-primary:first-child",
+      text: I18n.t("scenes.edit_title")
   end
 
   test "show renders an inspectable page for read-only users without controls" do

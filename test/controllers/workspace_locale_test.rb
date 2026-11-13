@@ -175,9 +175,9 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a", text: "Abrir las escenas"
     assert_select ".page-actions a", text: "Abrir las secciones", count: 0
     assert_select ".page-actions a", text: "Editar historia"
-    assert_select "a", text: "Gestionar las secciones"
-    assert_select "a", text: "Gestionar las tramas"
-    assert_select "a", text: "Gestionar las escenas"
+    assert_select ".structure-links a", text: /Secciones/
+    assert_select ".structure-links a", text: /Tramas/
+    assert_select ".structure-links a", text: /Escenas/
     assert_select "a", text: "Abrir la cuadrícula de apariciones"
     assert_select ".page-eyebrow", text: "Estructura de la historia"
     assert_select ".page-eyebrow", text: "Biblia del universo compartida"

@@ -29,6 +29,42 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-13
 
+- **[changed]** **Rendered-audit hierarchy and feedback fixes.**
+  - **The findings.** The rendered audit measured five inconsistencies: a second solid primary on
+    every filtered list, a Scene header whose primary came last, three equal outline buttons and a
+    repeated count list in the Story structure card, Character rows at 98px beside Scene rows at
+    65px, and plain links falling back to the browser's black outline while controls drew the
+    application's blue one.
+  - **The prototype.**
+    - Every flat-list filter's submit is `btn-outline-secondary` (Characters, Scenes, Items, Events,
+      Relations, Ownerships, Canon rules, and the shared taxonomy-tree filter), so the header's
+      create action is the page's only solid primary. The clear action stays `btn-light border`.
+    - Scene details and its five workspace pages lead with their primary action; the back link and
+      Discussion follow it. The Universe page keeps draft editing first, because that control is
+      page state rather than a destination.
+    - The Story structure card replaced its three outline buttons and separate count list with one
+      destination row per workspace and its count, joined into the same link. The visible count is a
+      bare figure and the accessible name carries `count_with_label`.
+    - An empty Story in a direct universe points its header primary at the starting-structure card
+      (`#story-start-structure`), so the header and the starting guide recommend the same first
+      step. A draft-based universe keeps **Open sections**.
+    - `.entity-list .entity-description` clamps to one line, so peer rows with a summary share one
+      density; Scene Elements keep two lines because that excerpt is content, not a glance.
+    - `a:not(.btn):focus-visible` and `summary:focus-visible` draw the 2px primary outline at a 2px
+      offset. Buttons and form fields keep Bootstrap's glow, and a `.btn` is excluded so it never
+      gets two rings.
+  - **Rejected.** Equalizing rows upward to a two-line reserve kept the summaries but made the
+    Scene list taller, against the denser atlas the brief asks for; an `outline-primary` filter
+    submit still competed with the solid create action; and a second Apply submit in the header
+    would have duplicated the card's form, so the primary is an in-page anchor instead.
+  - **Verification.** `bin/rails test` (3,547 runs), `bin/rubocop`, `test/docs_test.rb`, the full
+    browser suite, and a Chrome walkthrough of the Story overview and Characters list at desktop
+    and phone widths in both themes and in Spanish. The new `visual_hierarchy_test.rb` reads the
+    rendered Character/Scene row heights and the computed focus ring; `stories_controller_test.rb`
+    covers the empty Story's anchor and the draft-universe fallback. The full browser run produced
+    one unrelated draft-badge failure that passed when rerun alone (the recorded intermittent
+    system-suite behaviour).
+
 - **[docs]** **Rendered-interface visual audit.**
   - **Scope.** A browser pass over the running development app as the signed-in writer
     `dark@dark`, who owns Dark and Meridian, not a participant session and not a screen-reader

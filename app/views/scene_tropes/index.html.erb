@@ -14,7 +14,6 @@
     description: t("tropes.assignments.tab_description"),
     count: @scene_tropes.size,
     count_label: "trope" do %>
-    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
     <% if editable %>
       <button type="button" class="btn btn-primary"
         data-action="modal-form#open"
@@ -26,6 +25,7 @@
         <span><%= t("tropes.assignments.add") %></span>
       </button>
     <% end %>
+    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
   <% end %>
 
   <%= render "scenes/workspace_tabs" %>

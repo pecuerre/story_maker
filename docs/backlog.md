@@ -279,17 +279,6 @@ its own alongside the browser baseline follow-ups.
    view should share the list's filters; keep the full-table equivalent, explicit layer meanings, and
    print behavior. Assess with realistic data before choosing a control.
 
-86. **Prototype the hierarchy and feedback fixes the rendered audit found.**
-
-   The 2026-11-13 audit supplies the rendered evidence this item used to ask for: two solid primaries
-   on the filter pages, a header primary whose position changes between pages, three equal-weight
-   outline buttons in the Story structure card, Character rows at 98px beside Scene rows at 65px, and
-   focus rings in two visual languages. Prototype changes with the existing Bootstrap and theme
-   tokens rather than a new framework; make status and actions distinguishable without color alone.
-   Keep the observations the audit did not prove — repeated bordered pills, narrow metadata, touch
-   targets, theme contrast, and toast persistence — as checks rather than assumed defects. Verify
-   success, failure, loading, long text, focus, reduced motion, and both themes.
-
 - **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
   post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),
   and Rails stores flash in the cookie session, so the confirmation can raise `CookieOverflow` after

@@ -47,6 +47,8 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Rendered-audit action hierarchy.** List filters are outline buttons behind one solid primary, Scene headers lead with their edit action, and the Story structure card is a quiet destination list instead of three equal outline buttons; an empty Story's header opens that starting-structure card.
+- **Row density and focus ring.** Flat-list summaries are clamped to one line so Character and Scene rows share a height, and plain links and summaries draw the 2px primary focus ring instead of the browser's black outline.
 - **Scene editor disclosures.** The Scene form keeps the title, description, status, and Section visible and folds tags, plots, in-world time, Events, point of view, and the drafting contract into state-reporting disclosure groups that open on error.
 - **Element editor comfort.** The Content field is a tall, growing textarea rather than a five-row box, and the Element dialog is full-screen on phones.
 

@@ -17,7 +17,7 @@ until that exploration chooses a direction.
 
 - content is the largest and most prominent area;
 - navigation is quiet and scoped;
-- one primary action is visually dominant per page;
+- one primary action is visually dominant per page, and it leads the header's action group;
 - color is reserved for meaning, not decoration;
 - destructive actions are visually distinct from navigation categories;
 - the universe/story model is always explicit.
@@ -349,17 +349,26 @@ Use `app/views/shared/_page_header.html.erb` for work pages. It accepts:
 - `count` and `count_label`;
 - a block for page actions.
 
-The primary action belongs in the header's action area. On narrow screens actions wrap below the
-copy. From `md` up, the copy keeps a readable basis and the action area takes at most half the row,
-folding its own controls onto more lines when they do not fit; a long title, a long description, or
-a translated action label never widens the document or reaches the right sidebar. Avoid placing a
-title and its primary button in unrelated vertical sections.
+The primary action belongs in the header's action area, and it leads that group: the controls after it
+are navigation, conversation, or a page-state control, never another destination for the same task.
+On narrow screens actions wrap below the copy. From `md` up, the copy keeps a readable basis and the
+action area takes at most half the row, folding its own controls onto more lines when they do not
+fit; a long title, a long description, or a translated action label never widens the document or
+reaches the right sidebar. Avoid placing a title and its primary button in unrelated vertical
+sections.
+
+A list's filter is a supporting control, not a second page primary: its submit is an outline button
+so the single solid primary stays in the header. The same rule holds on a taxonomy tree, where the
+filter and the add control share the header.
 
 The **Story overview** chooses its one primary action from the Story's state rather than its record
-type: an empty Story leads to **Open sections**, and a Story with a Section or Scene leads to
-**Open scenes**. Sections, Plots, and Scenes remain in the structure card below, and the appearance
-grid opens from the scenes-per-character card, so the header does not repeat the body's destinations
-or offer a second creation label beside the list it opens.
+type: an empty Story with a starting structure available leads to the structure card below, so the
+header and the body recommend the same first step; an empty Story without one leads to **Open
+sections**, and a Story with a Section or Scene leads to **Open scenes**. Sections, Plots, and Scenes
+stay in the structure card below as one destination row each — never as a cluster of equal buttons
+with the same counts repeated beneath them — and the appearance grid opens from the
+scenes-per-character card, so the header does not repeat the body's destinations or offer a second
+creation label beside the list it opens.
 
 The header's `description` is for a page that **is** the thing it describes. A workspace that has a
 **tab strip** states what it holds in `shared/_content_intro` instead, rendered *below* the strip and
@@ -391,7 +400,9 @@ Characters, items, events, relations, and ownerships use:
 
 - `shared/_row_actions` for a neutral overflow menu;
 - a visible name/title and tag badges;
-- a short description clamped to a readable number of lines;
+- one clamped line of summary or description: a flat list row is a glance, and the record's own page
+  carries the full text, so Character and Scene rows share one density instead of growing with
+  whichever summary they happen to carry;
 - a `content-surface`/`list-group` wrapper;
 - a modal for quick create/edit, preserving the existing JSON-only mutation flow;
 - mutation controls hidden for guests and read-only members, while the record content and the Details
@@ -657,6 +668,10 @@ surface is a scrollable SVG inside the shared content surface:
 - Keep focus states visible; do not use hover as the only way to discover an action. A row's Details
   link and overflow menu are always rendered, so no list control depends on hover, on a pointer
   device, or on a wide viewport.
+- Focus rings use one vocabulary. Buttons and form fields keep Bootstrap's primary glow; plain links
+  and `summary` elements draw the same primary color as a 2px outline instead of falling back to the
+  browser's black outline. A control that already has a component ring keeps it rather than drawing
+  a second one.
 - Taxonomy insertion targets are at least 44×44 CSS pixels and reordering never depends on
   hover/drag or a drag-only path.
 - Preserve `prefers-reduced-motion` handling for transitions and drag feedback.

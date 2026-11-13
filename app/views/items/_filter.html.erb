@@ -43,7 +43,7 @@
     </div>
 
     <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
-      <%= submit_tag t("items.filter.submit"), class: "btn btn-primary", name: nil %>
+      <%= submit_tag t("items.filter.submit"), class: "btn btn-outline-secondary", name: nil %>
       <%# With no result there is nothing to clear from here, so the empty state
           below offers the only way back. %>
       <% if filter.active? && shown.positive? %>

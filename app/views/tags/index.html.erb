@@ -1,8 +1,8 @@
 <% content_for :title, t("tags.title") %>
 
 <% tag_config = tag_workspace_config(scope: @tag_scope, taxonomy: @tag_type) %>
-<%# The eyebrow is the same string as the active scope tab beside it, so one key
-    names both. %>
+<%# The eyebrow is the same string as the active scope option beside it, so one
+    key names both. %>
 <% scope_label = @tag_scope == "story" ? t("tags.scope.story") : t("tags.scope.universe") %>
 
 <%# The workspace's two navigation strips and the taxonomy tree below them are

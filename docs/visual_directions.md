@@ -57,11 +57,12 @@ The 2026-11-13 rendered audit measured the baseline this exploration has to impr
 - **Hierarchy.** Several pages show two solid primary buttons — the header action and the filter
   submit. The Story structure card offers three equal outline buttons. Scene headers put their
   primary action after secondary destinations.
-- **Chrome.** The photo file input keeps light browser chrome in dark mode, the Details link uses a
-  new-tab icon for same-tab navigation, and Scene tags stacks two identical tab bars.
+- **Chrome.** The photo file input kept light browser chrome in dark mode and the Details link used
+  a new-tab icon for same-tab navigation (both since fixed); Scene tags stacks two identical tab
+  bars.
 
-These directions do not decide the three local defects that do not depend on a direction; those
-are backlog items 97–99. They do answer the questions that do: how dense the workspace should be,
+These directions do not decide the audit's local defects that do not depend on a direction; those
+are handled separately. They do answer the questions that do: how dense the workspace should be,
 where hierarchy comes from, how much of the shell is permanent, and what the palette and type feel
 like.
 
@@ -322,11 +323,10 @@ Configuration and Inspector use.
 
 - It does not fix the final token values; the applied prototype may refine the selected palette and
   type before the rollout.
-- It does not settle the local defects in backlog items 97–99, the export-scope wording, the
-  analytics navigation, or the two-tab-bar scope switch. The Tags screen shows only the scope
-  switch so the second bar does not become a direction decision; backlog item 99 owns that
-  treatment.
+- It does not settle the audit's local defects, the export-scope wording, the analytics navigation,
+  or the two-tab-bar scope switch. The Tags screen shows only the scope switch so the second bar
+  does not become a direction decision; the separate **Separate the Tags scope switch from the
+  tag-type switch** item owns that treatment.
 - It does not roll Index out to every screen. The applied prototype changes the shell, the shared
-  tokens, and the representative screens; the remaining workspaces are validated in the slices
-  owned by backlog item 91, and a screen found wanting is refined there rather than by mixing in
-  Ledger or Folio.
+  tokens, and the representative screens; the remaining workspaces are validated during the Index
+  rollout, and a screen found wanting is refined there rather than by mixing in Ledger or Folio.

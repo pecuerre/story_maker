@@ -112,7 +112,9 @@ rebuilt from the node's data attributes when a rename is cancelled, so a new ele
 Tag management lives under the right sidebar's **Configuration → Tags**
 ([features/navigation.md](navigation.md)). `shared/_tag_workspace_navigation` and
 `app/helpers/tags_helper.rb` build it, and `TagsHelper#tagged_record_counts` is the per-page grouped
-count described above. The scope tabs are Universe/Story and the scope-specific taxonomy selector.
+count described above. The scope switch is Universe/Story and the taxonomy selector sits below it;
+they answer different questions — which workspace is open, and which of its pages — so the scope is
+a URL-backed segmented control while the taxonomy keeps the shared tab strip.
 
 A taxonomy's workspace block is declarative metadata rather than a hand-written block per type: its
 copy is a set of `tags.types.<type>.*` keys, and everything mechanical — the model parameter, the name

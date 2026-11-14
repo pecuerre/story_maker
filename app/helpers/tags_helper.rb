@@ -82,17 +82,15 @@ module TagsHelper
     end
 
     {
-      scope_tabs: [
+      scope_options: [
         {
           label: t("tags.scope.universe"),
           path: universe_tags_path(scope: "universe", taxonomy: universe_taxonomy),
-          controller: :tags,
           active: scope == "universe"
         },
         {
           label: t("tags.scope.story"),
           path: universe_tags_path(scope: "story", taxonomy: taxonomy),
-          controller: :tags,
           active: scope == "story"
         }
       ],

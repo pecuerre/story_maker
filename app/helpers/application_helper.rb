@@ -296,14 +296,17 @@ module ApplicationHelper
   # members and guests too, it sits on the right of the row next to the actions,
   # and it never hides behind a hover-only menu.
   #
-  # The link carries no count. A count is a fact about the record rather than
-  # about its destination, so it renders next to the name and tags as
-  # `record_count_badge` and the link label stays short in a long list.
+  # The link carries no count and no icon. A count is a fact about the record
+  # rather than about its destination, so it renders next to the name and tags as
+  # `record_count_badge` and the link label stays short in a long list. The icon
+  # is absent because the destination is the same tab: `bi-box-arrow-up-right`
+  # read as "opens in a new tab", and every other glyph on a row means an action
+  # (the overflow menu and the reorder arrows) rather than a place.
   def record_details_link(path, record:, classes: %w[details-link])
-    link_to path, class: classes.join(" "), aria: { label: t("shared.record_details_link.aria", name: record_label(record)) } do
-      concat content_tag(:i, "", class: "bi bi-box-arrow-up-right", aria: { hidden: true })
-      concat content_tag(:span, t("shared.record_details_link.text"))
-    end
+    link_to t("shared.record_details_link.text"),
+      path,
+      class: classes.join(" "),
+      aria: { label: t("shared.record_details_link.aria", name: record_label(record)) }
   end
 
   # The Edit control a record's own details page puts beside Back. It is the same

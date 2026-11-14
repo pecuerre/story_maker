@@ -15,7 +15,7 @@ recorded in [visual_design_brief.md](visual_design_brief.md): facts and cross-li
 alignment carry hierarchy, and chrome recedes. The conventions below implement the accepted
 **Index** direction in [visual_directions.md](visual_directions.md) and
 [ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md) across the workspace shell and every
-workspace; the remaining local defects from the audit are backlog items 97–99.
+workspace.
 
 - content is the largest and most prominent area;
 - navigation is quiet and scoped;
@@ -121,7 +121,7 @@ light-only value is re-tinted in the `[data-bs-theme="dark"]` block of
 | `--um-hover-bg` | `#efebe2` | `#26221c` | row and link hover |
 | `--um-surface-raised` | `#f8f5ed` | `#1b1915` | the last sidebar section |
 | `--um-row-hover` | `#faf7f0` | `#242019` | entity and taxonomy row hover |
-| `--um-surface-veil` | `rgba(255, 253, 248, .62)` | `rgba(30, 28, 24, .62)` | empty states, tag scope tabs |
+| `--um-surface-veil` | `rgba(255, 253, 248, .62)` | `rgba(30, 28, 24, .62)` | empty states, tag scope switch |
 | `--um-tag-badge-border` | `rgba(30, 29, 26, .16)` | `rgba(236, 231, 220, .18)` | the tag badge's hairline |
 | `--um-control-border` | `#8c8371` | `#8b8272` | form controls and row actions |
 | `--um-scope-universe` | `#244a7c` | `#9db7dd` | universe scope text |
@@ -497,11 +497,13 @@ and Relations; the Item workspace has Items and Ownerships; the Event workspace 
 **Timeline**. Locations and Sections each have one record tab. The Timeline is a tab rather than a
 sidebar entry of its own: the sidebar keeps one Event link, current across both tabs, and the two are
 reached through `content_workspace_tabs(:event)`. Use `shared/_tag_workspace_navigation` for
-Configuration → Tags: the outer Universe/Story selector is followed by the seven universe taxonomy tabs
-or the two story taxonomy (Section/Scene) tabs. Use `shared/_settings_navigation` for the platform
-Settings page, whose tab strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All
-tabs are URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not
-add `data-bs-toggle="tab"` because each destination is a separate request.
+Configuration → Tags: the Universe/Story scope switch is a URL-backed segmented control, followed by
+the seven universe taxonomy tabs or the two story taxonomy (Section/Scene) tabs. Use
+`shared/_settings_navigation` for the platform Settings page, whose tab strip is the same pattern
+turned vertical (`nav nav-tabs flex-column`). Every tab strip is a URL-backed Bootstrap `nav-tabs`:
+use the active class and `aria-current="page"`, but do not add `data-bs-toggle="tab"` because each
+destination is a separate request. The scope switch's links are not tab-shaped; its active option
+carries `aria-current="page"` like every other current destination.
 
 ### Details-page treatment
 

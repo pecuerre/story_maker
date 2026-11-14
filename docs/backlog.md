@@ -294,24 +294,6 @@ screenshots are recorded in [delivery_history.md](delivery_history.md#2026-11-13
 rolled out through the remaining workspaces. The built system and its conventions are in
 [visual_design.md](visual_design.md).
 
-The 2026-11-13 audit also found two defects that do not depend on the direction. They are local
-inconsistencies with controls the pages already use, not approval to restyle a screen.
-
-98. **Give the row Details link a same-page icon.**
-
-   `record_details_link` renders `bi-box-arrow-up-right`, which conventionally means "opens in a new
-   tab", while the link stays in the same tab; the collaborators list hand-builds the same icon. Use
-   a same-page affordance, or no icon, and keep the accessible name that repeats the record name.
-   Check the row's other icon-only controls for one vocabulary rather than mixed metaphors.
-
-99. **Separate the Tags scope switch from the tag-type switch.**
-
-   Scene tags renders two identical tab bars — **Universe Tags / Story Tags**, then **Section tags /
-   Scene tags**. The first changes scope and the second changes the type, but they share the same
-   underline treatment, so the second reads as a nested page. Give the scope switch a different
-   treatment, such as a segmented control or a labelled select, or combine both choices into one
-   control; keep the current URLs and the empty state in both languages.
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

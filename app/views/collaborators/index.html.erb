@@ -34,13 +34,14 @@
             </div>
           </div>
 
-          <%= link_to universe_collaborator_path(
+          <%# **The same text-only Details shape as every list row.** The link is
+              same-tab navigation, so it carries no icon; its visible word and
+              accessible name already say where it goes. %>
+          <%= link_to t("collaborators.index.open"),
+            universe_collaborator_path(
               universe_slug: Current.universe.slug, id: collaborator.user),
             class: "details-link",
-            aria: { label: t("collaborators.index.open_aria", name: collaborator.user.name) } do %>
-            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
-            <span><%= t("collaborators.index.open") %></span>
-          <% end %>
+            aria: { label: t("collaborators.index.open_aria", name: collaborator.user.name) } %>
         </div>
       <% end %>
     </div>

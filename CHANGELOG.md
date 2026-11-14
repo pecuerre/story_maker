@@ -42,11 +42,16 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Tags scope switch.** The Universe/Story selector is a URL-backed segmented control instead of a second tab strip, so only the taxonomy below it reads as tabs; the URLs and both languages are unchanged.
 - **Index rollout: Members and platform forms.** The Members list is a row list with quiet access chips instead of a table, and the add-member, import, and universe-delete forms are a single panel rather than a card inside a card.
 - **Index rollout: Story planning workspaces.** The Scenes filter joins the quiet `.list-filter` block, and the Sections workspace's **Move scene** submit is an outline button so the header's add action stays the page's only solid primary.
 - **Index rollout: Universe record workspaces.** The Items, Events, Relations, Ownerships, Canon, Locations, and tag lists now use the quiet `.list-filter` block instead of a filter card, matching the Characters prototype.
 - **Index prototype review.** Dark destructive text is re-tinted, the phone scope line wraps instead of clipping in Spanish, row actions reach a 40px touch target, and the Story structure card's kicker no longer repeats its heading.
 - **Index prototype.** The workspace shell and the Story overview, empty overview, Characters list, Tags tree, Character details, Scene details, and Scene editor now render the Index palette, serif display type, 46px rows, and hairline fact rules in both themes.
+
+### fixed
+
+- **Row Details icon.** The shared Details link and the collaborators History link are text-only, so same-tab navigation no longer wears the new-tab icon.
 
 ### docs
 

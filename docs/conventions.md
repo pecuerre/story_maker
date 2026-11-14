@@ -456,7 +456,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   details page renders the same workspace tabs only for that explicit navigation, while the
   taxonomy tree's Details link stays canonical and omits them. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
-  scope tabs and the scope-specific taxonomy selector.
+  scope switch and the scope-specific taxonomy tab strip.
 - Driven by `modal_form_controller.js`; a select that needs a searchable picker uses
   `data-controller="tom-select"` (a multi-select gets the pillbox with remove controls, a
   single-select gets one searchable choice). A modal with a long form uses `modal-lg`
@@ -1451,6 +1451,11 @@ label, which keeps the link short in a long list and keeps the count where it ca
 the name it belongs to. The Details link is the single, predictable way into a record, which is why it
 repeats the record name in its accessible name: many identical-looking links stay distinguishable in
 a long list.
+
+The link is **text without an icon**, and the collaborators list's **History** link follows the same
+shape. The destination is the same tab, and a row's glyphs — the overflow menu's dots, the reorder
+arrows, and a menu item's pencil or trash — all mean an action, so an icon on the primary destination
+would read as one more action.
 
 The taxonomy tree serializes the formatted count onto the node (`data-record-count-label`) because the
 tree controller rebuilds the rename button when an inline rename is cancelled; the text is formatted

@@ -15,6 +15,14 @@ class RecordDetailsLinkTest < ActionView::TestCase
     assert_not_includes html, "record-count"
   end
 
+  test "the link is text without an icon, because its destination is the same tab" do
+    character = characters(:character_one)
+    html = record_details_link("/u/one/characters/#{character.id}", record: character)
+
+    assert_not_includes html, "bi-"
+    assert_not_includes html, "<i"
+  end
+
   test "a record without a name is labelled by its display string" do
     relation = Relation.new(character1: characters(:character_one), character2: characters(:character_two))
     html = record_details_link("/u/one/relations/1", record: relation)

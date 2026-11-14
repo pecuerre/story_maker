@@ -575,7 +575,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
       assert_select ".page-eyebrow", text: "Biblia del universo"
       assert_select ".page-actions button", text: expected[:new_label]
       # The strip offers both scopes, and the universe scope is the active one.
-      assert_select ".tag-scope-tabs a.active", text: "Etiquetas del universo"
+      assert_select ".tag-scope-switch a.active", text: "Etiquetas del universo"
       assert_select ".tag-taxonomy-tabs a.active", text: expected[:title]
     end
   end

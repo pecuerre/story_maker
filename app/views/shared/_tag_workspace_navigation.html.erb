@@ -2,10 +2,19 @@
 <% taxonomy = local_assigns[:taxonomy] || tag_workspace_default_taxonomy %>
 <% navigation = tag_workspace_navigation_data(scope: scope, taxonomy: taxonomy) %>
 
-<%= render "shared/content_tabs",
-  class_name: "tag-scope-tabs",
-  aria_label: t("shared.tag_workspace_navigation.scope_aria_label"),
-  tabs: navigation.fetch(:scope_tabs) %>
+<%# The scope pair and the taxonomy strip answer different questions: the first
+    opens the universe or story workspace, the second opens one page of it. Both
+    used to be underlined tab strips, which made the taxonomy read as a nested
+    page, so the scope is a segmented control and only the taxonomy is a tab
+    strip. Both are still URL-backed links, so every choice has its own address. %>
+<nav class="tag-scope-switch" aria-label="<%= t("shared.tag_workspace_navigation.scope_aria_label") %>">
+  <% navigation.fetch(:scope_options).each do |option| %>
+    <% is_active = option.fetch(:active) %>
+    <%= link_to option.fetch(:label), option.fetch(:path),
+      class: "tag-scope-option#{' active' if is_active}",
+      aria: is_active ? { current: "page" } : {} %>
+  <% end %>
+</nav>
 
 <%= render "shared/content_tabs",
   class_name: "tag-taxonomy-tabs",

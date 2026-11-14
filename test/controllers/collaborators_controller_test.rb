@@ -46,6 +46,8 @@ class CollaboratorsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".collaborator-row .entity-title", text: /\/collaborators\/\d+/, count: 0
     # One link per row, so the count is the row count rather than a number.
     assert_select ".collaborator-row a", count: 2
+    # The History link is same-tab navigation, so it wears the row's text-only shape.
+    assert_select ".collaborator-row .details-link i", count: 0
   end
 
   test "each row's percentage is its share of every remembered change here" do

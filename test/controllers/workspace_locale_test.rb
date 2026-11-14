@@ -286,14 +286,14 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a", text: "Todas las secciones"
   end
 
-  test "the taxonomy workspace and its scope tabs are Spanish" do
+  test "the taxonomy workspace and its scope switch are Spanish" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
     get universe_tags_url(universe_slug: @universe.slug, scope: "story", taxonomy: "scene")
 
     assert_response :success
     assert_select "h1", text: "Etiquetas"
     assert_select ".page-eyebrow", text: "Etiquetas de historia"
-    assert_select ".tag-scope-tabs a.active", text: "Etiquetas de historia"
+    assert_select ".tag-scope-switch a.active", text: "Etiquetas de historia"
     assert_select ".tag-taxonomy-tabs a.active", text: "Etiquetas de escenas"
     assert_select ".tag-taxonomy-tabs a", text: "Etiquetas de secciones"
     assert_select ".page-description", text: /Define etiquetas opcionales para las escenas/

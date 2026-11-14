@@ -279,21 +279,6 @@ its own alongside the browser baseline follow-ups.
    focused follow-up to the broader accessibility validation in item 96; schedule it much later, after
    the other UI/UX findings are triaged.
 
-- **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
-  post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),
-  and Rails stores flash in the cookie session, so the confirmation can raise `CookieOverflow` after
-  the import has committed. The preview and the rake task need no change; the page flash should
-  summarize counts per slice instead of every id, or move the detail to a redirect target.
-
-### Visual design initiative — 2026-11-12
-
-The direction work is complete. The rendered interface was audited, its measured findings and
-screenshots are recorded in [delivery_history.md](delivery_history.md#2026-11-13), the owner chose
-**Index** on 2026-11-14 from [visual_directions.md](visual_directions.md) and
-[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md), and the prototype was then reviewed and
-rolled out through the remaining workspaces. The built system and its conventions are in
-[visual_design.md](visual_design.md).
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

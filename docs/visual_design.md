@@ -14,9 +14,8 @@ The interface should feel like a calm writing workspace. Its aim is the denser *
 recorded in [visual_design_brief.md](visual_design_brief.md): facts and cross-links lead, type and
 alignment carry hierarchy, and chrome recedes. The conventions below implement the accepted
 **Index** direction in [visual_directions.md](visual_directions.md) and
-[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md) for the workspace shell and the
-representative screens; the remaining screens inherit the shared tokens and are validated in the
-rollout slices.
+[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md) across the workspace shell and every
+workspace; the remaining local defects from the audit are backlog items 97–99.
 
 - content is the largest and most prominent area;
 - navigation is quiet and scoped;
@@ -186,6 +185,9 @@ uppercase. The serif is the hierarchy device, so a heading does not need a box a
   shared component classes.
 - Index is flat: surfaces are a 1px hairline with a 4px radius and **no shadow**; buttons and
   controls use a 3px radius. Resolve hierarchy with type, alignment, and rules, not nested boxes.
+  A form that sits inside a page panel is not a second card: the panel already supplies the surface,
+  so the form drops `.form-surface` and takes the panel's padding. A form that stands alone is the
+  page's one card.
 - List rows settle at `46px` on desktop with one clamped summary line; keep at least a `40px`
   touch target on phones, where a row may grow as its tags or labels wrap. A row's Details link and
   menu button keep their painted `19px` and `30px` boxes; below `sm` their hit area grows into the
@@ -196,8 +198,11 @@ uppercase. The serif is the hierarchy device, so a heading does not need a box a
   classes such as `.sidebar-link`, `.entity-row`, and `.taxonomy-row` own their spacing.
 - Do not use inline `style` attributes for layout or state. Existing tag color values are the
   intentional exception because they come from user data.
-- The Characters filter is a quiet block rather than a second card: its title is a small uppercase
-  kicker, its explanatory sentence is hidden below `md`, and its submit stays an outline button.
+- Every in-list filter is a quiet block rather than a second card: `.list-filter` names the block,
+  its title is a small uppercase kicker, its explanatory sentence is hidden below `md`, and its
+  submit stays an outline button. The Characters filter established the treatment on the prototype
+  and the rollout gave the same classes to the Universe record lists, the Scenes list, and the shared
+  taxonomy tree.
 
 ## Application shell
 
@@ -404,7 +409,9 @@ sections.
 
 A list's filter is a supporting control, not a second page primary: its submit is an outline button
 so the single solid primary stays in the header. The same rule holds on a taxonomy tree, where the
-filter and the add control share the header.
+filter and the add control share the header. A form that changes the page's own content rather than
+being its primary action — the Sections workspace's **Move scene**, for example — submits with that
+same outline weight.
 
 The **Story overview** chooses its one primary action from the Story's state rather than its record
 type: an empty Story with a starting structure available leads to the structure card below, so the
@@ -437,7 +444,10 @@ overflow menu on the right, and the rule that nothing on a row depends on hover 
 [conventions.md](conventions.md#list-rows). Read that for the contract. This section is the painted
 treatment: the `.record-count` pill is styled like the sidebar's `.sidebar-count` pills so a row's
 count and a sidebar's count read as the same quiet object, and a destructive action in a row's overflow
-menu is marked by text or icon rather than by a permanently red button.
+menu is marked by text or icon rather than by a permanently red button. The Members workspace's
+person list uses the same `.entity-row` wrapper instead of a table, with its access select, Save, and
+Remove controls in the row's action group, so a phone wraps them under the name rather than clipping
+the select.
 
 ### Flat entity lists
 

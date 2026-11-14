@@ -18,15 +18,19 @@
     <% if @import_root.folders.empty? %>
       <p class="mb-0"><%= t("imports.show.empty_root") %></p>
     <% else %>
-      <%= form_with url: import_path, method: :get, class: "form-surface" do |form| %>
-        <div class="mb-3">
-          <%= form.label :source, t("imports.show.source_label"), class: "form-label" %>
-          <%= form.select :source,
-            @import_root.folders.map { |name| [ name, name ] },
-            { include_blank: t("imports.show.source_blank"), selected: @source },
-            class: "form-select" %>
+      <%= form_with url: import_path, method: :get do |form| %>
+        <div class="row">
+          <div class="col-lg-7">
+            <div class="mb-3">
+              <%= form.label :source, t("imports.show.source_label"), class: "form-label" %>
+              <%= form.select :source,
+                @import_root.folders.map { |name| [ name, name ] },
+                { include_blank: t("imports.show.source_blank"), selected: @source },
+                class: "form-select" %>
+            </div>
+            <%= form.submit t("imports.show.preview"), class: "btn btn-primary" %>
+          </div>
         </div>
-        <%= form.submit t("imports.show.preview"), class: "btn btn-primary" %>
       <% end %>
     <% end %>
   </div>

@@ -287,24 +287,12 @@ its own alongside the browser baseline follow-ups.
 
 ### Visual design initiative — 2026-11-12
 
-The earlier UI/UX review is primarily about workflows; this initiative develops a coherent, more
-modern visual direction. The stages are in suggested order, with owner decisions before a direction
-is prototyped and before it is rolled out. These are pending ideas, not approval for a redesign.
-Coordinate with the existing visual/task baseline and visual hierarchy audit rather than repeating
-the same observations; use their findings to inform the other UI/UX items. The agreed starting point
-is [visual_design_brief.md](visual_design_brief.md). The rendered interface has been audited, its
-measured findings and screenshots are recorded in
-[delivery_history.md](delivery_history.md#2026-11-13), and the owner chose **Index** on 2026-11-14
-from [visual_directions.md](visual_directions.md), recorded in
-[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md).
-
-91. **Roll out the approved visual system in slices.**
-
-   Carry the prototype's Bootstrap and theme-token values through the remaining workspaces in
-   manageable groups, rather than restyling everything at once. Validate accessibility, responsive
-   behavior, translations, and existing workflows as each slice lands. Keep changes reversible,
-   avoid a new framework or other dependencies unless justified, and update the owning design
-   documentation as behavior changes.
+The direction work is complete. The rendered interface was audited, its measured findings and
+screenshots are recorded in [delivery_history.md](delivery_history.md#2026-11-13), the owner chose
+**Index** on 2026-11-14 from [visual_directions.md](visual_directions.md) and
+[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md), and the prototype was then reviewed and
+rolled out through the remaining workspaces. The built system and its conventions are in
+[visual_design.md](visual_design.md).
 
 The 2026-11-13 audit also found three defects that do not depend on the direction. They are local
 inconsistencies with controls the pages already use, not approval to restyle a screen.

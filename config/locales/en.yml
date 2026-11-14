@@ -1633,10 +1633,6 @@ en:
       title: "Members"
       description: "Grant read, write, or admin access to this universe. The owner always has admin access."
       back: "Back to universe"
-      columns:
-        member: "Member"
-        access: "Access"
-        actions: "Actions"
       grant_eyebrow: "Grant access"
       grant_title: "Add a member"
       grant_description: "The user must already have an account. In a public universe every signed-in user can contribute; an admin membership also grants control over members and universe settings."

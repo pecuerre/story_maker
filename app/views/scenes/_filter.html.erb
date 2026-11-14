@@ -12,9 +12,9 @@
 <% shown = local_assigns.fetch(:shown) %>
 <% filters_path = universe_story_scenes_path(story_id: story) %>
 
-<div class="content-surface scene-filter p-3 p-md-4 mb-4">
-  <h2 class="h6 mb-1"><%= t("scenes.filter.title") %></h2>
-  <p class="text-body-secondary">
+<div class="list-filter scene-filter mb-4">
+  <h2 class="list-filter-title"><%= t("scenes.filter.title") %></h2>
+  <p class="list-filter-description">
     <%= t("scenes.filter.description") %>
   </p>
 

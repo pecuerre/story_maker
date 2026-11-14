@@ -1512,11 +1512,17 @@ $um-search-match: #ffc107;
   font-weight: 600;
 }
 
-.character-filter {
+// Every in-list filter is a quiet instruction above its form rather than a card:
+// the list it narrows is the page's content, and a bordered box around the
+// controls would read as another section. The kicker names the action, and the
+// longer explanation is supplementary, so a phone drops it and keeps the
+// labelled controls. The prototype's Characters filter established this
+// treatment; the rollout gives the same classes to the other workspaces.
+.list-filter {
   margin-bottom: 1.25rem;
 }
 
-.character-filter-title {
+.list-filter-title {
   margin: 0 0 .75rem;
   color: var(--bs-secondary-color);
   font-family: var(--bs-body-font-family);
@@ -1526,7 +1532,7 @@ $um-search-match: #ffc107;
   text-transform: uppercase;
 }
 
-.character-filter-description {
+.list-filter-description {
   max-width: 64ch;
   margin: -.5rem 0 .75rem;
   color: var(--bs-secondary-color);
@@ -1536,7 +1542,7 @@ $um-search-match: #ffc107;
 }
 
 @media (max-width: 767.98px) {
-  .character-filter-description {
+  .list-filter-description {
     display: none;
   }
 }

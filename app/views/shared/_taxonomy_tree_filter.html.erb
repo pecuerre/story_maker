@@ -11,9 +11,9 @@
 <% tag_param = local_assigns[:filter_tag_param] %>
 <% tag_selected = tag_param && filter.public_send(tag_param) %>
 
-<div class="content-surface taxonomy-tree-filter p-3 p-md-4 mb-4">
-  <h2 class="h6 mb-1"><%= t("shared.taxonomy_tree.filter.title") %></h2>
-  <p class="text-body-secondary">
+<div class="list-filter taxonomy-tree-filter mb-4">
+  <h2 class="list-filter-title"><%= t("shared.taxonomy_tree.filter.title") %></h2>
+  <p class="list-filter-description">
     <%= t("shared.taxonomy_tree.filter.description") %>
   </p>
 

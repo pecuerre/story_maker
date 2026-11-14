@@ -29,6 +29,85 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-14
 
+- **[changed]** **Index rollout slice 3: Members and platform pages.**
+  - **The gap.** The Members workspace was the last table-shaped workspace. Its access cell carried a
+    read-only badge beside a select and Save, and at 390 the select collapsed to **Ac**; the page
+    also nested a `.form-surface` card inside a `.surface-card`. The import and universe-delete pages
+    had the same double-box shape, and `memberships/new` carried an inline `max-width` style.
+  - **The change.** Members is now an `.entity-row` list: the name, quiet access chip, and email are
+    the row's copy, and the access select, Save, and Remove sit in the row's action group, which wraps
+    under the name at phone widths. The access badge uses the same hairline chip as other status
+    values. The add-member form drops its inner card, `memberships/new` uses its form card as the
+    page surface, and the import and universe-delete forms sit inside their panel instead of a second
+    box; the inline style is gone.
+  - **Scope.** Settings, notifications, review requests, change history, collaborators, backups, API
+    tokens, discussions, the sign-in and password pages, the public front door, and the universe
+    chooser and editor already render the Index tokens and shared patterns; their empty states and
+    cards were checked and needed no view change. Items 97–99 remain separate pending defects.
+  - **Rejected.** At-phone column stacking for the Members table: a table cannot drop its header and
+    keep three interactive controls legible, and the workspace already has one row pattern. Hiding the
+    access select on phones: access is the page's only write.
+  - **Verification.** Captured at 1440 and 390 in Light and Dark, with Spanish labels where the page
+    has them, for Members, add-member, import, and permanently delete: the select stays readable at
+    390, the rows wrap rather than clip, and each page has one card. The relevant request suites pass
+    (46 runs, 0 failures, 0 skips). Captures are in `/tmp/opencode/visual-rollout/shots/` (temporary,
+    not committed).
+  - **Not verified.** Operating-system serif substitution beyond Linux, a screen reader, print,
+    forced-colors mode, and the populated review-request and draft-detail pages, which the Dark
+    development data does not contain.
+
+- **[changed]** **Index rollout slice 2: Story planning workspaces.**
+  - **The gap.** The Story workspace's lists and planning surfaces already render the shared tokens,
+    `entity-row` rows, and the tab strip, so the remaining differences were the Scenes filter's card
+    and one competing solid action. The Scenes filter kept its `content-surface` wrapper and an
+    always-visible explanation, and the Sections workspace's **Move scene** submit was a second
+    solid primary beneath the header's **Add section**.
+  - **The change.** The Scenes filter now uses `.list-filter`, so the kicker and phone behavior match
+    the other lists. The grouping form's submit is `btn-outline-secondary`, leaving the header's add
+    action as the page's only solid primary. `visual_design.md` states the rule for a body form that
+    changes the page's content.
+  - **Scope.** Plots, Sections, Scene Details, the Scene editor, the Scene board, the empty overview,
+    the Export page, the Timeline, and the comparison page already carry the Index
+    treatment; the matrix and appearance grid's horizontal navigation is item 85, and the Export
+    page's two scopes are item 84, so neither was restyled here.
+  - **Rejected.** Restructuring the Scene row's phone stack to hide counts or tags: the row is
+    allowed to grow as its labels wrap, and hiding a fact to save a line would misstate the scene.
+    Changing the conflict outlines on Narrative order: the red carries a status meaning, which the
+    system reserves for meaning rather than decoration.
+  - **Verification.** Captured at 1440 and 390 in Light and Dark, with Spanish labels at 1440, for the
+    Scenes list and the Sections workspace: the filter is cardless, the description drops at phone
+    width, and the grouping form keeps its focus outline. The relevant request suites pass (176
+    runs, 0 failures, 0 skips). Captures are in `/tmp/opencode/visual-rollout/shots/` (temporary,
+    not committed).
+  - **Not verified.** Operating-system serif substitution beyond Linux, a screen reader, print, and
+    forced-colors mode.
+
+- **[changed]** **Index rollout slice 1: Universe record workspaces.**
+  - **The gap.** Item 91 carries the prototype's treatment through the workspaces the seven
+    representative screens did not cover. The Universe record lists were still painting their
+    filters as `content-surface` cards with an `h6` title and an always-visible explanatory
+    paragraph, while the reviewed Characters list had already settled the Index answer: a cardless
+    block with an uppercase kicker, quiet serif copy, and no description at phone widths.
+  - **The change.** `.list-filter`, `.list-filter-title`, and `.list-filter-description` replace the
+    Characters-only classes as the one filter treatment. Items, Events, Relations, Ownerships,
+    Canon, and the shared taxonomy tree filter now use it, and the Characters filter was renamed onto
+    it so there is one vocabulary rather than two. The per-workspace classes (`.item-filter`,
+    `.taxonomy-tree-filter`, and the rest) stay as each workspace's hook.
+  - **Scope.** The rows, record details pages, Map, and Faction relationships needed no change; they
+    already render the shared Index tokens, `record_details`, `entity-row`, and `taxonomy-row`
+    treatments. The Scene list belongs to slice 2, and items 97–99 remain separate pending defects.
+  - **Rejected.** Extracting one shared filter partial across the seven workspaces: their canonical
+    keys, sort allowlists, counts, and summary badges differ, and the behavior contract is owned by
+    `features/list_filters.md`. Hiding the description with a narrower `max-width` instead of
+    `display: none`: the phone review showed the copy, not the controls, was consuming the screen.
+  - **Verification.** Captured in the running app at 1440 and 390 CSS pixels in Light and Dark, with
+    Spanish labels at 390, for every changed list: the filter is cardless, the kicker and controls
+    survive the phone width, and the filtered state keeps its counts and badges. The relevant
+    request suites pass (157 runs, 0 failures, 0 skips). Captures are in
+    `/tmp/opencode/visual-rollout/shots/` (temporary, not committed).
+  - **Not verified.** Operating-system serif substitution beyond Linux, a screen reader, print, and
+    forced-colors mode.
+
 - **[changed]** **Index prototype reviewed and refined.**
   - **The gap.** The prototype entry above built Index into the Rails screens; backlog item 90 then
     asked for the review pass before item 91 translates it into rollout slices — the actual screens at

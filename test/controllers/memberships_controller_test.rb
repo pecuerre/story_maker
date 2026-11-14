@@ -174,7 +174,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "input[type=submit][value=?]", I18n.t("memberships.index.save"), count: 0
     assert_select "button", text: I18n.t("memberships.index.remove"), count: 0
-    assert_select "td.text-end", text: I18n.t("memberships.index.you")
+    assert_select ".entity-row-actions", text: I18n.t("memberships.index.you")
   end
 
   test "other membership rows keep change and remove controls" do

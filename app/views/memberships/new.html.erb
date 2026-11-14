@@ -15,24 +15,22 @@
   </div>
 <% end %>
 
-<div class="surface-card p-4" style="max-width: 42rem;">
-  <%= form_with scope: :membership,
-    url: universe_memberships_path(universe_slug: Current.universe.slug),
-    class: "form-surface" do |form| %>
-    <div class="mb-3">
-      <%= form.label :email_address, t("memberships.form.email_address"), class: "form-label" %>
-      <%= form.email_field :email_address, class: "form-control", required: true, autofocus: true %>
-    </div>
-    <div class="mb-3">
-      <%= form.label :access_level, t("memberships.form.access_level"), class: "form-label" %>
-      <%= form.select :access_level,
-        membership_access_level_options,
-        { include_blank: t("memberships.form.choose_level") },
-        class: "form-select", required: true %>
-    </div>
-    <div class="form-actions">
-      <%= form.submit t("memberships.form.submit"), class: "btn btn-primary" %>
-      <%= link_to t("shared.form.cancel"), universe_memberships_path(universe_slug: Current.universe.slug), class: "btn btn-link" %>
-    </div>
-  <% end %>
-</div>
+<%= form_with scope: :membership,
+  url: universe_memberships_path(universe_slug: Current.universe.slug),
+  class: "form-surface" do |form| %>
+  <div class="mb-3">
+    <%= form.label :email_address, t("memberships.form.email_address"), class: "form-label" %>
+    <%= form.email_field :email_address, class: "form-control", required: true, autofocus: true %>
+  </div>
+  <div class="mb-3">
+    <%= form.label :access_level, t("memberships.form.access_level"), class: "form-label" %>
+    <%= form.select :access_level,
+      membership_access_level_options,
+      { include_blank: t("memberships.form.choose_level") },
+      class: "form-select", required: true %>
+  </div>
+  <div class="form-actions">
+    <%= form.submit t("memberships.form.submit"), class: "btn btn-primary" %>
+    <%= link_to t("shared.form.cancel"), universe_memberships_path(universe_slug: Current.universe.slug), class: "btn btn-link" %>
+  </div>
+<% end %>

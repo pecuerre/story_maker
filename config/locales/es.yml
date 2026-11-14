@@ -1553,10 +1553,6 @@ es:
       title: "Miembros"
       description: "Concede acceso de lectura, escritura o administración a este universo. El propietario siempre tiene acceso de administración."
       back: "Volver al universo"
-      columns:
-        member: "Miembro"
-        access: "Acceso"
-        actions: "Acciones"
       grant_eyebrow: "Conceder acceso"
       grant_title: "Añadir un miembro"
       grant_description: "El usuario ya debe tener una cuenta. En un universo público cualquier usuario que haya iniciado sesión puede colaborar; una membresía de administración también concede el control sobre los miembros y los ajustes del universo."

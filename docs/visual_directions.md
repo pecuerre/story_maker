@@ -3,12 +3,11 @@
 This document presents three visual directions and records the owner's choice. The three proposals
 began as a static comparison: no application token, stylesheet, view, or behaviour changed while the
 direction was being chosen. The chosen **Index** direction has since been applied to the workspace
-shell and the representative screens as a Rails prototype; the built values are in
-[visual_design.md](visual_design.md), and the rollout to the remaining workspaces is backlog item
-91. The aim, users, constraints, and representative screens remain owned by
-[visual_design_brief.md](visual_design_brief.md); the built system remains owned by
-[visual_design.md](visual_design.md). This document owns the proposed directions, their tradeoffs,
-the contrast and font checks, and the recommendation.
+shell, the representative screens, and the remaining workspaces through the rollout slices; the
+built values are in [visual_design.md](visual_design.md). The aim, users, constraints, and
+representative screens remain owned by [visual_design_brief.md](visual_design_brief.md); the built
+system remains owned by [visual_design.md](visual_design.md). This document owns the proposed
+directions, their tradeoffs, the contrast and font checks, and the recommendation.
 
 The three directions are **Index** (a reference atlas), **Ledger** (a dense data index), and
 **Folio** (an editorial workspace). Each is applied to the same screens with the same content, so

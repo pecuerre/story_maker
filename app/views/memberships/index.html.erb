@@ -23,8 +23,7 @@
       </p>
 
       <%= form_with scope: :membership,
-        url: universe_memberships_path(universe_slug: Current.universe.slug),
-        class: "form-surface" do |form| %>
+        url: universe_memberships_path(universe_slug: Current.universe.slug) do |form| %>
         <div class="mb-3">
           <%= form.label :email_address, t("memberships.form.email_address"), class: "form-label" %>
           <%= form.email_field :email_address, class: "form-control", required: true %>
@@ -42,63 +41,53 @@
   </div>
 
   <div class="col-lg-7">
-    <div class="content-surface">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th scope="col"><%= t("memberships.index.columns.member") %></th>
-              <th scope="col"><%= t("memberships.index.columns.access") %></th>
-              <th scope="col" class="text-end"><%= t("memberships.index.columns.actions") %></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <div class="fw-semibold"><%= Current.universe.owner.name %></div>
-                <div class="small text-body-secondary"><%= Current.universe.owner.email_address %></div>
-              </td>
-              <td><span class="badge text-bg-primary"><%= t("memberships.access_levels.admin") %></span></td>
-              <td class="text-end"><span class="small text-body-secondary"><%= t("memberships.index.owner") %></span></td>
-            </tr>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <div class="list-group-item entity-row d-flex flex-wrap align-items-center gap-3">
+          <div class="entity-copy flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="entity-title"><%= Current.universe.owner.name %></span>
+              <span class="badge rounded-pill text-bg-light border"><%= t("memberships.access_levels.admin") %></span>
+            </div>
+            <div class="entity-description"><%= Current.universe.owner.email_address %></div>
+          </div>
+          <span class="small text-body-secondary"><%= t("memberships.index.owner") %></span>
+        </div>
 
-            <% @memberships.each do |membership| %>
-              <% own_membership = membership.user == Current.user %>
-              <tr>
-                <td>
-                  <div class="fw-semibold"><%= membership.user.name %></div>
-                  <div class="small text-body-secondary"><%= membership.user.email_address %></div>
-                </td>
-                <td>
-                  <span class="badge text-bg-primary"><%= t("memberships.access_levels.#{membership.access_level}") %></span>
-                  <% unless own_membership %>
-                    <%= form_with scope: :membership,
-                      url: universe_membership_path(universe_slug: Current.universe.slug, id: membership),
-                      method: :patch,
-                      class: "d-flex align-items-center gap-2 ms-2" do |form| %>
-                      <%= form.select :access_level,
-                        membership_access_level_options,
-                        { selected: membership.access_level },
-                        { class: "form-select form-select-sm",
-                          aria: { label: t("memberships.index.access_level_aria", name: membership.user.name) } } %>
-                      <%= form.submit t("memberships.index.save"), class: "btn btn-sm btn-outline-secondary" %>
-                    <% end %>
-                  <% end %>
-                </td>
-                <td class="text-end">
-                  <% if own_membership %>
-                    <span class="small text-body-secondary"><%= t("memberships.index.you") %></span>
-                  <% else %>
-                    <%= button_to t("memberships.index.remove"), universe_membership_path(universe_slug: Current.universe.slug, id: membership),
-                      method: :delete,
-                      class: "btn btn-sm btn-outline-danger",
-                      data: { turbo_confirm: t("memberships.index.remove_confirm", name: membership.user.name) } %>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+        <% @memberships.each do |membership| %>
+          <% own_membership = membership.user == Current.user %>
+          <div class="list-group-item entity-row d-flex flex-wrap align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= membership.user.name %></span>
+                <span class="badge rounded-pill text-bg-light border"><%= t("memberships.access_levels.#{membership.access_level}") %></span>
+              </div>
+              <div class="entity-description"><%= membership.user.email_address %></div>
+            </div>
+
+            <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end ms-auto">
+              <% if own_membership %>
+                <span class="small text-body-secondary"><%= t("memberships.index.you") %></span>
+              <% else %>
+                <%= form_with scope: :membership,
+                  url: universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                  method: :patch,
+                  class: "d-flex align-items-center gap-2" do |form| %>
+                  <%= form.select :access_level,
+                    membership_access_level_options,
+                    { selected: membership.access_level },
+                    { class: "form-select form-select-sm",
+                      aria: { label: t("memberships.index.access_level_aria", name: membership.user.name) } } %>
+                  <%= form.submit t("memberships.index.save"), class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+                <%= button_to t("memberships.index.remove"), universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                  method: :delete,
+                  class: "btn btn-sm btn-outline-danger",
+                  data: { turbo_confirm: t("memberships.index.remove_confirm", name: membership.user.name) } %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

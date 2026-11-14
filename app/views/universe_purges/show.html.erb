@@ -31,38 +31,42 @@
       JavaScript turned off still cannot delete the wrong universe. %>
   <%= form_with url: universe_purge_path(universe_slug: @universe.slug),
     method: :delete,
-    class: "form-surface mt-4",
+    class: "mt-4",
     html: { autocomplete: "off" },
     data: { controller: "name-confirmation", name_confirmation_expected_value: @universe.name } do |form| %>
-    <div class="mb-3">
-      <%= form.label :confirmation, t("universes.purge.form.label", name: @universe.name), class: "form-label" %>
-      <%= form.text_field :confirmation,
-        value: params[:confirmation],
-        class: "form-control",
-        autocomplete: "off",
-        autocapitalize: "none",
-        autocorrect: "off",
-        spellcheck: "false",
-        required: true,
-        autofocus: true,
-        aria: { describedby: "universe-purge-confirmation-hint" },
-        data: {
-          name_confirmation_target: "input",
-          action: "input->name-confirmation#check",
-          "1p-ignore": "true",
-          "lpignore": "true"
-        } %>
-      <div id="universe-purge-confirmation-hint" class="form-text">
-        <%= t("universes.purge.form.hint") %>
-      </div>
-    </div>
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="mb-3">
+          <%= form.label :confirmation, t("universes.purge.form.label", name: @universe.name), class: "form-label" %>
+          <%= form.text_field :confirmation,
+            value: params[:confirmation],
+            class: "form-control",
+            autocomplete: "off",
+            autocapitalize: "none",
+            autocorrect: "off",
+            spellcheck: "false",
+            required: true,
+            autofocus: true,
+            aria: { describedby: "universe-purge-confirmation-hint" },
+            data: {
+              name_confirmation_target: "input",
+              action: "input->name-confirmation#check",
+              "1p-ignore": "true",
+              "lpignore": "true"
+            } %>
+          <div id="universe-purge-confirmation-hint" class="form-text">
+            <%= t("universes.purge.form.hint") %>
+          </div>
+        </div>
 
-    <div class="form-actions">
-      <%= form.submit t("universes.purge.form.submit"),
-        class: "btn btn-danger",
-        disabled: true,
-        data: { name_confirmation_target: "submit" } %>
-      <%= link_to t("shared.form.cancel"), edit_universe_path(@universe), class: "btn btn-link" %>
+        <div class="form-actions">
+          <%= form.submit t("universes.purge.form.submit"),
+            class: "btn btn-danger",
+            disabled: true,
+            data: { name_confirmation_target: "submit" } %>
+          <%= link_to t("shared.form.cancel"), edit_universe_path(@universe), class: "btn btn-link" %>
+        </div>
+      </div>
     </div>
   <% end %>
 </div>

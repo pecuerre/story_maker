@@ -294,16 +294,8 @@ screenshots are recorded in [delivery_history.md](delivery_history.md#2026-11-13
 rolled out through the remaining workspaces. The built system and its conventions are in
 [visual_design.md](visual_design.md).
 
-The 2026-11-13 audit also found three defects that do not depend on the direction. They are local
+The 2026-11-13 audit also found two defects that do not depend on the direction. They are local
 inconsistencies with controls the pages already use, not approval to restyle a screen.
-
-97. **Theme the photo field's file input.**
-
-   The Scene and Story forms build their picture control in `photo_crop_controller.js`, and the file
-   input is the browser's native picker. It carries `.form-control`, but **Choose File / No file
-   chosen** keeps the browser's light chrome, so in the dark theme it is the brightest control on the
-   form. Add a `::file-selector-button` treatment from the theme tokens, keep the existing focus ring,
-   and check the empty and chosen states at desktop and phone widths in both themes.
 
 98. **Give the row Details link a same-page icon.**
 
@@ -329,3 +321,9 @@ analyzed like the list above, given the next number, and moved under PENDING WOR
   scene to begin" and its Section-tree card says "Add the first one to begin" to a guest or read-only
   member, who can add neither. Give those cards a read-only description, the way the Sections
   workspace already has `read_only_empty_description`, and add the Spanish copy.
+
+- **Photo file-button hover.** Bootstrap fills the photo field's `::file-selector-button` on hover
+  from `--bs-secondary-bg`, which carries the same value as `--bs-tertiary-bg` in both themes
+  (`#28241e` Dark, `#ece8dd` Light), so hovering the picker changes nothing. A visible hover needs
+  a fill that differs from the tertiary surface, chosen against whatever the other form controls
+  do, and the empty and chosen states in both themes.

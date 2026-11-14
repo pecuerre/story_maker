@@ -53,6 +53,10 @@ Labels used below, in the order their groups appear:
 - **Index chosen.** The owner chose Index as the visual direction on 2026-11-14; ADR 0047 records the decision and the prototype stage is unblocked.
 - **Visual directions exploration.** Three directions — Index, Ledger, and Folio — are presented with light and dark palettes, typography, density, contrast checks, tradeoffs, and a recommendation in `docs/visual_directions.md`, with a review prototype in `docs/visual_directions_prototype.html`.
 
+### chore
+
+- **Photo file-button theme coverage.** A browser case reads the photo field's `::file-selector-button` fill and label contrast in both themes, so a file picker that keeps the light palette fails the suite.
+
 ## 2026-11-13
 
 ### added

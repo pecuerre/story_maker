@@ -124,6 +124,50 @@ class SettingsThemeTest < ApplicationSystemTestCase
     end
   end
 
+  # A file input is the one shared form control whose button the browser paints
+  # itself: `::file-selector-button`, filled by Bootstrap from `--bs-tertiary-bg`
+  # rather than from the control's own background. That makes the photo field the
+  # one place a theme can half-apply — a dark frame around a light button — so the
+  # answer is read from the pseudo-element instead of inferred from the palette.
+  # The 2026-11-13 audit recorded the native light button inside the dark form;
+  # this asserts what the page paints now, in both themes, at the element a writer
+  # actually clicks.
+  test "the photo field's file button follows the chosen theme" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+    scene = scenes(:scene_one)
+    scene_path = edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
+
+    sign_in_via_form(users(:user_one))
+
+    visit settings_path
+    choose "Dark"
+    click_button "Save theme"
+    # The confirmation is the wait: the preference is applied by the reloaded
+    # document, and the old one still carries the previous attribute, so reading
+    # the root element before this lands would answer for the page being left.
+    assert_text "Theme set to Dark."
+
+    visit scene_path
+    assert_equal "dark", theme_attribute
+    dark_fill = file_button_style("background-color")
+    assert_operator relative_luminance(dark_fill), :<, 0.1,
+      "the dark theme should paint the file picker's button from the dark tertiary surface"
+    assert_operator contrast_ratio(file_button_style("color"), dark_fill), :>=, 4.5,
+      "the file picker's label should stay readable on its own fill in the dark theme"
+
+    visit settings_path
+    choose "Light"
+    click_button "Save theme"
+    assert_text "Theme set to Light."
+
+    visit scene_path
+    light_fill = file_button_style("background-color")
+    assert_not_equal dark_fill, light_fill,
+      "the file picker's fill should come from the theme rather than from a fixed color"
+    assert_operator relative_luminance(light_fill), :>, relative_luminance(dark_fill)
+  end
+
   private
     def theme_attribute
       page.evaluate_script("document.documentElement.getAttribute('data-bs-theme')")
@@ -138,11 +182,26 @@ class SettingsThemeTest < ApplicationSystemTestCase
     # The property is read from *this* element rather than from the first CSS
     # match, because several buttons of one variant exist on the page and a hidden
     # one would answer for the visible button the case is measuring.
-    def computed_style(element, property)
-      page.execute_script(
-        "return getComputedStyle(arguments[0]).getPropertyValue(arguments[1])",
-        element.native, property
-      )
+    def computed_style(element, property, pseudo: nil)
+      if pseudo
+        page.execute_script(
+          "return getComputedStyle(arguments[0], arguments[2]).getPropertyValue(arguments[1])",
+          element.native, property, pseudo
+        )
+      else
+        page.execute_script(
+          "return getComputedStyle(arguments[0]).getPropertyValue(arguments[1])",
+          element.native, property
+        )
+      end
+    end
+
+    # The photo field's picker button is a pseudo-element of the file input, so it
+    # has no node of its own to find and is read through the input that originates
+    # it. The field is built by `photo_crop_controller.js`, and this suite's
+    # navigation wait has already let that controller connect.
+    def file_button_style(property)
+      computed_style(find("input[type=file]"), property, pseudo: "::file-selector-button")
     end
 
     # WCAG 2.1 contrast: the relative luminance of each color, then the ratio

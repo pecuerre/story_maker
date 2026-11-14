@@ -29,6 +29,32 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-14
 
+- **[chore]** **Photo file-button theme check.**
+  - **The gap.** The 2026-11-13 rendered audit recorded the photo field's **Choose File / No file
+    chosen** as the browser's native light control inside the dark form, and backlog item 97 asked
+    for a `::file-selector-button` treatment built from the theme tokens.
+  - **What the rendered page does.** The button already paints from `--bs-tertiary-bg` — `#28241e`
+    in Dark, `#ece8dd` in Light — with `--bs-body-color` ink, because Bootstrap's own
+    `::file-selector-button` rule reads that variable. The observation did not reproduce: setting
+    the theme through the settings form and then loading a form that carries the photo field paints
+    the button dark in Dark and light in Light, empty and after a file is chosen.
+  - **Why an audit could read it light.** Not established: the audit switched themes through the
+    settings form too, so the answer is recorded as "does not reproduce on this tree" rather than as
+    a cause. One way a light value does appear on a dark page is a scripted `data-bs-theme` flip:
+    that starts the pseudo-element's 150ms background transition, and a read inside the window
+    answers with the outgoing color — light `#ece8dd`, then two intermediate values, then the dark
+    one. The application never flips the attribute at runtime, so a writer never sees that state.
+  - **The change.** No stylesheet rule was added: a local copy of Bootstrap's `::file-selector-button`
+    treatment would be a second owner of the same fact. The delivered work is the browser case in
+    `test/system/settings_theme_test.rb`, which reads the pseudo-element's fill and label contrast in
+    both themes, and the removal of item 97 from the backlog.
+  - **Verification.** The Scene and Story edit pages were checked at 1280 and 390 in both themes,
+    and the Characters and Story editor modals at 1280 in both, empty and with a file chosen; the
+    label, focus ring, and file name were legible throughout. The full `settings_theme_test.rb` file
+    passes (5 runs, 109 assertions) — an earlier run failed the pre-existing guest/switching case on
+    a stale read and passed alone and on the rerun — and setting `--bs-tertiary-bg` to the light
+    value on a dark page turns the button light, which is the regression the new case catches.
+
 - **[changed]** **Index rollout slice 3: Members and platform pages.**
   - **The gap.** The Members workspace was the last table-shaped workspace. Its access cell carried a
     read-only badge beside a select and Save, and at 390 the select collapsed to **Ac**; the page

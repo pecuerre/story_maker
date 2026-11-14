@@ -148,6 +148,10 @@ Rules for the dark theme:
   re-points the text, boundary, hover, and pressed variables of every `.btn-outline-*` at the dark
   text-emphasis palette. Keep that loop rather than patching one variant, and check a changed theme
   color in both themes against the 4.5:1 text and 3:1 boundary targets.
+- **Semantic text utilities need the same re-tint.** Bootstrap's `.text-danger` keeps the light
+  theme's deep red in dark mode, where it is about `2.5:1` on the near-black canvas; the dark
+  danger text-emphasis is the legible counterpart. `_application_custom.scss` points `.text-danger`
+  at it, so a destructive menu item is readable before it is hovered as well as after.
 - The navbar stays dark in both themes: it is the one dark surface that is part of the design, not a
   theme choice.
 - Author-chosen data colors are left alone: tag badges and timeline nodes keep the colors stored on
@@ -183,7 +187,10 @@ uppercase. The serif is the hierarchy device, so a heading does not need a box a
 - Index is flat: surfaces are a 1px hairline with a 4px radius and **no shadow**; buttons and
   controls use a 3px radius. Resolve hierarchy with type, alignment, and rules, not nested boxes.
 - List rows settle at `46px` on desktop with one clamped summary line; keep at least a `40px`
-  touch target on phones, where a row may grow as its tags or labels wrap.
+  touch target on phones, where a row may grow as its tags or labels wrap. A row's Details link and
+  menu button keep their painted `19px` and `30px` boxes; below `sm` their hit area grows into the
+  row's own padding to the row's `40px` target, so touch can reach them without growing the row or
+  moving the painted label.
 - The content column caps at `1040px`; the workspace rails are `14.5rem` and `12.75rem`.
 - Avoid global rules that shrink every `.nav-link` or `.list-group-item`. Component-specific
   classes such as `.sidebar-link`, `.entity-row`, and `.taxonomy-row` own their spacing.
@@ -214,6 +221,12 @@ The scope hue belongs to the context label and section heading; Index lets the r
 surface show through instead of filling each block with a tint. Labels wrap rather than truncate when
 a translated entry is longer than the rail, which is why the Spanish **Solicitudes de revisión** takes
 two lines in the narrow tools column.
+
+Below `xl` a mobile workspace bar carries the **Menu** and **Tools** drawer buttons and, at its
+trailing edge, the current scope: the universe name and then the story name. The two names are
+separate flex items, so a translated button pair that leaves too little room drops the whole story to
+a second line — prefixed by its separator — instead of clipping the only place a phone states which
+story is current.
 
 A scope link is marked current with `.active` **and** `aria-current="page"` only on the page it points
 at, so the bar never claims a scope that is not the page being viewed. The search box issues no query of

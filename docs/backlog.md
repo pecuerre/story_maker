@@ -298,17 +298,6 @@ measured findings and screenshots are recorded in
 from [visual_directions.md](visual_directions.md), recorded in
 [ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md).
 
-90. **Review and refine the Index prototype.**
-
-   Index now runs on the workspace shell, Story overview and empty overview, Characters list, Tags
-   tree, Character details, Scene details, and Scene editor; the built values are in
-   [visual_design.md](visual_design.md) and the temporary captures are in
-   `/tmp/opencode/visual-index-prototype-2026-11-14/shots/`. Walk the actual screens at desktop,
-   tablet, and phone widths in both themes, including the Spanish labels, zoom, and keyboard focus;
-   check the system-serif fallback on the machines the owner uses, the warm palette against
-   author-chosen tag colours, and the phone touch targets. Record the refinements here and apply
-   them to this prototype before item 91 translates the result into rollout slices.
-
 91. **Roll out the approved visual system in slices.**
 
    Carry the prototype's Bootstrap and theme-token values through the remaining workspaces in

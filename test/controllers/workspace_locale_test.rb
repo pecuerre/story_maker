@@ -179,7 +179,7 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".structure-links a", text: /Tramas/
     assert_select ".structure-links a", text: /Escenas/
     assert_select "a", text: "Abrir la cuadrícula de apariciones"
-    assert_select ".page-eyebrow", text: "Estructura de la historia"
+    assert_select ".page-eyebrow", text: "De un vistazo"
     assert_select ".page-eyebrow", text: "Biblia del universo compartida"
     assert_select "h2", text: "Registros de construcción del mundo"
     # The universe's name is interpolated into a translated sentence, so the

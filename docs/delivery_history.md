@@ -29,6 +29,53 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-11-14
 
+- **[changed]** **Index prototype reviewed and refined.**
+  - **The gap.** The prototype entry above built Index into the Rails screens; backlog item 90 then
+    asked for the review pass before item 91 translates it into rollout slices — the actual screens at
+    desktop, tablet, and phone widths in both themes, Spanish labels, zoom, keyboard focus, the
+    system-serif fallback, author-chosen tag colours, and phone touch targets, with the refinements
+    recorded and applied to this prototype.
+  - **The findings.** Four issues survived measurement. Bootstrap's `.text-danger` kept the light
+    theme's `#a32626` in dark mode, which is 2.47:1 on the near-black canvas and dimmed every row
+    menu's **Delete** until it was hovered. At 390px in Spanish, **Menú** and **Herramientas** left the
+    scope line 119px for 131px of text, so the only place a phone states the current story ended in an
+    ellipsis. The row's **Details** link and menu button painted 19px and 30px boxes inside a 46px
+    row, short of the 40px touch target the brief asks for. And the Story structure card's kicker
+    repeated its heading word for word in both languages — **STORY STRUCTURE / Story structure**.
+  - **The change.** `.text-danger` now takes the dark danger text-emphasis (`#f09999`, about 7:1).
+    The mobile scope line became a wrapping flex pair: the universe and the story are separate items,
+    the separator belongs to the story, and the story moves to its own line whole when the translated
+    buttons leave no room; it is right-aligned and the story is prefixed by `·` on its own line. The
+    two row controls keep their painted size but gain a pseudo-element hit area at `sm` and below,
+    built from the row's own padding so the 46px row and the first-line alignment both survive. The
+    structure card's kicker is now **At a glance** / **De un vistazo**. `workspace_locale_test.rb`
+    follows the new Spanish kicker.
+  - **Kept as they are.** The taxonomy child rows' three-line stack at 390 (the actions stay visible
+    and nothing is truncated), the Tags scope/type tab pair (item 99), the 44rem form measure beside
+    the wider page header (deliberate reading measure), and the author's saturated tag colours (all
+    demo pairs measure 4.50:1 or better; the colours are data, not theme).
+  - **Rejected.** Growing every phone row to 54px so the controls could have real 40px boxes — it
+    would lose the density the brief asks for; hiding the taxonomy parent label to save a phone line —
+    it removes the scope the tree states; and softening tag fills toward the warm palette — that would
+    override data the author chose.
+  - **Verification.** A per-text-node WCAG audit of the overview, Characters, Tags, Character details,
+    Scene details, and Scene editor found no text below 4.5:1 in either theme after the fix, except
+    the intentionally disabled **Move up/down** menu items (3.68:1). The Spanish scope line now fits
+    119px into 119px in a wrapped pair; English stays on one 132px line. At 390px the row is 46px,
+    the two hit areas are about 40px, and `elementsFromPoint` 30px below the **Details** text returns
+    the link. Six screens at 390 showed no horizontal overflow, the 720px reflow (1440px at 200%
+    zoom) still fits, the keyboard pass shows the 2px primary outline and the buttons' glow once the
+    focus transition settles, and Chrome's platform-font query resolves Georgia for titles and prose
+    and Ubuntu for UI on this Linux machine. `test/system/index_prototype_review_test.rb` now asserts
+    the wrapped Spanish line, the dark destructive colour, and the two 40px hit areas in a rendered
+    browser; `workspace_locale_test.rb` follows the new Spanish kicker. The full request suite passes
+    (3,547 runs, 0 failures, 13 skips) and the new browser case passes on its own (3 runs, 0 failures).
+    The rendered checks are in `/tmp/opencode/visual-index-prototype-2026-11-14/review/` and
+    `/tmp/opencode/refine/` (temporary, not committed).
+  - **Not verified.** macOS Iowan Old Style, Windows Palatino/Book Antiqua, iOS and Android, a real
+    screen reader, forced-colors mode, and print. The browser suite was not the target of this visual
+    pass; the unrelated defects in items 97–99 remain open.
+
 - **[changed]** **Index applied as the Rails prototype.**
   - **The gap.** Backlog item 90 asked for Index to be applied to the workspace shell and a small set
     of representative screens, reviewed through real screenshots at desktop, tablet, and phone

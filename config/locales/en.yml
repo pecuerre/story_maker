@@ -1352,7 +1352,7 @@ en:
       open_scenes: "Open scenes"
       open_appearances: "Open appearance grid"
       actions_aria: "Story actions"
-      structure_eyebrow: "Story structure"
+      structure_eyebrow: "At a glance"
       structure_heading: "Story structure"
       structure_description: "Organize this story into a hierarchy such as acts, chapters, books, or seasons, and write it as an ordered sequence of scenes."
       sections: "Sections"

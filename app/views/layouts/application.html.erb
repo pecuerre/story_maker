@@ -79,7 +79,7 @@
               </button>
             </div>
             <span class="mobile-workspace-context">
-              <%= Current.universe.name %><% if Current.story %> · <%= Current.story.name %><% end %>
+              <span class="mobile-workspace-universe"><%= Current.universe.name %></span><% if Current.story %><span class="mobile-workspace-story"><%= Current.story.name %></span><% end %>
             </span>
           </div>
 

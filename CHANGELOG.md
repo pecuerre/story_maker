@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Index prototype review.** Dark destructive text is re-tinted, the phone scope line wraps instead of clipping in Spanish, row actions reach a 40px touch target, and the Story structure card's kicker no longer repeats its heading.
 - **Index prototype.** The workspace shell and the Story overview, empty overview, Characters list, Tags tree, Character details, Scene details, and Scene editor now render the Index palette, serif display type, 46px rows, and hairline fact rules in both themes.
 
 ### docs

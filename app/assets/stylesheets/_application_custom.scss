@@ -132,6 +132,15 @@
   --bs-card-bg: #1e1c18;
 }
 
+// `.text-danger` keeps the light theme's deep red in Bootstrap's dark theme,
+// where it is about 2.5:1 on the near-black canvas — see a row menu's Delete.
+// The dark text-emphasis red is already the hover colour of that item, so the
+// idle and hover states now share one legible red instead of the hover being
+// the only readable moment.
+[data-bs-theme="dark"] .text-danger {
+  color: var(--bs-danger-text-emphasis) !important;
+}
+
 // Bootstrap's dark theme does not re-tint outline buttons: its outline mixin
 // bakes the *light* theme color into every variable, so `.btn-outline-primary`
 // keeps `#1d4f7a` as its text and border. That is 2.4:1 on the dark canvas —
@@ -663,14 +672,31 @@ $um-search-match: #ffc107;
   gap: .5rem;
 }
 
+// The bar is the only place a phone states the current scope, so a translated
+// button pair must not leave the story name clipped — "Menú"/"Herramientas"
+// take enough room that Spanish used to ellipsize "Dark · Bethesda Dark" at
+// 390px. It wraps instead, and the separator stays glued to the story name so
+// the break falls between the universe and the story rather than after a dot.
 .mobile-workspace-context {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  column-gap: .25rem;
   min-width: 0;
   margin-left: auto;
-  overflow: hidden;
   color: var(--bs-secondary-color);
   font-size: .875rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-align: end;
+}
+
+// The separator belongs to the story, so a wrapped context reads as
+// "Dark" / "· Bethesda Dark" instead of breaking between the words of the
+// story's own name. The pair is a flex row for the same reason: the story is
+// one item and moves to its own line whole when both names do not fit.
+.mobile-workspace-story::before {
+  content: "·\00a0";
 }
 
 .sidebar-context {
@@ -2204,6 +2230,40 @@ $um-search-match: #ffc107;
 
   .entity-list .entity-row {
     align-items: flex-start !important;
+  }
+
+  // The row keeps its 46px rhythm, but a bare Details link is 19px high and a
+  // row menu 30px. Their painted boxes stay as they are and the hit area grows
+  // into the row's own padding, so a thumb gets the row's 40px target without
+  // the label dropping out of line with the row title.
+  .entity-row .details-link,
+  .taxonomy-row .details-link,
+  .entity-row .dropdown-toggle,
+  .taxonomy-row .dropdown-toggle {
+    position: relative;
+  }
+
+  .entity-row .details-link::after,
+  .taxonomy-row .details-link::after,
+  .entity-row .dropdown-toggle::before,
+  .taxonomy-row .dropdown-toggle::before {
+    content: "";
+    position: absolute;
+  }
+
+  .entity-row .details-link::after {
+    inset: -7px -.25rem -14px;
+  }
+
+  .taxonomy-row .details-link::after {
+    inset: -10.5px -.25rem;
+  }
+
+  .entity-row .dropdown-toggle::before,
+  .taxonomy-row .dropdown-toggle::before {
+    // The button's 1px border means its padding box is shorter than the
+    // painted control, so this cannot use the same 5px as a borderless link.
+    inset: -.40625rem -.1875rem;
   }
 }
 

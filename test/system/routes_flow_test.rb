@@ -23,9 +23,7 @@ class RoutesFlowTest < ApplicationSystemTestCase
 
     assert_selector ".entity-row", text: "The north road", wait: REFRESH_WAIT
     assert_selector ".entity-row", text: "12 leagues"
-    within find(".entity-row", text: "The north road") do
-      click_link "Details"
-    end
+    click_row_menu_action find(".entity-row", text: "The north road"), "Details"
     assert_text "Two days on foot"
     assert_text from.name
     assert_text to.name

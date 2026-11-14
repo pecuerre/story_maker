@@ -30,9 +30,6 @@
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
   data-row-description="<%= row_description %>"
-  <% if record_count %>
-    data-record-count-label="<%= record_count_text(record_count, details_count_label) %>"
-  <% end %>
   <%# One value per descriptor, so the editor can pre-fill a row. A descriptor
       marked `url` names a stored image rather than a column: the photo editor is
       given the URL of the photo this node already has, which the node cannot
@@ -45,60 +42,45 @@
       <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
     <% end %>
 
-    <%# The inline-rename trigger is deliberately sized to its own content: only
-        hovering or focusing the name itself starts a rename, never the whole row. %>
+    <%# The name is the record's link now that renaming moved to the row menu.
+        `draggable="false"` keeps a native link drag from replacing the row's own
+        drag; the grip and the row still move the node. %>
     <span class="taxonomy-name-area d-flex align-items-center gap-2 flex-wrap">
-      <% if editable %>
-        <%= button_tag type: "button",
-          class: "taxonomy-name-trigger text-break",
-          aria: { label: t("shared.taxonomy_node.rename", name: node.name) },
-          data: { taxonomy_tree_target: "name", action: "click->taxonomy-tree#editName" } do %>
-          <% if node.respond_to?(:bgcolor) %>
-            <%= entity_tag_badge(node) %>
-          <% else %>
-            <span class="entity-title"><%= node.name %></span>
+      <% if node.respond_to?(:bgcolor) %>
+        <% if details_url %>
+          <%= link_to details_url.call(node), class: "taxonomy-name-link", draggable: "false",
+            data: { taxonomy_tree_target: "name" } do %>
             <%= entity_tag_badge(node) %>
           <% end %>
-          <%= render "shared/draft_pending_badge", record: node %>
-          <% parent = hierarchy.parent_of(node) %>
-          <% if parent %>
-            <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
-          <% end %>
-          <%= record_count_badge(record_count, details_count_label) %>
-          <% if row_description.present? %>
-            <span class="entity-description d-block"><%= row_description %></span>
-          <% end %>
+        <% else %>
+          <span data-taxonomy-tree-target="name"><%= entity_tag_badge(node) %></span>
         <% end %>
       <% else %>
-        <span class="taxonomy-name-text text-break">
-          <% if node.respond_to?(:bgcolor) %>
-            <%= entity_tag_badge(node) %>
-          <% else %>
-            <span class="entity-title"><%= node.name %></span>
-            <%= entity_tag_badge(node) %>
-          <% end %>
-          <%= render "shared/draft_pending_badge", record: node %>
-          <% parent = hierarchy.parent_of(node) %>
-          <% if parent %>
-            <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
-          <% end %>
-          <%= record_count_badge(record_count, details_count_label) %>
-          <% if row_description.present? %>
-            <span class="entity-description d-block"><%= row_description %></span>
-          <% end %>
-        </span>
+        <% if details_url %>
+          <%= link_to node.name, details_url.call(node), class: "entity-title entity-title-link",
+            draggable: "false", data: { taxonomy_tree_target: "name" } %>
+        <% else %>
+          <span class="entity-title" data-taxonomy-tree-target="name"><%= node.name %></span>
+        <% end %>
+        <%= entity_tag_badge(node) %>
+      <% end %>
+      <%= render "shared/draft_pending_badge", record: node %>
+      <% parent = hierarchy.parent_of(node) %>
+      <% if parent %>
+        <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
+      <% end %>
+      <%= record_count_badge(record_count, details_count_label) %>
+      <% if row_description.present? %>
+        <span class="entity-description d-block"><%= row_description %></span>
       <% end %>
     </span>
 
-    <%# The row's right-hand group is always visible and always in the same
-        order: Details is navigation, the menu is mutation. Neither depends on
-        hover, so the row works with a keyboard, on touch, and on a narrow
-        viewport, and both are rendered for writers while Details is rendered
-        for every access level. %>
+    <%# The row's right-hand group: a writer's menu holds the explicit Details
+        action beside Add child, the move controls, Edit, and Delete. Read-only
+        readers navigate through the name, which is the row's own link. %>
     <span class="taxonomy-row-end ms-auto d-flex align-items-center gap-2">
-      <%# A row's prose total is outside the name trigger so a cancelled rename
-          restores the server-rendered row unchanged; the trigger rebuilds only
-          its own content. %>
+      <%# A row's prose total is outside the name link so the row's own text is
+          not part of the destination's accessible name. %>
       <% word_count = details_word_count&.call(node) %>
       <% if word_count %>
         <span class="badge rounded-pill text-bg-light border"
@@ -106,10 +88,6 @@
           <i class="bi bi-file-text" aria-hidden="true"></i>
           <%= number_with_delimiter(word_count) %>
         </span>
-      <% end %>
-
-      <% if details_url %>
-        <%= record_details_link details_url.call(node), record: node %>
       <% end %>
 
       <% if editable %>
@@ -123,19 +101,13 @@
               <i class="bi bi-three-dots" aria-hidden="true"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
+              <% if details_url %>
+                <li><%= record_details_link details_url.call(node), record: node %></li>
+                <li><hr class="dropdown-divider"></li>
+              <% end %>
               <li>
-                <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#add">
                   <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.add_child") %>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.insert_before") %>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.insert_after") %>
                 </button>
               </li>
               <li><hr class="dropdown-divider"></li>

@@ -65,6 +65,30 @@ class IndexPrototypeReviewTest < ApplicationSystemTestCase
       "the dark theme should use its danger text-emphasis rather than the light theme's deep red"
   end
 
+  test "the Scene board card title uses the row link color at rest" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_board_path(universe_slug: universe.slug, story_id: story)
+    assert_selector "a.scene-board-scene-link"
+
+    colors = page.evaluate_script(<<~JS)
+      (function () {
+        var link = document.querySelector("a.scene-board-scene-link")
+        var probe = document.createElement("span")
+        probe.style.color = "var(--bs-link-color)"
+        document.body.appendChild(probe)
+        var expected = getComputedStyle(probe).color
+        probe.remove()
+        return { actual: getComputedStyle(link).color, expected: expected }
+      })()
+    JS
+
+    assert_equal colors["expected"], colors["actual"],
+      "the board title should paint like a list row's name rather than inheriting the card's text color"
+  end
+
   test "the row controls keep a 40px touch target at phone width" do
     universe = universes(:universe_one)
 
@@ -78,23 +102,21 @@ class IndexPrototypeReviewTest < ApplicationSystemTestCase
 
     hit = page.evaluate_script(<<~JS, row.native)
       (function (row) {
-        var link = row.querySelector(".details-link")
+        var name = row.querySelector("a.entity-title-link")
         var toggle = row.querySelector(".dropdown-toggle")
-        var linkRect = link.getBoundingClientRect()
         var toggleRect = toggle.getBoundingClientRect()
-        // The painted boxes are 19px and 30px high, so a point a few pixels
-        // above each is outside the control's own box but inside the hit area
-        // it paints from the row's padding.
-        var aboveLink = document.elementFromPoint(linkRect.left + 10, linkRect.top - 4)
+        // The toggle's painted box is 30px high, so a point a few pixels above
+        // it is outside the button but inside the hit area it paints from the
+        // row's padding.
         var aboveToggle = document.elementFromPoint(
           toggleRect.left + toggleRect.width / 2,
           toggleRect.top - 4
         )
         return {
           rowHeight: row.getBoundingClientRect().height,
-          linkHitHeight: parseFloat(getComputedStyle(link, "::after").height),
+          nameHeight: name ? name.getBoundingClientRect().height : 0,
           toggleHitHeight: parseFloat(getComputedStyle(toggle, "::before").height),
-          details: aboveLink === link || link.contains(aboveLink),
+          oldDetailsLink: Boolean(row.querySelector(".details-link")),
           menu: aboveToggle === toggle || toggle.contains(aboveToggle)
         }
       })(arguments[0])
@@ -102,12 +124,12 @@ class IndexPrototypeReviewTest < ApplicationSystemTestCase
 
     assert_operator hit["rowHeight"], :>=, 40,
       "the row itself is the first touch target: #{hit.inspect}"
-    assert_operator hit["linkHitHeight"], :>=, 39.5,
-      "the Details hit area should reach the row's 40px target: #{hit.inspect}"
+    assert_operator hit["nameHeight"], :>, 0,
+      "the name should be a real link target: #{hit.inspect}"
+    assert_not hit["oldDetailsLink"],
+      "Details moved into the row menu: #{hit.inspect}"
     assert_operator hit["toggleHitHeight"], :>=, 39.5,
       "the row menu hit area should reach the row's 40px target: #{hit.inspect}"
-    assert hit["details"],
-      "a point above the painted Details text should still reach the link: #{hit.inspect}"
     assert hit["menu"],
       "a point above the painted menu button should still reach it: #{hit.inspect}"
   end

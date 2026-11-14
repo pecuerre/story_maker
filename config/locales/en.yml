@@ -332,15 +332,12 @@ en:
       story_aria_label: "Story tag workspace"
       universe_aria_label: "Universe tag workspace"
     taxonomy_tree:
-      hint: "Use the row menu for Add child, Insert before/after, Move up/Move down, Edit, and Delete. Inline rename is available by clicking the name itself. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child."
+      hint: "Use the row menu for Details, Add child, Move up/Move down, Edit, and Delete. The Add button opens the same editor. Click a name to open its record. Drag a row to reorder it or nest it under another."
       empty_description: "Create the first one to start building this hierarchy."
       read_only_empty_description: "There is nothing here to show yet."
       # The strings the tree's own controller reads. The tree renders the
-      # server-side rows, but its inline create and rename rows, its editor
-      # modal, and its status line are built in the browser, so those words are
-      # here rather than in the partial.
-      new_name: "New name"
-      save: "Save"
+      # server-side rows, but its editor modal and its status line are built in
+      # the browser, so those words are here rather than in the partial.
       save_changes: "Save changes"
       edit_title: "Edit %{name}"
       # The hidden text a required field carries beside its visible asterisk. The
@@ -348,7 +345,6 @@ en:
       # draws, not a word, and it is the same mark in every language.
       required: " (required)"
       delete_confirm: "Delete %{name} and its children?"
-      insert_at: "Insert item at position %{position}"
       # The one sentence a tag's color pair is judged by, shown under the two
       # color controls while the author picks them. It warns and does not block:
       # the pair is the author's data, the badge shape still names the tag, and
@@ -361,7 +357,6 @@ en:
       # message and "this entry" by the next one.
       record_subject: "the item"
       create_failed: "The item could not be created."
-      rename_failed: "The name could not be saved."
       update_failed: "The changes could not be saved."
       delete_failed: "The item could not be deleted."
       move_failed: "The item could not be moved."
@@ -391,10 +386,7 @@ en:
         no_match_title: "Nothing matches these filters"
         no_match_description: "%{count} in this universe, but none of them match the filters above."
     taxonomy_node:
-      rename: "Rename %{name}"
       add_child: "Add child"
-      insert_before: "Insert before"
-      insert_after: "Insert after"
       move_up: "Move up"
       move_down: "Move down"
       # The parent a node sits under, shown beside the node's name so a reader

@@ -34,11 +34,12 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: "Character tags"
     click_button "Add character tag"
-    within ".taxonomy-new" do
-      find("input[name='name']").set(hostile_name)
-      click_button "Save"
+    within ".modal.show" do
+      fill_in "Name", with: hostile_name
+      assert_selector "input[type=checkbox][name='character_tag[taggable]']:checked"
+      click_button "Save changes"
     end
-    assert_selector ".taxonomy-name-trigger", text: hostile_name
+    assert_selector "a.taxonomy-name-link", text: hostile_name
     assert_no_selector "img[data-taxonomy-xss]"
     # The header badge is the taxonomy's own tag count, so it already includes
     # the tag created above: the create refreshes the same URL, and the count
@@ -62,7 +63,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_selector "li[data-node-id='#{other.id}'] .entity-description", text: "Updated from the modal"
   end
 
-  test "inline rename updates the serialized parent options" do
+  test "the row menu's Edit updates the serialized parent options" do
     user = users(:user_one)
     universe = universes(:universe_one)
     tag = character_tags(:character_tag_one)
@@ -71,13 +72,13 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
     assert_stimulus_loaded
 
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button.taxonomy-name-trigger").click
-      find("form.taxonomy-update-form input[name='name']").set("Renamed browser tag")
-      click_button "Save"
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+    within ".modal.show" do
+      fill_in "Name", with: "Renamed browser tag"
+      click_button "Save changes"
     end
 
-    assert_selector "button.taxonomy-name-trigger", text: "Renamed browser tag"
+    assert_selector "a.taxonomy-name-link", text: "Renamed browser tag"
     other = character_tags(:character_tag_two)
     click_row_menu_action "li[data-node-id='#{other.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
@@ -87,7 +88,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
   end
 
-  test "root insertion uses the list boundary and the row menu moves items" do
+  test "the Add button appends a root and the row menu moves items" do
     user = users(:user_one)
     universe = universes(:universe_one)
     story = stories(:story_one)
@@ -101,14 +102,14 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
     assert_stimulus_loaded
 
-    find(".taxonomy-separator[data-parent-id=''][data-position='1'] button").click
-    within ".taxonomy-new" do
-      find("input[name='name']").set("Boundary root")
-      click_button "Save"
+    click_button "Add section"
+    within ".modal.show" do
+      fill_in "Name", with: "Boundary root"
+      click_button "Save changes"
     end
 
-    assert_selector "button.taxonomy-name-trigger", text: "Boundary root"
-    assert_equal [ "Section one", "Boundary root", "Root B" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
+    assert_selector "a.entity-title-link", text: "Boundary root", wait: REFRESH_WAIT
+    assert_equal [ "Section one", "Root B", "Boundary root" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
 
     # Move up/down live in the row menu, and the boundary state is a disabled
     # menu item rather than a missing button. The menu is collapsed here, so the
@@ -120,10 +121,10 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     click_row_menu_action "li[data-node-id='#{root_a.id}'] > .taxonomy-row", "Move down"
 
     assert_selector "li[data-name='Section one'] [data-taxonomy-action='move-up']:not([disabled])", visible: :all
-    assert_equal [ "Boundary root", "Section one", "Root B" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
+    assert_equal [ "Root B", "Section one", "Boundary root" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
   end
 
-  test "the row menu holds every mutation and the name alone starts a rename" do
+  test "the row menu holds Details and every mutation, and the name opens the record" do
     user = users(:user_one)
     universe = universes(:universe_one)
     tag = character_tags(:character_tag_one)
@@ -132,22 +133,23 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
 
     within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      # The row carries the name and the Details link only: the plus sign and the
-      # move arrows are not row buttons any more.
-      assert_selector "button.taxonomy-name-trigger"
+      # The name is the record's link; Add child, the move arrows, Details, Edit,
+      # and Delete live in the menu rather than as row buttons.
+      assert_selector "a.taxonomy-name-link[href='#{universe_character_tag_path(universe_slug: universe.slug, id: tag)}']"
       assert_no_selector "button[title='Add child']"
       assert_no_selector "button[title='Move up']"
       assert_no_selector "button[title='Move down']"
       find("button[aria-expanded='false']").click
 
       within ".dropdown-menu.show" do
+        assert_text "Details"
         assert_text "Add child"
-        assert_text "Insert before"
-        assert_text "Insert after"
         assert_text "Move up"
         assert_text "Move down"
         assert_text "Edit"
         assert_text "Delete"
+        assert_no_text "Insert before"
+        assert_no_text "Insert after"
       end
     end
   end
@@ -163,14 +165,15 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Add child"
 
-    within ".taxonomy-new" do
-      find("input[name='name']").set("Child from the menu")
-      click_button "Save"
+    within ".modal.show" do
+      assert_equal tag.id.to_s, find("select[name='character_tag[parent_id]']").value
+      fill_in "Name", with: "Child from the menu"
+      click_button "Save changes"
     end
 
     # The create is a fetch followed by a same-URL refresh, so wait for the
     # refreshed row before reading the database.
-    assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger", text: "Child from the menu"
+    assert_selector "li[data-node-id='#{tag.id}'] a.taxonomy-name-link", text: "Child from the menu", wait: REFRESH_WAIT
     child = CharacterTag.find_by(name: "Child from the menu")
     assert_not_nil child
     assert_equal tag.id, child.parent_id
@@ -188,19 +191,13 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
       assert_selector ".taxonomy-tag", text: "Section tag one"
-      find("button.taxonomy-name-trigger").click
-      find("form.taxonomy-update-form input[name='name']").set("Renamed section")
-      click_button "Save"
     end
 
-    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
-      assert_selector ".taxonomy-tag", text: "Section tag one"
-    end
-
-    # The modal editor sends the whole record, so a rename that only changes the
-    # summary and description must not clear the assignment either.
+    # The modal editor sends the whole record, so a rename that also changes the
+    # summary and description must not clear the tag assignment.
     click_row_menu_action "li[data-node-id='#{section.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
+      fill_in "Name", with: "Renamed section"
       fill_in "Short summary", with: "Summarized from the modal"
       fill_in "Description", with: "Described from the modal"
       click_button "Save changes"
@@ -208,30 +205,13 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
       assert_selector ".taxonomy-tag", text: "Section tag one"
+      assert_selector "a.entity-title-link", text: "Renamed section"
       assert_selector ".entity-description", text: "Summarized from the modal"
     end
     assert_equal "Described from the modal", section.reload.description
   end
 
-  test "new taxonomy nodes can be renamed with the keyboard" do
-    user = users(:user_one)
-    universe = universes(:universe_one)
-
-    sign_in_via_form(user)
-    visit universe_character_tags_path(universe_slug: universe.slug)
-    assert_stimulus_loaded
-    click_button "Add character tag"
-    within ".taxonomy-new" do
-      find("input[name='name']").set("Keyboard tag")
-      click_button "Save"
-    end
-
-    trigger = find("button.taxonomy-name-trigger", text: "Keyboard tag")
-    trigger.send_keys(" ")
-    assert_selector "form.taxonomy-update-form input[name='name']"
-  end
-
-  test "cancelling a new root restores the empty state" do
+  test "cancelling the create modal leaves the empty state alone" do
     user = users(:user_one)
     universe = Universe.create!(owner: user, name: "Empty taxonomy browser universe", slug: "empty-taxonomy-browser")
 
@@ -241,15 +221,16 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_selector "[data-taxonomy-tree-empty]"
 
     click_button "Add character tag"
-    within ".taxonomy-new" do
+    within ".modal.show" do
       click_button "Cancel"
     end
 
+    assert_no_selector ".modal.show"
     assert_selector "[data-taxonomy-tree-empty]"
-    assert_no_selector ".taxonomy-new"
+    assert_equal 0, universe.character_tags.count
   end
 
-  test "row controls and the Details link stay visible without hover at any width" do
+  test "the name link and the row menu stay visible without hover at any width" do
     user = users(:user_one)
     universe = universes(:universe_one)
 
@@ -258,53 +239,19 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
     assert_stimulus_loaded
 
-    assert_selector ".taxonomy-separator-add", visible: :visible
-    # Row mutations moved into the overflow menu, and neither the menu nor the
-    # Details link is a hover affordance: both are always rendered.
-    assert_selector ".taxonomy-row-end .taxonomy-actions .dropdown-toggle", visible: :visible
-    assert_selector ".taxonomy-row-end a.details-link", text: "Details", visible: :visible
+    # The name is the route and the menu holds Details and the mutations; neither
+    # is a hover affordance.
+    tag = character_tags(:character_tag_one)
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      assert_selector ".taxonomy-name-area a.taxonomy-name-link", visible: :visible
+      assert_selector ".taxonomy-row-end .taxonomy-actions .dropdown-toggle", visible: :visible
+      within ".taxonomy-row-end .taxonomy-actions" do
+        find(".dropdown-toggle").click
+        assert_selector ".dropdown-menu.show a", text: "Details", visible: :visible
+      end
+    end
     # The count belongs to the record, so it sits with the name on the left.
     assert_selector ".taxonomy-name-area .record-count", visible: :visible
-  end
-
-  test "cancelling an inline rename restores the row's count" do
-    user = users(:user_one)
-    universe = universes(:universe_one)
-    tag = character_tags(:character_tag_one)
-
-    sign_in_via_form(user)
-    visit universe_character_tags_path(universe_slug: universe.slug)
-    assert_stimulus_loaded
-
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button.taxonomy-name-trigger").click
-      assert_selector ".record-count", count: 0
-      click_button "Cancel"
-      # The count is part of the rename button the controller rebuilds, so it has
-      # to come back with the button instead of waiting for a page load.
-      assert_selector "button.taxonomy-name-trigger .record-count", text: "(1 character)"
-      assert_selector "a.details-link", text: "Details"
-    end
-  end
-
-  test "cancelling an inline rename discards the typed name" do
-    user = users(:user_one)
-    universe = universes(:universe_one)
-    tag = character_tags(:character_tag_one)
-
-    sign_in_via_form(user)
-    visit universe_character_tags_path(universe_slug: universe.slug)
-    assert_stimulus_loaded
-
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button.taxonomy-name-trigger").click
-      find("form.taxonomy-update-form input[name='name']").set("Never saved")
-      click_button "Cancel"
-      # A cancelled rename puts back what the server rendered. Keeping the typed
-      # text would show a name the database does not have.
-      assert_selector "button.taxonomy-name-trigger", text: tag.name
-    end
-    assert_equal tag.name, tag.reload.name
   end
 
   test "a dismiss that lands while the editor is still fading in still closes it" do
@@ -340,7 +287,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_selector "body[data-dismiss-closed='yes']"
     assert_no_selector ".modal.show"
     # The dismiss discarded the edit rather than saving it.
-    assert_selector "button.taxonomy-name-trigger", text: tag.name
+    assert_selector "a.taxonomy-name-link", text: tag.name
     assert_equal tag.name, tag.reload.name
   end
 
@@ -410,7 +357,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
       fill_in "Name", with: "Character tag one renamed"
       click_button "Save changes"
     end
-    assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger", text: "Character tag one renamed"
+    assert_selector "li[data-node-id='#{tag.id}'] a.taxonomy-name-link", text: "Character tag one renamed"
     assert_equal "Character tag one renamed", tag.reload.name
   end
 

@@ -32,11 +32,10 @@
 module ClientStrings
   # The keys the taxonomy tree's controller reads.
   #
-  # `shared.form.*` and `shared.taxonomy_node.rename` are keys the server
-  # already renders, and the client reuses them rather than keeping a second
-  # copy: a reader who clicks **Rename** in a rendered row and then cancels an
-  # inline rename in the same language has read one word twice and expects it to
-  # be one word.
+  # `shared.form.*` are keys the server already renders, and the client reuses
+  # them rather than keeping a second copy: a reader who sees **Cancel** in a
+  # rendered editor and in the tree's own modal in the same language has read one
+  # word twice and expects it to be one word.
   #
   # `shared.record_error`, `shared.record_message`, and the two
   # `shared.modal_form.*` sentences a rejected editor save reports are shared with
@@ -48,18 +47,13 @@ module ClientStrings
     shared.form.close
     shared.record_error
     shared.record_message
-    shared.taxonomy_node.rename
     shared.taxonomy_tree.edit_title
-    shared.taxonomy_tree.new_name
-    shared.taxonomy_tree.save
     shared.taxonomy_tree.save_changes
     shared.taxonomy_tree.required
     shared.taxonomy_tree.delete_confirm
-    shared.taxonomy_tree.insert_at
     shared.taxonomy_tree.low_contrast_colors
     shared.taxonomy_tree.record_subject
     shared.taxonomy_tree.create_failed
-    shared.taxonomy_tree.rename_failed
     shared.taxonomy_tree.update_failed
     shared.taxonomy_tree.delete_failed
     shared.taxonomy_tree.move_failed

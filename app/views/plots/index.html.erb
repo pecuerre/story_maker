@@ -33,7 +33,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= plot.name %></span>
+                <%= record_title_link universe_story_plot_path(story_id: @story, id: plot), record: plot %>
                 <span class="badge rounded-pill text-bg-light border"
                   aria-label="<%= count_with_label(@scene_counts.fetch(plot.id, 0), "scene") %>">
                   <%= count_with_label(@scene_counts.fetch(plot.id, 0), "scene") %>
@@ -45,9 +45,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_story_plot_path(story_id: @story, id: plot), record: plot %>
             <%= render "shared/row_actions",
               record: plot,
+              details_url: universe_story_plot_path(story_id: @story, id: plot),
               label: t("plots.singular"),
               confirm_text: t("plots.delete_confirm", name: plot.name),
               edit_url: universe_story_plot_path(story_id: @story, id: plot),

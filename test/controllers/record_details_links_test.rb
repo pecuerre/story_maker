@@ -1,8 +1,8 @@
 require "test_helper"
 
-# The Details link is the new way into every record's own page. It must render
-# on every list row and taxonomy node, for read-only viewers too, and the count
-# of related records must sit beside the name rather than inside the link.
+# The Details link renders on every list row and taxonomy node, for read-only
+# viewers too, and the count of related records must sit beside the name rather
+# than inside the link.
 class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
@@ -16,7 +16,7 @@ class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
     get universe_character_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "li[data-node-id=?] a.details-link[href=?]", tag.id.to_s,
+    assert_select "li[data-node-id=?] .dropdown-menu a[href=?]", tag.id.to_s,
       universe_character_tag_path(universe_slug: @universe.slug, id: tag),
       text: "Details"
     assert_select "li[data-node-id=?] .taxonomy-name-area .record-count", tag.id.to_s,
@@ -39,7 +39,7 @@ class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
 
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
     assert_response :success
-    assert_select "li[data-node-id=?] a.details-link[href=?]", section.id.to_s,
+    assert_select "li[data-node-id=?] .dropdown-menu a[href=?]", section.id.to_s,
       universe_story_section_path(universe_slug: @universe.slug, story_id: @story, id: section),
       text: "Details"
     assert_select "li[data-node-id=?] .taxonomy-name-area .record-count", section.id.to_s,
@@ -47,7 +47,7 @@ class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
 
     get universe_locations_url(universe_slug: @universe.slug)
     assert_response :success
-    assert_select "li[data-node-id=?] a.details-link[href=?]", location.id.to_s,
+    assert_select "li[data-node-id=?] .dropdown-menu a[href=?]", location.id.to_s,
       universe_location_path(universe_slug: @universe.slug, id: location),
       text: "Details"
     assert_select "li[data-node-id=?] .record-count", location.id.to_s, count: 0
@@ -68,7 +68,7 @@ class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
     assert_select "li[data-node-id=?] .record-count", tag.id.to_s, text: "(3 characters)"
     assert_select "li[data-node-id=?] .record-count", unused.id.to_s, text: "(0 characters)"
     # The count sits beside the name and never inside the link.
-    assert_select "li[data-node-id=?] a.details-link", tag.id.to_s, text: "Details"
+    assert_select "li[data-node-id=?] .dropdown-menu a", tag.id.to_s, text: "Details"
   end
 
   test "flat list rows link to their own page" do
@@ -80,31 +80,30 @@ class RecordDetailsLinksTest < ActionDispatch::IntegrationTest
       get send("universe_#{route}_url", universe_slug: @universe.slug)
 
       assert_response :success
-      assert_select "a.details-link[href=?]", send(path_helper, universe_slug: @universe.slug, id: record)
+      assert_select ".entity-row .dropdown-menu a[href=?]", send(path_helper, universe_slug: @universe.slug, id: record), text: "Details"
     end
   end
 
-  test "a scene row links to the scene page and its title is plain text" do
+  test "a scene row links to the scene page from its name and from Details" do
     scene = scenes(:scene_one)
+    path = universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scene)
 
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
-    assert_select ".entity-row a.details-link[href=?]",
-      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scene),
-      text: "Details"
-    assert_select ".entity-row .entity-title", text: scene.name, count: 1
-    assert_select ".entity-row .entity-title a", count: 0
+    assert_select ".entity-row .dropdown-menu a[href=?]", path, text: "Details"
+    assert_select ".entity-row a.entity-title-link[href=?]", path, text: scene.name
   end
 
-  test "the link is present for a guest on a public universe" do
+  test "a guest navigates by the row's name because menus are writer-only" do
     sign_out
     tag = character_tags(:character_tag_one)
 
     get universe_character_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "li[data-node-id=?] a.details-link[href=?]", tag.id.to_s,
+    assert_select "li[data-node-id=?] a[href=?]", tag.id.to_s,
       universe_character_tag_path(universe_slug: @universe.slug, id: tag)
+    assert_select ".taxonomy-row .dropdown-menu", count: 0
   end
 end

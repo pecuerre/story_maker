@@ -37,7 +37,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= faction.name %></span>
+                <%= record_title_link universe_faction_path(id: faction), record: faction %>
                 <%= entity_tag_badge(faction) %>
                 <%= render "shared/draft_pending_badge", record: faction %>
               </div>
@@ -45,9 +45,9 @@
                 <div class="entity-description"><%= summary_text(faction) %></div>
               <% end %>
             </div>
-            <%= record_details_link universe_faction_path(id: faction), record: faction %>
             <%= render "shared/row_actions",
               record: faction,
+              details_url: universe_faction_path(id: faction),
               label: t("faction", count: 1),
               record_name: faction.name,
               confirm_text: t("factions.delete_confirm", name: faction.name),

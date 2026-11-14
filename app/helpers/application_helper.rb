@@ -291,22 +291,31 @@ module ApplicationHelper
   # cannot hold a second even when the value it is given has one.
   DATETIME_LOCAL_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-  # The one "Details" link used by every record's list row and taxonomy node.
-  # It is real navigation to that record's own page, so it renders for read-only
-  # members and guests too, it sits on the right of the row next to the actions,
-  # and it never hides behind a hover-only menu.
+  # The route into a record's own page, rendered as the first item of the row's
+  # action menu. The row's name links there too, so this is the explicit action
+  # rather than the only route; its accessible name repeats the record name so a
+  # screen reader can tell one row's Details item from another.
   #
-  # The link carries no count and no icon. A count is a fact about the record
-  # rather than about its destination, so it renders next to the name and tags as
-  # `record_count_badge` and the link label stays short in a long list. The icon
-  # is absent because the destination is the same tab: `bi-box-arrow-up-right`
-  # read as "opens in a new tab", and every other glyph on a row means an action
-  # (the overflow menu and the reorder arrows) rather than a place.
-  def record_details_link(path, record:, classes: %w[details-link])
-    link_to t("shared.record_details_link.text"),
-      path,
-      class: classes.join(" "),
-      aria: { label: t("shared.record_details_link.aria", name: record_label(record)) }
+  # The icon is the menu's own vocabulary: every item in a row menu carries one,
+  # and the information mark reads as "about this record" rather than as an
+  # external-tab arrow.
+  def record_details_link(path, record:, classes: %w[dropdown-item])
+    link_to path, class: classes.join(" "), aria: { label: t("shared.record_details_link.aria", name: record_label(record)) } do
+      safe_join([ tag.i(class: "bi bi-info-circle me-2", aria: { hidden: true }),
+        t("shared.record_details_link.text") ])
+    end
+  end
+
+  # The name a list row shows, as a link to the record it names. It sits beside
+  # the row's Details action rather than replacing it; its accessible name is the
+  # visible label itself, while Details repeats the record name, so the two links
+  # to one page stay distinct in a long list.
+  #
+  # `label` is for a row whose visible text is already composed: an Event's
+  # `display_label` in the reader's language, a `display_string`, or a Relation's
+  # sentence with its tag badge.
+  def record_title_link(path, record:, label: record_label(record))
+    link_to label, path, class: "entity-title entity-title-link"
   end
 
   # The Edit control a record's own details page puts beside Back. It is the same

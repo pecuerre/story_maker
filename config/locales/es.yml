@@ -323,15 +323,13 @@ es:
       story_aria_label: "Espacio de trabajo de etiquetas de historia"
       universe_aria_label: "Espacio de trabajo de etiquetas del universo"
     taxonomy_tree:
-      hint: "Usa el menú de la fila para añadir una hija, insertar antes o después, subir o bajar, editar y eliminar. También puedes renombrar en línea haciendo clic en el propio nombre. Arrastra las filas cuando quieras reordenarlas visualmente; soltar cerca del principio o del final anida una fila como hija."
+      hint: "Usa el menú de la fila para ver los detalles, añadir una hija, subir o bajar, editar y eliminar. El botón Añadir abre el mismo editor. Haz clic en un nombre para abrir su registro. Arrastra una fila para reordenarla o anidarla bajo otra."
       empty_description: "Crea el primero para empezar a construir esta jerarquía."
       read_only_empty_description: "Todavía no hay nada que mostrar aquí."
       # Las cadenas que lee el propio controlador del árbol. El árbol dibuja las
-      # filas del servidor, pero su fila de creación y renombrado en línea, su
-      # modal de edición y su línea de estado se construyen en el navegador, así
-      # que esas palabras están aquí y no en la parcial.
-      new_name: "Nombre nuevo"
-      save: "Guardar"
+      # filas del servidor, pero su modal de edición y su línea de estado se
+      # construyen en el navegador, así que esas palabras están aquí y no en la
+      # parcial.
       save_changes: "Guardar los cambios"
       edit_title: "Editar %{name}"
       # El texto oculto que un campo obligatorio lleva junto a su asterisco
@@ -339,7 +337,6 @@ es:
       # hoja de estilos, no una palabra, y es la misma marca en todos los idiomas.
       required: " (obligatorio)"
       delete_confirm: "¿Eliminar %{name} y sus elementos hijos?"
-      insert_at: "Insertar un elemento en la posición %{position}"
       # La única frase con la que se juzga el par de colores de una etiqueta, que
       # se muestra bajo los dos controles de color mientras el autor los elige.
       # Avisa y no bloquea: el par es dato del autor, la forma de la chapa sigue
@@ -352,7 +349,6 @@ es:
       # elemento» en un mensaje y «esta entrada» en el siguiente.
       record_subject: "el elemento"
       create_failed: "No se pudo crear el elemento."
-      rename_failed: "No se pudo guardar el nombre."
       update_failed: "No se pudieron guardar los cambios."
       delete_failed: "No se pudo eliminar el elemento."
       move_failed: "No se pudo mover el elemento."
@@ -383,10 +379,7 @@ es:
         no_match_title: "Nada coincide con estos filtros"
         no_match_description: "%{count} en este universo, pero ninguno coincide con los filtros de arriba."
     taxonomy_node:
-      rename: "Renombrar %{name}"
       add_child: "Añadir hija"
-      insert_before: "Insertar antes"
-      insert_after: "Insertar después"
       move_up: "Subir"
       move_down: "Bajar"
       parent: "bajo %{name}"

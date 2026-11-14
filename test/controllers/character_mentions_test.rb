@@ -41,7 +41,7 @@ class CharacterMentionsTest < ActionDispatch::IntegrationTest
     mentions = section_starting_with("Mentioned in prose")
     refute_nil mentions
     assert_equal [ universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: suggested) ],
-      mentions.css("a.details-link").map { |link| link["href"] }
+      mentions.css(".entity-title a").map { |link| link["href"] }
     assert_select "section.detail-section .badge", text: "Not recorded as present"
     assert_includes response.body, "Mentioned in: At the gate"
   end
@@ -55,7 +55,7 @@ class CharacterMentionsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Written as The Fox"
-    assert_select "section.detail-section a.details-link[href=?]",
+    assert_select "section.detail-section .entity-title a[href=?]",
       universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scene)
   end
 

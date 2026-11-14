@@ -87,7 +87,8 @@ module ModalFields
       {
         name: "taggable",
         label_key: "modal_fields.taggable",
-        type: "checkbox"
+        type: "checkbox",
+        default: true
       },
       photo_field,
       *extra_fields
@@ -107,7 +108,8 @@ module ModalFields
       {
         name: "show_in_menu",
         label_key: "modal_fields.show_in_menu",
-        type: "checkbox"
+        type: "checkbox",
+        default: false
       }
     ])
   end

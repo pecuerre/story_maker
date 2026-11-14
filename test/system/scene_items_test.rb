@@ -101,8 +101,8 @@ class SceneItemsTest < ApplicationSystemTestCase
     assert_no_button "Add item"
     assert_no_selector "[data-controller='modal-form']"
     assert_no_selector ".entity-list .dropdown.row-actions"
-    # The details link is real navigation, so it renders for every access level.
-    assert_selector ".entity-list a.details-link", text: "Details"
+    # The name is real navigation, so it renders for every access level.
+    assert_selector ".entity-list a.entity-title-link", text: "Reader's prop"
   end
 
   test "the tab is reached from Scene Details as a url-backed workspace tab" do

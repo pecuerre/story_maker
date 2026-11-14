@@ -21,7 +21,7 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
   end
 
   def appearance_links
-    appearances_section.css("a.details-link").map { |link| link["href"] }
+    appearances_section.css(".entity-title a").map { |link| link["href"] }
   end
 
   def section_titles
@@ -98,7 +98,7 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".detail-section h2", text: "Appears in scenes of #{@story.name}"
     assert_select ".empty-title", text: "Not in any scene of #{@story.name} yet"
-    assert_select ".detail-section a.details-link", count: 0
+    assert_equal [], appearance_links
   end
 
   test "without a current story the section asks for one and links to the story list" do
@@ -109,7 +109,7 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".detail-section h2", text: "Appears in scenes"
     assert_select ".empty-title", text: "Select a story to see its scenes"
-    assert_select ".detail-section a.details-link", count: 0
+    assert_equal [], appearance_links
     assert_select ".empty-state a[href=?]", universe_stories_path(universe_slug: @universe.slug), text: "All stories"
   end
 
@@ -182,7 +182,7 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     get universe_item_path(universe_slug: other.slug, id: outsider)
     assert_response :success
     assert_select ".empty-title", text: "Select a story to see its scenes"
-    assert_select ".detail-section a.details-link", count: 0
+    assert_equal [], appearance_links
 
     other_story = Story.create!(universe: other, name: "Elsewhere story")
     get universe_story_path(universe_slug: other.slug, id: other_story)
@@ -190,6 +190,6 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     get universe_item_path(universe_slug: other.slug, id: outsider)
     assert_response :success
     assert_select ".empty-title", text: "Not in any scene of #{other_story.name} yet"
-    assert_select ".detail-section a.details-link", count: 0
+    assert_equal [], appearance_links
   end
 end

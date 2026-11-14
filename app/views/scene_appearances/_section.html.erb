@@ -66,10 +66,6 @@
               elements: scene_appearance_speaking_in(entry).to_sentence) %></div>
           <% end %>
         </div>
-
-        <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
-          <%= record_details_link universe_story_scene_path(story_id: Current.story, id: entry.scene), record: entry.scene %>
-        </div>
       </div>
     <% end %>
   </div>

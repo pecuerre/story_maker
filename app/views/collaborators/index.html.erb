@@ -15,10 +15,10 @@
       <% @collaborators.each do |collaborator| %>
         <div class="list-group-item entity-row collaborator-row d-flex align-items-center gap-3">
           <div class="entity-copy flex-grow-1">
-            <%# **A plain name, not a link.** Every list row in this application names
-                its record in an `entity-title` span and puts the navigation on the
-                right as one explicit link, so a title that is also a link would be a
-                second destination on the row pointing at the same place. %>
+            <%# **A plain name, not a link.** A Collaborator is not a record with a
+                page of its own: the row's one destination is the change history
+                filtered to them, and a title that linked there too would be a
+                second control for the same place. %>
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <span class="entity-title"><%= collaborator.user.name %></span>
             </div>

@@ -25,7 +25,10 @@ class TagImprovementsTest < ApplicationSystemTestCase
     # workspace tab keeps the tab strip, the canonical link does not.
     visit universe_character_tags_path(universe_slug: universe.slug)
     within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("a.details-link").click
+      find(".taxonomy-actions .dropdown-toggle").click
+      within ".dropdown-menu.show" do
+        click_link "Details"
+      end
     end
 
     assert_current_path universe_character_tag_path(universe_slug: universe.slug, id: tag)
@@ -142,7 +145,7 @@ class TagImprovementsTest < ApplicationSystemTestCase
       click_button "Save changes"
     end
 
-    assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger"
+    assert_selector "li[data-node-id='#{tag.id}'] a.taxonomy-name-link", text: tag.name, wait: REFRESH_WAIT
     assert_not tag.reload.taggable
   end
 

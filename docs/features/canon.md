@@ -60,7 +60,7 @@ rule in the Universe appears in one list, universe-wide rules first, and a row l
 ledger id (`k1` reads as `K1`, so the row and a citation in prose use the same label), then its name,
 canon type, category, statement, owner, and the Story when one owns it. The statement and the source
 passage are plain text in a row, and a `[[canon:K1]]` reference in either is reduced to `K1` with no
-link: the row already carries its own Details link. The details page renders both passages in the
+link: the row already carries its own Details action. The details page renders both passages in the
 shared Markdown dialect instead, so paragraphs, lists, emphasis, and `[[kind:slug]]` references are
 read as the author wrote them; a reference there links the record it names. The editor holds the
 name, slug, category, canon type, statement, source passage, and an optional owner; choosing **The

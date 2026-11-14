@@ -209,8 +209,10 @@ class ModalHtmlFlowTest < ApplicationSystemTestCase
     visit universe_relations_path(universe_slug: @universe.slug)
 
     within ".list-group-item", text: "A relation with a long description" do
-      assert_selector "a.details-link", text: "Details", visible: :visible
+      assert_selector "a.entity-title-link", visible: :visible
       assert_selector "button.dropdown-toggle", visible: :visible
+      find("button.dropdown-toggle").click
+      assert_selector ".dropdown-menu.show a", text: "Details", visible: :visible
     end
     click_button "Add relation"
     within ".modal.show" do

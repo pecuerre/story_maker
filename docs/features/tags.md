@@ -54,9 +54,9 @@ treatment is in [visual_design.md](../visual_design.md). What defines it:
 
 - `shared/_taxonomy_tree` wraps `shared/_taxonomy_node`, and takes the `create_url`/`update_url`
   lambdas + `model_param` + `modal_fields` locals, plus `details_url`/`details_count`/
-  `details_count_label` for the row's **Details** link and count pill. A row's only URL surface is
-  `data-update-url` (update, move, delete, inline rename) and the Details link; the editor is a
-  DOM-built modal, so there are no `new`/`edit` routes and no per-row edit/delete URL attributes.
+  `details_count_label` for the row's **Details** menu item and count pill. A row's only URL surface
+  is `data-update-url` (update, move, delete) and its menu's Details item; the editor is a DOM-built
+  modal, so there are no `new`/`edit` routes and no per-row edit/delete URL attributes.
 - The tree descends through a **`HierarchyIndex`** (`app/models/hierarchy_index.rb`) built from the
   page's own load of the hierarchy, and `hierarchy` is a **required** local for that reason: the
   partial asks the index for a node's children instead of `node.children`, so one query answers every
@@ -66,12 +66,15 @@ treatment is in [visual_design.md](../visual_design.md). What defines it:
   number of root rows the tree lists: `tags_helper.rb` passes `Current.universe.<type>_tags.count`,
   and a nested grouping tag is a tag like any other. A create, rename, or delete performs a same-URL
   Turbo visit, so the badge tracks live changes.
-- A row carries five things and no more: the **name** (the only inline-rename target, sized to its own
-  text so clicking the empty space beside it does nothing), the record's **tags**, its **count** pill
-  when the taxonomy has one, the **Details** link on the right, and one **overflow menu** holding Add
-  child, Insert before, Insert after, Move up, Move down, Edit, and Delete. Move up/down are disabled
-  menu items at the sequence boundaries, so the row itself has no add or arrow buttons. The Details
-  link and the menu are both always visible: a row never depends on hover.
+- A row carries the **name** as a link to the record's own page, the record's **tags**, its **count**
+  pill when the taxonomy has one, and one **overflow menu**. For a writer that menu holds Details,
+  Add child, Move up, Move down, Edit, and Delete; Move up/down are disabled items at the sequence
+  boundaries, so the row itself has no add or arrow buttons. Nothing on the row depends on hover. A
+  read-only member or guest gets no menu and uses the name link.
+- The page's **Add** button and a row's **Add child** open the same editor modal; the row trigger
+  presets the parent and the page trigger starts at the root. Creation appends at the end of the
+  chosen parent's siblings. There is deliberately no inline create row and no inline rename: the
+  name is navigation, and Edit is the modal.
 - The add action must be human-readable (`Add relation tag`), never generated directly from a model
   parameter (`Add Relation_tag`).
 
@@ -81,6 +84,10 @@ The tag editor's field descriptors come from `ModalFields#taxonomy_tag_fields` (
 taxonomy) and `ModalFields#content_tag_taxonomy_fields` (Character/Location/Item/Event tags, which add
 `show_in_menu`). The per-type `*_tag_taxonomy_fields(nodes)` helpers delegate to these, e.g.
 `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
+
+The create modal is the same editor with an empty record. It starts from each descriptor's `default`
+— `taggable` checked and `show_in_menu` unchecked — and the parent the trigger chose, so a new tag
+has the model's defaults rather than a blank form's unchecked boxes.
 
 Every tag editor carries a `taggable` checkbox: a tag with `taggable: false` is a grouping for its
 children and is excluded from element tag editors, while staying in the tree and on records that
@@ -137,7 +144,7 @@ runs while those constants are being built.
 
 A content tag with `show_in_menu: true` also appears on its workspace page. Those links include
 `from=workspace`, so the tag details page renders the same workspace tabs only for that explicit
-navigation, while the taxonomy tree's Details link stays canonical and omits them.
+navigation, while the taxonomy tree's Details item stays canonical and omits them.
 
 ## The tag details card
 

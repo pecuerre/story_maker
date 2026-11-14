@@ -67,10 +67,10 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= ownership.item.name %></span>
+                <%= record_title_link universe_item_path(id: ownership.item), record: ownership.item %>
                 <%= entity_tag_badge(ownership) %>
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                <span class="entity-title"><%= ownership.character.name %></span>
+                <%= record_title_link universe_character_path(id: ownership.character), record: ownership.character %>
                 <%= render "shared/draft_pending_badge", record: ownership %>
               </div>
               <% if ownership.description.present? %>
@@ -78,10 +78,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_ownership_path(id: ownership), record: ownership %>
-
             <%= render "shared/row_actions",
               record: ownership,
+              details_url: universe_ownership_path(id: ownership, **@list_filter.query_params),
               label: t("ownership", count: 1),
               record_name: t("ownerships.endpoints", first: ownership.character.name,
                 second: ownership.item.name),

@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Scene board title links.** Board card titles now use the same link color at rest and hover underline as a row's name.
+- **Taxonomy editing is modal-only.** Inline rename and inline create are gone; Add and Add child open the record editor, with the parent preset for a child, and Insert before/after is removed.
+- **Details in row menus.** Every writer's row menu opens with **Details** to the record; the row name is the visible route for every access level.
+- **List row name links.** Every flat list's and taxonomy tree's row name now opens its record.
 - **Tags scope switch.** The Universe/Story selector is a URL-backed segmented control instead of a second tab strip, so only the taxonomy below it reads as tabs; the URLs and both languages are unchanged.
 - **Index rollout: Members and platform forms.** The Members list is a row list with quiet access chips instead of a table, and the add-member, import, and universe-delete forms are a single panel rather than a card inside a card.
 - **Index rollout: Story planning workspaces.** The Scenes filter joins the quiet `.list-filter` block, and the Sections workspace's **Move scene** submit is an outline button so the header's add action stays the page's only solid primary.
@@ -51,6 +55,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Stale Members browser test.** The grant-access system test waits for the Members row and scopes its access select there instead of querying the removed table.
 - **Row Details icon.** The shared Details link and the collaborators History link are text-only, so same-tab navigation no longer wears the new-tab icon.
 
 ### docs
@@ -61,6 +66,10 @@ Labels used below, in the order their groups appear:
 ### chore
 
 - **Photo file-button theme coverage.** A browser case reads the photo field's `::file-selector-button` fill and label contrast in both themes, so a file picker that keeps the light palette fails the suite.
+
+### planned
+
+- **Screen-reader review of row navigation.** Backlog item 100 records the focused assistive review of the name links, row menus, and taxonomy editor for much later.
 
 ## 2026-11-13
 

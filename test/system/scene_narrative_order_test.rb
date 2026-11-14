@@ -67,10 +67,11 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Scenes"
     assert_selector ".entity-list .entity-title", text: "Private scene"
     assert_selector ".entity-list .entity-row", text: "Read-only details"
-    # The row is plain text plus a Details link, so a read-only member can reach
-    # the scene page and the link never waits for a hover.
-    assert_selector ".entity-list a.details-link[href='#{universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)}']",
-      text: "Details", visible: :visible
+    # The row's name is the read-only member's route into the Scene; there is no
+    # writer menu on this page.
+    assert_selector ".entity-list a.entity-title-link[href='#{universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)}']",
+      text: "Private scene", visible: :visible
+    assert_no_selector ".entity-list a.details-link"
     assert_no_link "Add scene"
     assert_no_selector "form[action$='/move']"
     assert_no_selector ".dropdown.row-actions"

@@ -16,7 +16,8 @@ function build({ elementHtml = "", modalFields = [] } = {}) {
   controller.modelParamValue = "character_tag"
   controller.modalFieldsValue = JSON.stringify(modalFields)
   controller.hasFieldNameValue = false
-  controller.emptyStateTemplate = null
+  controller.createUrlValue = "/u/dark/character_tags"
+  controller.createTitleValue = "Add character tag"
   return { controller, host }
 }
 
@@ -369,102 +370,54 @@ describe("taxonomy color contrast", () => {
   })
 })
 
-describe("taxonomy row building", () => {
-  test("a color is only accepted in the documented format", () => {
-    const { controller } = build()
+describe("taxonomy editor dialog", () => {
+  // happy-dom has no Bootstrap; the stub is the instance contract the controller
+  // uses, and what these cases read is the dialog the controller builds.
+  function fakeBootstrap() {
+    class FakeModal {
+      constructor(element) { this.element = element }
+      show() {}
+      hide() {}
+    }
+    globalThis.window.bootstrap = { Modal: FakeModal }
+  }
 
-    expect(controller.safeColor("#a1b2c3")).toBe(true)
-    expect(controller.safeColor("#A1B2C3")).toBe(true)
-    expect(controller.safeColor("red")).toBe(false)
-    expect(controller.safeColor("#fff")).toBe(false)
-    expect(controller.safeColor("url(javascript:alert(1))")).toBe(false)
-    expect(controller.safeColor(undefined)).toBe(false)
-  })
+  function createFields() {
+    return [
+      { name: "name", label: "Name", type: "text", required: true },
+      { name: "parent_id", label: "Parent tag", type: "select", options: [ [ "", "No parent" ], [ "7", "Root" ] ] },
+      { name: "taggable", label: "Taggable", type: "checkbox", default: true }
+    ]
+  }
 
-  test("a hostile name stays text and injects no element", () => {
-    const { controller, host } = build()
-    const hostile = '<img src=x onerror="window.pwned = true">'
-
-    const trigger = controller.buildNameTrigger({
-      name: hostile,
-      bgcolor: "#ff0000",
-      fgcolor: "javascript:alert(1)",
-      recordCountLabel: "(4 characters)",
-      description: "<script>window.pwned = true</script>"
-    })
-    host.append(trigger)
-
-    expect(trigger.tagName).toBe("BUTTON")
-    expect(trigger.getAttribute("aria-label")).toBe(`Rename ${hostile}`)
-    expect(trigger.querySelector("img")).toBeNull()
-    expect(trigger.querySelector("script")).toBeNull()
-    expect(trigger.querySelector(".badge").textContent).toBe(hostile)
-    // An unusable foreground color is dropped rather than written into the style.
-    expect(trigger.querySelector(".badge").style.color).toBe("")
-    expect(trigger.querySelector(".record-count").textContent).toBe("(4 characters)")
-    expect(trigger.querySelector(".entity-description").textContent).toBe("<script>window.pwned = true</script>")
-  })
-
-  test("a node without a usable color still shows its name", () => {
-    const { controller } = build()
-
-    const fragment = controller.buildNameContent({ name: "Root", bgcolor: "not-a-color" })
-
-    expect(fragment.querySelector(".entity-title").textContent).toBe("Root")
-    expect(fragment.querySelector(".badge")).toBeNull()
-  })
-
-  test("a cancelled inline rename restores the server's name, not the typed one", () => {
+  test("a create opens the shared editor with the create URL and title", () => {
+    fakeBootstrap()
     const { controller, host } = build({
-      elementHtml: `
-        <div class="taxonomy-surface">
-          <ul class="taxonomy-list" data-drop-parent-id="">
-            <li class="taxonomy-node" data-node-id="3">
-              <form><input name="name" value="Never saved"></form>
-            </li>
-          </ul>
-        </div>
-      `
+      elementHtml: '<button type="button" data-action="taxonomy-tree#add">Add</button>',
+      modalFields: createFields()
     })
-    const node = host.querySelector("[data-node-id]")
-    node.dataset.name = "Hero"
-    node.dataset.taxonomyValues = JSON.stringify({ name: "Hero", bgcolor: "#00ff00" })
-    node.dataset.recordCountLabel = "(4 characters)"
 
-    controller.restoreName(node.querySelector("form"))
+    controller.add({ preventDefault() {}, currentTarget: host.querySelector("[data-action='taxonomy-tree#add']") })
 
-    const trigger = host.querySelector("[data-taxonomy-tree-target='name']")
-    expect(host.querySelector("form")).toBeNull()
-    expect(trigger.tagName).toBe("BUTTON")
-    expect(trigger.textContent).toContain("Hero")
-    expect(trigger.textContent).not.toContain("Never saved")
-    expect(trigger.textContent).toContain("(4 characters)")
-    expect(document.activeElement).toBe(trigger)
+    const modal = controller.modalElement
+    expect(modal.querySelector(".modal-title").textContent).toBe("Add character tag")
+    expect(modal.querySelector("form").getAttribute("action")).toBe("/u/dark/character_tags")
   })
 
-  test("a rebuilt row shows the server's summary line rather than the description", () => {
-    // A Location row shows its short summary; a tag row shows its description.
-    // The server sends the exact line as `rowDescription`, so cancelling a
-    // rename must restore the same text the page rendered.
-    const { controller, host } = build()
+  test("a create starts from the descriptor defaults and presets the parent", () => {
+    fakeBootstrap()
+    const parent = document.createElement("li")
+    parent.dataset.nodeId = "7"
+    parent.innerHTML = '<button type="button" data-action="taxonomy-tree#add">Add child</button>'
+    const { controller, host } = build({ modalFields: createFields() })
+    host.append(parent)
 
-    const trigger = controller.buildNameTrigger({
-      name: "Winden",
-      rowDescription: "The town at the center of the knot.",
-      description: "The full profile."
-    })
-    host.append(trigger)
+    controller.add({ preventDefault() {}, currentTarget: parent.querySelector("[data-action='taxonomy-tree#add']") })
 
-    expect(trigger.querySelector(".entity-description").textContent).toBe("The town at the center of the knot.")
-  })
-
-  test("an empty summary line keeps the row to one line, not the description", () => {
-    const { controller, host } = build()
-
-    const trigger = controller.buildNameTrigger({ name: "Winden", rowDescription: "", description: "The full profile." })
-    host.append(trigger)
-
-    expect(trigger.querySelector(".entity-description")).toBeNull()
+    const modal = controller.modalElement
+    expect(controller.createDefaults()).toEqual({ taggable: true })
+    expect(modal.querySelector("input[type=checkbox][name='character_tag[taggable]']").checked).toBe(true)
+    expect(modal.querySelector("select[name='character_tag[parent_id]']").value).toBe("7")
   })
 
   test("the editor dialog takes the class the page names", () => {
@@ -473,12 +426,12 @@ describe("taxonomy row building", () => {
     node.dataset.name = "Winden"
     node.dataset.updateUrl = "/u/dark/locations/1"
 
-    const narrow = build().controller.buildModal(node)
+    const narrow = build().controller.buildModal(node, { create: false })
     expect(narrow.querySelector(".modal-dialog").classList.contains("modal-lg")).toBe(false)
 
     const { controller } = build()
     controller.element.dataset.modalDialogClass = "modal-dialog modal-lg modal-dialog-scrollable"
-    const wide = controller.buildModal(node)
+    const wide = controller.buildModal(node, { create: false })
     expect(wide.querySelector(".modal-dialog").classList.contains("modal-lg")).toBe(true)
     expect(wide.querySelector(".modal-dialog").classList.contains("modal-dialog-scrollable")).toBe(true)
   })
@@ -670,9 +623,8 @@ describe("taxonomy editor closing focus", () => {
     controller.request = async () => ({ ok: true, status: 200 })
     modal.querySelector("input").focus()
 
-    await controller.updateDetails(
-      { preventDefault() {}, currentTarget: modal.querySelector("form") },
-      { dataset: { nodeId: "1" } }
+    await controller.submitDetails(
+      { preventDefault() {}, currentTarget: modal.querySelector("form") }
     )
     modal.dispatchEvent(new Event("hidden.bs.modal"))
 
@@ -711,50 +663,5 @@ describe("taxonomy announcements", () => {
     expect(controller.parseJson("{oops", [])).toEqual([])
     expect(controller.parseJson(undefined, null)).toBeNull()
     expect(controller.escapeRegExp("a[b]c")).toBe("a\\[b\\]c")
-  })
-})
-
-describe("the empty state beside a remembered create", () => {
-  // A remembered create is rendered server-side as a read-only `.taxonomy-pending`
-  // row, and the server suppresses the empty state when it is the only thing in the
-  // tree. The client must not put the empty state back: showing a reader both is
-  // two answers to "is this taxonomy empty?".
-  function emptyTree({ pending = false } = {}) {
-    const pendingRow = pending
-      ? '<li class="taxonomy-pending"><div class="taxonomy-row">Remembered</div></li>'
-      : ""
-    const template = document.createElement("div")
-    template.innerHTML = '<div class="p-3" data-taxonomy-tree-empty>No tags yet</div>'
-
-    const { controller, host } = build({
-      elementHtml: `<div class="taxonomy-surface"><ul class="taxonomy-list">${pendingRow}</ul></div>`
-    })
-    controller.emptyStateTemplate = template.firstElementChild
-    return { controller, host }
-  }
-
-  test("is not restored while a pending row is on the page", () => {
-    const { controller, host } = emptyTree({ pending: true })
-
-    controller.restoreEmptyState()
-
-    expect(host.querySelector("[data-taxonomy-tree-empty]")).toBeNull()
-  })
-
-  test("is restored once the tree has a real node", () => {
-    const { controller, host } = emptyTree()
-    host.querySelector(".taxonomy-list").insertAdjacentHTML("afterbegin", '<li class="taxonomy-node" data-node-id="1"></li>')
-
-    controller.restoreEmptyState()
-
-    expect(host.querySelector("[data-taxonomy-tree-empty]")).toBeNull()
-  })
-
-  test("is restored on a tree that has neither", () => {
-    const { controller, host } = emptyTree()
-
-    controller.restoreEmptyState()
-
-    expect(host.querySelector("[data-taxonomy-tree-empty]")).not.toBeNull()
   })
 })

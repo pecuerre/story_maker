@@ -83,7 +83,7 @@
           <div class="list-group-item entity-row px-0 d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <%= link_to story.name, universe_story_path(id: story), class: "entity-title text-break" %>
+                <%= record_title_link universe_story_path(id: story), record: story %>
                 <% if Current.story == story %>
                   <span class="badge text-bg-primary"><%= t("universes.show.current_badge") %></span>
                 <% end %>

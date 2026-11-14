@@ -63,26 +63,25 @@ class CsrfTokenTest < ApplicationSystemTestCase
       visit universe_character_tags_path(universe_slug: @universe.slug)
       assert_stimulus_loaded
 
-      within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-        find("button.taxonomy-name-trigger").click
-        find("form.taxonomy-update-form input[name='name']").set("Renamed with a token")
-        click_button "Save"
+      click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+      within ".modal.show" do
+        fill_in "Name", with: "Renamed with a token"
+        click_button "Save changes"
       end
-      assert_selector "button.taxonomy-name-trigger", text: "Renamed with a token"
+      assert_selector "a.taxonomy-name-link", text: "Renamed with a token"
 
       remove_csrf_token
-      within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-        find("button.taxonomy-name-trigger").click
-        find("form.taxonomy-update-form input[name='name']").set("Renamed without a token")
-        click_button "Save"
+      click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+      within ".modal.show" do
+        fill_in "Name", with: "Renamed without a token"
+        click_button "Save changes"
       end
 
       # The status region lives above the tree, not inside the row. The editor
       # stays open with the rejected value, and the name on the server is the one
       # the previous, authorized rename really saved.
-      assert_selector "[data-taxonomy-tree-status].text-danger", text: "The name could not be saved."
-      assert_selector "li[data-node-id='#{tag.id}'] form.taxonomy-update-form input[name='name']",
-        visible: :all
+      assert_selector "[data-taxonomy-tree-status].text-danger", text: "The changes could not be saved."
+      assert_selector "input[data-taxonomy-field='name']", visible: :all
       assert_equal "Renamed with a token", tag.reload.name
     end
   end

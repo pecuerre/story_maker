@@ -46,7 +46,7 @@
                   source cite the rule, so it is the first thing a reader scans
                   rather than a footnote after the statement. %>
               <code class="canon-rule-id"><%= canon_rule_id(rule) %></code>
-              <span class="entity-title"><%= rule.display_string %></span>
+              <%= record_title_link universe_canon_rule_path(id: rule), record: rule %>
               <% if rule.canon_type.present? %>
                 <span class="badge rounded-pill text-bg-light border"><%= canon_type_label(rule) %></span>
               <% end %>
@@ -70,8 +70,8 @@
               <% if rule.source.present? %><span> · <%= canon_rule_prose(rule.source) %></span><% end %>
             </div>
           </div>
-          <%= record_details_link universe_canon_rule_path(id: rule), record: rule %>
           <%= render "shared/row_actions", record: rule, label: t("canon_rule", count: 1),
+            details_url: universe_canon_rule_path(id: rule, **@list_filter.query_params),
             record_name: rule.display_string,
             edit_url: universe_canon_rule_path(id: rule, **@list_filter.query_params),
             delete_url: universe_canon_rule_path(id: rule, **@list_filter.query_params),

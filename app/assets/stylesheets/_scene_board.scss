@@ -122,14 +122,14 @@
 }
 
 .scene-board-scene-link {
-  color: inherit;
+  color: var(--bs-link-color);
   overflow-wrap: anywhere;
   text-decoration: none;
 }
 
 .scene-board-scene-link:hover,
 .scene-board-scene-link:focus-visible {
-  color: var(--bs-link-color);
+  color: var(--bs-link-hover-color);
   text-decoration: underline;
   text-underline-offset: .15em;
 }

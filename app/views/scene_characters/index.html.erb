@@ -40,7 +40,7 @@
           <div class="list-group-item entity-row d-flex align-items-start gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= entry.character.name %></span>
+                <%= record_title_link universe_character_path(id: entry.character), record: entry.character %>
                 <% scene_character_participation_badges(entry).each do |badge| %>
                   <span class="badge rounded-pill text-bg-light border"><%= badge %></span>
                 <% end %>
@@ -61,8 +61,6 @@
             </div>
 
             <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
-              <%= record_details_link universe_character_path(id: entry.character), record: entry.character %>
-
               <% if editable && entry.explicitly_linked? %>
                 <div class="dropdown row-actions">
                   <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
@@ -73,6 +71,10 @@
                     <i class="bi bi-three-dots" aria-hidden="true"></i>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(entry.link) %>-actions">
+                    <li>
+                      <%= record_details_link universe_character_path(id: entry.character), record: entry.character %>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
                     <li>
                       <button type="button" class="dropdown-item"
                         data-action="modal-form#open"

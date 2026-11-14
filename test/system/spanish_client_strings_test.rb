@@ -69,13 +69,15 @@ class SpanishClientStringsTest < ApplicationSystemTestCase
 
     visit universe_character_tags_path(universe_slug: @universe.slug)
 
-    # The inline create row, built by the controller rather than rendered. Its
-    # input's accessible name is an attribute, not visible text.
+    # The create editor, built by the controller rather than rendered. Its title
+    # and its fields come from the same translated descriptors as the edit editor.
     click_button "Añadir etiqueta de personaje"
-    within ".taxonomy-new" do
-      assert_equal "Nombre nuevo", find("input[name='name']")["aria-label"]
-      assert_selector "button", text: "Guardar"
-      assert_selector "button", text: "Cancelar"
+    within ".modal.show" do
+      assert_selector ".modal-title", text: "Añadir etiqueta de personaje"
+      assert_field "Nombre"
+      assert_selector ".modal-footer button", text: "Cancelar"
+      assert_selector ".modal-footer button", text: "Guardar los cambios"
+      click_button "Cancelar"
     end
 
     # The details editor, which the controller builds in `document.body` and so

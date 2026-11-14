@@ -189,10 +189,10 @@ uppercase. The serif is the hierarchy device, so a heading does not need a box a
   so the form drops `.form-surface` and takes the panel's padding. A form that stands alone is the
   page's one card.
 - List rows settle at `46px` on desktop with one clamped summary line; keep at least a `40px`
-  touch target on phones, where a row may grow as its tags or labels wrap. A row's Details link and
-  menu button keep their painted `19px` and `30px` boxes; below `sm` their hit area grows into the
-  row's own padding to the row's `40px` target, so touch can reach them without growing the row or
-  moving the painted label.
+  touch target on phones, where a row may grow as its tags or labels wrap. A row's menu button keeps
+  its painted `30px` box; below `sm` its hit area grows into the row's own padding to the row's
+  `40px` target, so touch can reach it without growing the row or moving the painted label. The name
+  is a text link and its own target.
 - The content column caps at `1040px`; the workspace rails are `14.5rem` and `12.75rem`.
 - Avoid global rules that shrink every `.nav-link` or `.list-group-item`. Component-specific
   classes such as `.sidebar-link`, `.entity-row`, and `.taxonomy-row` own their spacing.
@@ -439,15 +439,17 @@ required.
 
 ### Row and count treatment
 
-The row shape — plain-text name on the left with its badges and count pill, the Details link and the
-overflow menu on the right, and the rule that nothing on a row depends on hover — is defined once, in
+The row shape — the linked name on the left with its badges and count pill, the action menu on the
+right, and the rule that nothing on a row depends on hover — is defined once, in
 [conventions.md](conventions.md#list-rows). Read that for the contract. This section is the painted
-treatment: the `.record-count` pill is styled like the sidebar's `.sidebar-count` pills so a row's
-count and a sidebar's count read as the same quiet object, and a destructive action in a row's overflow
-menu is marked by text or icon rather than by a permanently red button. The Members workspace's
-person list uses the same `.entity-row` wrapper instead of a table, with its access select, Save, and
-Remove controls in the row's action group, so a phone wraps them under the name rather than clipping
-the select.
+treatment: a linked name keeps the title's size and weight, takes the link color, and underlines on
+hover or focus, the same link color the menu's **Details** item uses, so it reads as a destination
+without gaining an icon or a second weight. The `.record-count` pill is styled like the sidebar's
+`.sidebar-count` pills so a row's count and a sidebar's count read as the same quiet object, and a
+destructive action in a row's overflow menu is marked by text or icon rather than by a permanently red
+button. The Members workspace's person list uses the same `.entity-row` wrapper instead of a table,
+with its access select, Save, and Remove controls in the row's action group, so a phone wraps them
+under the name rather than clipping the select.
 
 ### Flat entity lists
 
@@ -460,7 +462,7 @@ Characters, items, events, relations, and ownerships use:
   whichever summary they happen to carry;
 - a `content-surface`/`list-group` wrapper;
 - a modal for quick create/edit, preserving the existing JSON-only mutation flow;
-- mutation controls hidden for guests and read-only members, while the record content and the Details
+- mutation controls hidden for guests and read-only members, while the record content and the name
   link remain visible.
 
 A modal has three states, and none of them is a dead end
@@ -544,18 +546,16 @@ The taxonomy system's rules — the DSL, the mandatory scope, the tree's row and
   with a page header carrying an explicit `title`, count, and a human-readable add label, optional
   URL-backed workspace tabs, the taxonomy's own sentence below that navigation as `.content-intro`,
   and a consistent empty state.
-- The name carries a native rename button for users with write access, sized to its own text so only
-  hovering or focusing the name starts a rename; clicking the rest of the row does nothing.
+- The name is a link to the record's own page, for every access level; there is no rename button and
+  no inline creation. The page's Add button and the row menu's Add child open the editor modal.
 - A `.record-count` pill sits next to the name and its tags, naming the number of records that page
-  will list (`(4 characters)`, `(3 scenes)`), with a **Details** link on the right that is visible at
-  every access level. The row carries the single neutral overflow menu, whose items and boundary
-  behavior are in [features/tags.md](features/tags.md); the row itself has no add or arrow buttons,
-  and drag handles remain an optional enhancement.
-- The row's right-hand group (Details + menu) is never a hover affordance: a hover-revealed control is
-  not usable on touch and is invisible to a keyboard user scanning a long list, so the row is the same
+  will list (`(4 characters)`, `(3 scenes)`). The row carries the single neutral overflow menu, whose
+  items and boundary behavior are in [features/tags.md](features/tags.md); for a writer it opens with
+  **Details** and then holds the mutations, and the row itself has no add or arrow buttons. Drag
+  handles remain an optional enhancement.
+- The name link and the menu toggle are never a hover affordance: a hover-revealed control is not
+  usable on touch and is invisible to a keyboard user scanning a long list, so the row is the same
   shape as a flat list row.
-- The first insert target of the tree needs room for its 44px button, so the root list keeps top
-  padding; otherwise the button would hang over the hint paragraph above it.
 
 ### Full-page forms
 
@@ -581,11 +581,10 @@ The painted shape:
   with an open-folder icon and a `title` stating that grouping does not change the narrative order;
   optional Scene Tag badges use the taxonomy colors, and untagged Scenes remain valid.
 - Rows show two small bordered count pills — the Scene's **Element** count and how many **Characters
-  take part** — then a right-hand group with the **Details** link for every access level, the
-  writer-only Move up/Move down controls, and the Edit/Delete menu with a clear disabled state at
-  the sequence boundaries.
-- The three Scene workspace tabs share one row shape: the linked record's name as plain text, a
-  bordered **Linked** badge, and `Role: …` with **No role recorded**. The Characters tab is the
+  take part** — with the name as the route and, for writers, Move up/Move down controls and the menu
+  whose first item is **Details**.
+- The three Scene workspace tabs share one row shape: the linked record's name, a bordered
+  **Linked** badge, and `Role: …` with **No role recorded**. The Characters tab is the
   exception, because it has a second source: a Character who only speaks carries **Speaks in N
   element(s)** instead of **Linked** and has no dropdown.
 - The Locations tab is the only one whose rows are hierarchical, so its title is the full ancestor
@@ -638,7 +637,8 @@ The board's columns, ordering, and read-only contract are in
 - A column is a bordered surface carrying its Section name (linked to the Section page) and a count
   pill that names what it counts. An empty column says **No scenes here** instead of disappearing.
 - A card uses the tertiary background inside its column and carries the 1-based position pill and the
-  Scene title link. Nothing on the card depends on hover.
+  Scene title link. The title uses the same link color at rest and underline on hover/focus as a list
+  row's name. Nothing on the card depends on hover.
 - A writer's card adds the list's Move up/Move down buttons, with the same disabled boundary state, and
   a **Move to section** disclosure holding a compact Section selector and its submit. The disclosure is
   a native `<details>`, so regrouping needs no JavaScript and a keyboard or touch reader uses the same
@@ -721,13 +721,14 @@ surface is a scrollable SVG inside the shared content surface:
   scope links, which are current only on the page they point at.
 - Dropdown menus have unique IDs and `aria-labelledby` targets.
 - Delete actions are labeled as destructive and retain confirmation.
-- The Details link repeats the record name in its accessible name, so many identical looking links
-  stay distinguishable in a long list. A count is a separate pill whose visible text names what it
-  counts, so it is announced as a fact about the record rather than as part of the link.
+- The **Details** menu item repeats the record name in its accessible name, so many identical looking
+  items stay distinguishable in a long list. A row's name link uses the name itself as its accessible
+  name, so the two destinations do not share a label. A count is a separate pill whose visible text
+  names what it counts, so it is announced as a fact about the record rather than as part of a link.
 - Placeholder navigation keeps `aria-disabled` and is additionally styled as unavailable, so the
   visual state and the semantics agree.
-- Keep focus states visible; do not use hover as the only way to discover an action. A row's Details
-  link and overflow menu are always rendered, so no list control depends on hover, on a pointer
+- Keep focus states visible; do not use hover as the only way to discover an action. A row's name
+  link and menu toggle are always rendered, so no list control depends on hover, on a pointer
   device, or on a wide viewport.
 - Focus rings use one vocabulary. Buttons and form fields keep Bootstrap's primary glow; plain links
   and `summary` elements draw the same primary color as a 2px outline instead of falling back to the
@@ -746,8 +747,9 @@ surface is a scrollable SVG inside the shared content surface:
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout, and
-   render `record_details_link` on every row so the record's own page stays one click away. Keep the
-   [list row shape](#list-rows): plain-text name on the left, Details then actions on the right.
+   render `record_title_link` on the name and pass `details_url` so the menu's **Details** item keeps
+   the record's own page one click away. Keep the [list row shape](#list-rows): a linked name on the
+   left, the action menu on the right.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
    records and `shared/_tag_workspace_navigation` for taxonomy management. Put universe
    configuration tools and the Members access manager in the right sidebar's **Configuration**

@@ -58,7 +58,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= event.display_label %></span>
+                <%= record_title_link universe_event_path(id: event), record: event %>
                 <%= entity_tag_badge(event) %>
                 <%= render "shared/draft_pending_badge", record: event %>
               </div>
@@ -73,10 +73,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_event_path(id: event), record: event %>
-
             <%= render "shared/row_actions",
               record: event,
+              details_url: universe_event_path(id: event),
               label: t("event", count: 1),
               record_name: event.display_label,
               confirm_text: t("events.delete_confirm", name: event.display_label),

@@ -28,7 +28,7 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     # A grouped scene leaves this list: it is listed on its own section's page.
     assert_no_selector ".scene-grouping .list-group-item", text: "Scene three"
     assert_selector ".scene-grouping", text: "nothing waiting to"
-    find("a.details-link[aria-label^='Details for Section one']").click
+    find("a.entity-title-link", text: "Section one").click
     assert_selector "h1", text: "Section one"
     assert_selector ".detail-section", text: "Scene three"
 

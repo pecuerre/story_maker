@@ -36,7 +36,7 @@
           <% @routes.each do |route| %>
             <li class="list-group-item entity-row map-route-row d-flex align-items-center gap-3">
               <div class="entity-copy flex-grow-1">
-                <div class="entity-title"><%= route.display_string %></div>
+                <%= record_title_link universe_route_path(id: route), record: route %>
                 <div class="entity-description">
                   <%= link_to route.from_location.name,
                     universe_location_path(id: route.from_location),
@@ -51,7 +51,6 @@
                   <% end %>
                 </div>
               </div>
-              <%= record_details_link universe_route_path(id: route), record: route %>
             </li>
           <% end %>
         </ol>

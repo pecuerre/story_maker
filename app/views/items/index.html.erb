@@ -58,7 +58,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= item.name %></span>
+                <%= record_title_link universe_item_path(id: item), record: item %>
                 <%= entity_tag_badge(item) %>
                 <%= render "shared/draft_pending_badge", record: item %>
               </div>
@@ -73,10 +73,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_item_path(id: item), record: item %>
-
             <%= render "shared/row_actions",
               record: item,
+              details_url: universe_item_path(id: item),
               label: t("item", count: 1),
               record_name: item.name,
               confirm_text: t("items.delete_confirm", name: item.name),

@@ -11,7 +11,7 @@
       <div class="list-group-item entity-row d-flex align-items-center gap-3">
         <div class="entity-copy flex-grow-1">
           <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="entity-title"><%= universe.name %></span>
+            <%= record_title_link universe_path(universe), record: universe %>
             <% if universe.private? %>
               <span class="badge text-bg-warning-subtle text-warning-emphasis">
                 <span class="status-dot status-dot--private" aria-hidden="true"></span><%= t("universes.visibility.private") %>
@@ -38,8 +38,6 @@
           </div>
         </div>
 
-        <%= record_details_link universe_path(universe), record: universe %>
-
         <% if can_administer_universe?(universe) %>
           <div class="dropdown row-actions">
             <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
@@ -50,6 +48,10 @@
               <i class="bi bi-three-dots" aria-hidden="true"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(universe) %>-actions">
+              <li>
+                <%= record_details_link universe_path(universe), record: universe %>
+              </li>
+              <li><hr class="dropdown-divider"></li>
               <li><%= link_to t("universes.manage_members"), universe_memberships_path(universe_slug: universe.slug), class: "dropdown-item" %></li>
               <li><%= link_to t("universes.edit"), edit_universe_path(universe), class: "dropdown-item" %></li>
               <% if can_purge_universe?(universe) %>

@@ -176,7 +176,7 @@ flat descendant-inclusive list; the child sections have no include-descendants t
 retain the flat list and toggle. `character_tags`, `faction_tags`, `location_tags`, `item_tags`, and `event_tags`
 additionally have `show_in_menu` (bool, default `false`): a tag with `show_in_menu: true` appears as a
 tab on its workspace page and links to that tag's own details page. Workspace tab links carry
-`from=workspace`, preserving that navigation on the tag page; taxonomy Details links remain canonical
+`from=workspace`, preserving that navigation on the tag page; taxonomy Details items remain canonical
 and do not show workspace tabs.
 
 Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,

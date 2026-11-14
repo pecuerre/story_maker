@@ -37,7 +37,7 @@
           <div class="list-group-item entity-row d-flex align-items-start gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= link.item.name %></span>
+                <%= record_title_link universe_item_path(id: link.item), record: link.item %>
                 <span class="badge rounded-pill text-bg-light border"><%= t("scenes.participation.linked") %></span>
               </div>
               <%# The role is the author's own free text, so it is interpolated into
@@ -48,8 +48,6 @@
             </div>
 
             <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
-              <%= record_details_link universe_item_path(id: link.item), record: link.item %>
-
               <% if editable %>
                 <div class="dropdown row-actions">
                   <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
@@ -60,6 +58,10 @@
                     <i class="bi bi-three-dots" aria-hidden="true"></i>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(link) %>-actions">
+                    <li>
+                      <%= record_details_link universe_item_path(id: link.item), record: link.item %>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
                     <li>
                       <button type="button" class="dropdown-item"
                         data-action="modal-form#open"

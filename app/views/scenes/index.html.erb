@@ -59,7 +59,7 @@ end %>
                 aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @scene_total) %>">
                 <%= scene.position + 1 %>
               </span>
-              <span class="entity-title"><%= scene.name %></span>
+              <%= record_title_link universe_story_scene_path(story_id: @story, id: scene), record: scene %>
               <span class="badge rounded-pill text-bg-light border"
                 title="<%= t("scenes.index.status_title") %>">
                 <%= scene_status_label(scene.status) %>
@@ -97,12 +97,10 @@ end %>
             <% end %>
           </div>
 
-          <%# The row's right-hand group matches every other list: Details is
-              navigation into the scene's own page and is rendered for every
-              access level, while the controls below it are for writers only. %>
+          <%# The row's right-hand group matches every other list: the name is the
+              navigation for every access level, and a writer's menu holds the
+              explicit Details action beside the controls. %>
           <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
-            <%= record_details_link universe_story_scene_path(story_id: @story, id: scene), record: scene %>
-
             <% if editable %>
               <%# Boundary state is the Story's real first and last position, so a
                   filtered list never disables a move that has a neighbor. %>
@@ -140,6 +138,10 @@ end %>
                   <i class="bi bi-three-dots" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(scene) %>-actions">
+                  <li>
+                    <%= record_details_link universe_story_scene_path(story_id: @story, id: scene), record: scene %>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
                   <li>
                     <%= link_to edit_universe_story_scene_path(story_id: @story, id: scene), class: "dropdown-item" do %>
                       <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("shared.row_actions.edit") %>

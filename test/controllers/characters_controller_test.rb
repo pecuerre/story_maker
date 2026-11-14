@@ -36,6 +36,19 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       universe_character_network_path(universe_slug: @universe.slug), text: "Network"
   end
 
+  # The row's name is a destination as well as a label, and it must stay
+  # distinguishable from the row's own Details action for a screen reader.
+  test "a list row's name links to the Character beside its Details action" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    path = universe_character_path(universe_slug: @universe.slug, id: @character)
+    assert_select ".entity-row a.entity-title-link[href=?]", path, text: @character.name
+    assert_select ".entity-row a.entity-title-link[aria-label]", count: 0
+    assert_select ".entity-row .dropdown-menu a[href=?][aria-label=?]", path,
+      I18n.t("shared.record_details_link.aria", name: @character.name), text: "Details"
+  end
+
   # The filter, the sort, and the three ways this list can be empty. The value
   # object is covered in `CharacterFilterTest`; what a request can show and this
   # cannot is the page around it — the canonical URL, the two empty states, and

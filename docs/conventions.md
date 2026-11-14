@@ -432,17 +432,16 @@ The three functional editing patterns are:
 **1. Taxonomy tree** (all `_tag` indexes, plus `sections` and `locations`): the row shape, the
 `create_url`/`update_url` lambdas, the one-overflow-menu rule, the count badge, and the DOM-built
 editor all belong to the tag system, in [features/tags.md](features/tags.md). What is shared with the
-other two patterns is only this: a row's only URL surface is `data-update-url` (update, move, delete,
-inline rename) and its Details link, the editor is a DOM-built modal so there are no `new`/`edit`
+other two patterns is only this: a row's only URL surface is `data-update-url` (update, move, delete)
+and its menu's **Details** item, the editor is a DOM-built modal so there are no `new`/`edit`
 routes, and a successful mutation performs a same-URL Turbo visit so serialized parent/tag
 descriptors, page counts, and sidebar counts come from one fresh server render. User-controlled names
 and descriptions are assigned with `textContent`/DOM properties, never interpolated into `innerHTML`.
 
 **2. Flat list + Bootstrap modal** (characters, factions, items, events, relations, ownerships, routes, canon rules):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
-  Each row also renders `record_details_link` before its actions, so the record's own page is one
-  click away and visible to read-only viewers. The name is plain text; the Details link is the only
-  link into the record's own page.
+  Each row renders `record_title_link` on its name and passes `details_url` to `shared/_row_actions`,
+  so the record's own page is one click away from the name and the menu's **Details** item.
 - Characters, Factions, and Items keep their editor in a per-model partial
   (`characters/_editor_modal`, `factions/_editor_modal`, `items/_editor_modal`). The workspace
   renders it once, and the record's own details page renders it again beside a header Edit control
@@ -454,7 +453,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   related records together while preserving each canonical page. Character tags pinned with
   `show_in_menu` also appear on the Relations page. Their links include `from=workspace`; the tag
   details page renders the same workspace tabs only for that explicit navigation, while the
-  taxonomy tree's Details link stays canonical and omits them. Tag management uses
+  taxonomy tree's Details item stays canonical and omits them. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
   scope switch and the scope-specific taxonomy tab strip.
 - Driven by `modal_form_controller.js`; a select that needs a searchable picker uses
@@ -1137,7 +1136,7 @@ preview is a parallel source beside it — see [ADR
 **A pending record is an unsaved instance of the model**, built from the payload sliced to
 `model.column_names`, so a pending row renders through the same `record_label` ladder a live row uses
 and no model gains a second way of naming itself — with the one exception below, for a record the
-ladder has nothing to name. What a pending row cannot have is a **Details link, an editor, a delete
+ladder has nothing to name. What a pending row cannot have is a **Details item, an editor, a delete
 menu, or a position** — all four need an id — so `shared/_row_actions` and `shared/_taxonomy_node` are
 never handed one.
 
@@ -1422,7 +1421,7 @@ universe's or story's records. A non-taggable grouping tag instead lists records
 child tag; `TaggedRecordsByTag` batches that grouping through the scoped join table, and `RecordTags`
 loads each listed record's other badges in one query. Taggable tags retain the include-descendants
 toggle and flat list. Menu links carry `from=workspace`, which keeps their content tabs on the tag
-details page; a taxonomy Details link does not carry that marker. `TaggedRecordCounts` answers the
+details page; a taxonomy Details item does not carry that marker. `TaggedRecordCounts` answers the
 same question for a whole taxonomy in one grouped query, which is what the row's `.record-count` pill
 uses.
 
@@ -1431,35 +1430,30 @@ uses.
 Every list row — flat entity lists, taxonomy nodes, and the Scenes list — has the same shape, so a row
 means the same thing in every workspace:
 
-- **left**: the record's name as plain text (never a link), followed by its tag badges and, for a
-  taxonomy node or a section, a `.record-count` pill holding the number of related records its own
-  page will list together with **what it counts** — "(4 characters)", "(3 scenes)". A bare figure
-  next to a name is ambiguous in a list of many rows, so the label is part of the visible text and is
-  therefore the pill's own accessible name. `record_count_text(count, label)` formats it and
-  `record_count_badge(count, label)` wraps it in the pill, which is styled like the sidebar's
-  `.sidebar-count` pills. A Relation row is the one row whose tag is the sentence's verb: its first
-  tag by `(position, id)` renders as that tag's colored badge between the two endpoint names, and an
-  untagged Relation falls back to `Character one → Character two`;
-- **right**: `record_details_link` — real navigation to that record's own page, rendered for read-only
-  members and public guests too, labelled **Details** only, with the record name in its accessible
-  name — followed by the action menu (`shared/_row_actions` for flat lists, the taxonomy row's own
-  menu for trees, and the Scenes row's Edit/Delete menu).
+- **left**: the record's name, linked to the record's own page on every list (including a taxonomy
+  node), followed by its tag badges and, for a taxonomy node or a section, a `.record-count` pill
+  holding the number of related records its own page will list together with **what it counts** —
+  "(4 characters)", "(3 scenes)". A bare figure next to a name is ambiguous in a list of many rows,
+  so the label is part of the visible text and is therefore the pill's own accessible name.
+  `record_count_text(count, label)` formats it and `record_count_badge(count, label)` wraps it in the
+  pill, which is styled like the sidebar's `.sidebar-count` pills. A Relation row is the one row whose
+  tag is the sentence's verb: its first tag by `(position, id)` renders as that tag's colored badge
+  between the two endpoint names, and an untagged Relation falls back to
+  `Character one → Character two`;
+- **right**: the action menu (`shared/_row_actions` for flat lists, the taxonomy row's own menu for
+  trees, and the Scenes row's menu). For a writer it starts with **Details** — real navigation to the
+  record's own page, labelled **Details** only, with the record name in its accessible name — and then
+  holds the mutations. A read-only member or public guest gets no menu and navigates by the name.
 
-Both halves of the right-hand group are always visible: nothing on a row depends on hover, so the
-list works with a keyboard, on touch, and at a narrow width. A count is never part of the Details
-label, which keeps the link short in a long list and keeps the count where it can be scanned next to
-the name it belongs to. The Details link is the single, predictable way into a record, which is why it
-repeats the record name in its accessible name: many identical-looking links stay distinguishable in
-a long list.
+The name link is always visible, so nothing on a row depends on hover; the menu's toggle is too, so a
+keyboard, touch, and narrow width all reach the same actions. A count is never part of the Details
+label, which keeps the item short and keeps the count where it can be scanned next to the name it
+belongs to. The Details item repeats the record name in its accessible name: many identical-looking
+items stay distinguishable in a long list, while the name link's accessible name is the name itself.
+The item carries the menu's information icon; the name is the primary route and stays text.
 
-The link is **text without an icon**, and the collaborators list's **History** link follows the same
-shape. The destination is the same tab, and a row's glyphs — the overflow menu's dots, the reorder
-arrows, and a menu item's pencil or trash — all mean an action, so an icon on the primary destination
-would read as one more action.
-
-The taxonomy tree serializes the formatted count onto the node (`data-record-count-label`) because the
-tree controller rebuilds the rename button when an inline rename is cancelled; the text is formatted
-by the server, so nothing is pluralized in JavaScript.
+The taxonomy tree keeps its parent line, count pill, and short summary beside the name, so the row
+does not have to open the editor to say where a record sits.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`,
 `empty_state`, and `record_details`/`detail_section` patterns. The three functional page patterns and
@@ -1548,8 +1542,9 @@ value objects, and the deletion contract are one feature with one home, in
   as colored badges). Sidebar counts are right-aligned pills; a row's own count is a pill too, so
   both use the same quiet treatment. Current links carry
   both `.active` and `aria-current="page"`. Details pages add `record_details_link(path, record:)` —
-  the single Details link used by every row and tree node, with the record name in its accessible
-  name and no count — plus `record_count_text(count, label)` / `record_count_badge(count, label)`
+  the first item of every writer's row menu, with the record name in its accessible name and no
+  count — and `record_title_link(path, record:)` for the linked name, plus
+  `record_count_text(count, label)` / `record_count_badge(count, label)`
   for the number that record's page will list and what it counts ("(4 characters)"),
   `detail_fact(label, value, blank:)` for one identity value, and `in_world_range(from, to)`
   for the optional interval Event/Relation/Ownership share. `record_photo_url(record)` is the single
@@ -1564,10 +1559,11 @@ value objects, and the deletion contract are one feature with one home, in
 - `app/views/shared/_taxonomy_tree.html.erb` accepts an optional `confirm_message` lambda that
   supplies the destructive copy for each node, an optional `read_only_empty_description` so a
   read-only member is not told to add or drag records, and the `details_url`/`details_count`/
-  `details_count_label` trio that renders the row's Details link and count pill. It also requires a
-  `hierarchy` local — a `HierarchyIndex` over the page's own load — because the recursive node partial
-  descends through it rather than through `node.children`. `_row_actions`
-  accepts the same kind of `confirm_text`.
+  `details_count_label` trio that feeds the row's Details menu item and count pill. It also requires
+  a `hierarchy` local — a `HierarchyIndex` over the page's own load — because the recursive node
+  partial descends through it rather than through `node.children`. `_row_actions` accepts the same
+  kind of `confirm_text`, and it now requires the row's `details_url` because Details is its first
+  item.
 - **A select that must not offer the record being edited declares it on the control.** One modal form
   serves every row, so the server cannot exclude a row's own record from an option list and the row's
   identity has to travel with the trigger: `_row_actions` adds `data-modal-form-record-id`, and
@@ -1621,13 +1617,15 @@ behaviour, and the contrast rules a browser test measures — has its own home i
 subsystems it shares helpers and Stimulus controllers with.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
-- `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, inline rename, modal, JSON CRUD. A
-  rejected modal save renders the same summary-plus-field-message contract as the flat-list modal,
-  and the editor claims focus back on `shown.bs.modal` when the rejection arrived while the modal
-  was still opening. Its single-field paths (inline rename, create, move, delete) announce the
-  server's own message when the response body carries one. Its editor is built in `document.body`,
-  outside the controller element, so anything it looks up inside the editor is queried on the editor,
-  not read as a Stimulus target.
+- `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, the create/edit modal, move and
+  delete, JSON CRUD. **Renaming and creating are modal-only**: the row name is the record's link, the
+  page's Add button and the row's Add child open the same editor (the row trigger presets the parent),
+  and there is no inline rename or inline create row. A rejected modal save renders the same
+  summary-plus-field-message contract as the flat-list modal, and the editor claims focus back on
+  `shown.bs.modal` when the rejection arrived while the modal was still opening. Its single-field
+  paths (move, delete) announce the server's own message when the response body carries one. Its
+  editor is built in `document.body`, outside the controller element, so anything it looks up inside
+  the editor is queried on the editor, not read as a Stimulus target.
 - `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views, including the JSON
   submission, `422` error rendering, pending state, JSON delete, and the same-URL refresh described
   in [ADR 0011](adr/0011-modal-json-mutation-contract.md). **A dismiss that lands while the dialog is

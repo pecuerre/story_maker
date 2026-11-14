@@ -35,7 +35,7 @@
         <div class="list-group-item entity-row d-flex align-items-center gap-3">
           <div class="entity-copy flex-grow-1">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="entity-title"><%= route.display_string %></span>
+              <%= record_title_link universe_route_path(id: route), record: route %>
               <%= render "shared/draft_pending_badge", record: route %>
             </div>
             <div class="entity-description">
@@ -48,8 +48,8 @@
             </div>
             <% if route.description.present? %><div class="entity-description"><%= route.description %></div><% end %>
           </div>
-          <%= record_details_link universe_route_path(id: route), record: route %>
           <%= render "shared/row_actions", record: route, label: t("route", count: 1),
+            details_url: universe_route_path(id: route),
             record_name: route.display_string, edit_url: universe_route_path(id: route),
             delete_url: universe_route_path(id: route),
             values: (rejected&.persisted? && rejected.id == route.id) ? route_fields_json(rejected) : route_fields_json(route) %>

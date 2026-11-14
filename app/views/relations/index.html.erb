@@ -66,7 +66,8 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= relation_row_sentence(relation) %></span>
+                <%= record_title_link universe_relation_path(id: relation), record: relation,
+                  label: relation_row_sentence(relation) %>
                 <%= render "shared/draft_pending_badge", record: relation %>
               </div>
               <% if relation.from_date.present? || relation.to_date.present? %>
@@ -77,10 +78,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_relation_path(id: relation), record: relation %>
-
             <%= render "shared/row_actions",
               record: relation,
+              details_url: universe_relation_path(id: relation, **@list_filter.query_params),
               label: t("relation", count: 1),
               record_name: t("relations.endpoints", first: relation.character1.name,
                 second: relation.character2.name),

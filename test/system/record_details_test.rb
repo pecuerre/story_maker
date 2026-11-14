@@ -12,11 +12,14 @@ class RecordDetailsTest < ApplicationSystemTestCase
 
     within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
       # The count sits with the name on the left and spells out what it counts;
-      # the link itself says only "Details" and is visible without hovering.
+      # the menu holds the explicit Details action.
       assert_selector ".record-count", text: "(1 character)", visible: :visible
-      assert_selector "a.details-link", text: "Details", visible: :visible
+      assert_selector "a.taxonomy-name-link", text: tag.name, visible: :visible
       assert_selector ".taxonomy-actions .dropdown-toggle", visible: :visible
-      click_link "Details"
+      find(".taxonomy-actions .dropdown-toggle").click
+      within ".dropdown-menu.show" do
+        click_link "Details"
+      end
     end
 
     assert_selector "h1", text: tag.name
@@ -38,7 +41,10 @@ class RecordDetailsTest < ApplicationSystemTestCase
 
     within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
       assert_selector ".record-count", text: "(1 scene)", visible: :visible
-      click_link "Details"
+      find(".taxonomy-actions .dropdown-toggle").click
+      within ".dropdown-menu.show" do
+        click_link "Details"
+      end
     end
 
     assert_selector "h1", text: section.name

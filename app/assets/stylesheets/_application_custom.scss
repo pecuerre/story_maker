@@ -1363,6 +1363,23 @@ $um-search-match: #ffc107;
   overflow-wrap: anywhere;
 }
 
+// A row whose name is also its way into the record. The name keeps the title's
+// weight and takes the link color, so the row shows two routes to the same page
+// instead of a name that only reacts to a pointer. Flat lists use it; a taxonomy
+// tree keeps a plain name because that name is the inline rename trigger. The
+// shared row shape and its scope are in conventions.md.
+.entity-title-link {
+  color: var(--bs-link-color);
+  text-decoration: none;
+}
+
+.entity-title-link:hover,
+.entity-title-link:focus-visible {
+  color: var(--bs-link-hover-color);
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
 // A canon rule is cited by its ledger id, so the list row leads with it and
 // gives it the weight of a label rather than a footnote. It stays a `code`
 // element, so the identifier's own role is in the markup.
@@ -2260,16 +2277,15 @@ $um-search-match: #ffc107;
   // The row keeps its 46px rhythm, but a bare Details link is 19px high and a
   // row menu 30px. Their painted boxes stay as they are and the hit area grows
   // into the row's own padding, so a thumb gets the row's 40px target without
-  // the label dropping out of line with the row title.
+  // the label dropping out of line with the row title. The collaborator row's
+  // own Details-shaped link is the remaining `.details-link` on a row.
   .entity-row .details-link,
-  .taxonomy-row .details-link,
   .entity-row .dropdown-toggle,
   .taxonomy-row .dropdown-toggle {
     position: relative;
   }
 
   .entity-row .details-link::after,
-  .taxonomy-row .details-link::after,
   .entity-row .dropdown-toggle::before,
   .taxonomy-row .dropdown-toggle::before {
     content: "";
@@ -2278,10 +2294,6 @@ $um-search-match: #ffc107;
 
   .entity-row .details-link::after {
     inset: -7px -.25rem -14px;
-  }
-
-  .taxonomy-row .details-link::after {
-    inset: -10.5px -.25rem;
   }
 
   .entity-row .dropdown-toggle::before,

@@ -22,14 +22,14 @@ class MembershipAccessTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     assert_selector "h1", text: "Members"
-    assert_no_selector "td", text: @member.email_address
+    assert_no_selector ".entity-row", text: @member.email_address
 
     fill_in "Email address", with: @member.email_address
     select "Write", from: "Access level"
     click_button "Grant access"
 
-    assert_selector "td", text: @member.email_address, wait: REFRESH_WAIT
-    within "tr", text: @member.email_address do
+    assert_selector ".entity-row", text: @member.email_address, wait: REFRESH_WAIT
+    within ".entity-row", text: @member.email_address do
       assert_selector "select", text: "Write"
     end
     assert UniverseMembership.exists?(universe: @universe, user: @member, access_level: :write)

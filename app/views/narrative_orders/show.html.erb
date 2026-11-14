@@ -88,7 +88,7 @@
 
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <%= link_to row.scene.name, universe_story_scene_path(story_id: @story, id: row.scene), class: "entity-title" %>
+                    <%= record_title_link universe_story_scene_path(story_id: @story, id: row.scene), record: row.scene %>
                     <% if row.placed? %>
                       <span class="badge rounded-pill text-bg-light border">
                         <%= t("narrative_orders.timeline_row", number: row.timeline_row) %>
@@ -165,7 +165,8 @@
                     <% positions = @comparison.positions_for(event) %>
                     <div class="border rounded p-2<%= " opacity-75" if positions.empty? %>">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <%= link_to narrative_event_label(event), universe_event_path(id: event), class: "entity-title" %>
+                        <%= record_title_link universe_event_path(id: event), record: event,
+                          label: narrative_event_label(event) %>
                         <% if positions.any? %>
                           <span class="badge rounded-pill text-bg-light border">
                             <%= t("narrative_orders.scenes_here", positions: positions.join(", ")) %>
@@ -198,7 +199,8 @@
                 <% positions = @comparison.positions_for(event) %>
                 <li class="border rounded p-2 mb-2">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <%= link_to narrative_event_label(event), universe_event_path(id: event), class: "entity-title" %>
+                    <%= record_title_link universe_event_path(id: event), record: event,
+                      label: narrative_event_label(event) %>
                     <% if positions.any? %>
                       <span class="badge rounded-pill text-bg-light border">
                         <%= t("narrative_orders.scenes_here", positions: positions.join(", ")) %>

@@ -23,9 +23,7 @@ class FactionRelationshipsTest < ApplicationSystemTestCase
     end
 
     assert_selector ".entity-row .entity-title", text: "An explicit direction", wait: REFRESH_WAIT
-    within find(".entity-row", text: "An explicit direction") do
-      click_link "Details"
-    end
+    click_row_menu_action find(".entity-row", text: "An explicit direction"), "Details"
 
     assert_selector "h1", text: "An explicit direction"
     assert_text from.name

@@ -37,11 +37,9 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
       universe_location_path(universe_slug: @universe.slug, id: route.from_location)
     assert_select ".map-route-row a[href=?]",
       universe_location_path(universe_slug: @universe.slug, id: route.to_location)
-    assert_select ".map-route-row a.details-link[href=?]",
+    assert_select ".map-route-row a.entity-title-link[href=?]",
       universe_route_path(universe_slug: @universe.slug, id: route)
     assert_select ".map-route-row .visually-hidden", text: "to"
-    assert_select ".map-route-row a.details-link[aria-label=?]",
-      "Details for #{route.display_string}"
     assert_select ".map-route-edge[data-route-id=?][marker-end='url(#map-route-arrow)']", route.id.to_s
     assert_select ".map-route-edge[data-from-location-id=?][data-to-location-id=?]",
       route.from_location_id.to_s, route.to_location_id.to_s

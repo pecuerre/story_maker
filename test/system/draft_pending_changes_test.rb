@@ -31,6 +31,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       fill_in "Name", with: "Remembered in the list"
       click_button "Save character"
     end
+    assert_no_selector ".modal.show"
 
     # The Characters workspace answers JSON, so the row can only appear once the
     # page has been reloaded — and reloading is what an author does when they want
@@ -114,6 +115,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       fill_in "Name", with: "Renamed but not applied"
       click_button "Save character"
     end
+    assert_no_selector ".modal.show"
 
     visit universe_characters_path(universe_slug: @universe.slug)
 
@@ -136,6 +138,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     visit universe_characters_path(universe_slug: @universe.slug)
 
     click_row_menu_action first(".list-group-item", text: character.name), "Delete", confirm: true
+    assert_selector ".draft-pending-badge", text: "Pending deletion", wait: REFRESH_WAIT
 
     visit universe_characters_path(universe_slug: @universe.slug)
 
@@ -168,6 +171,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       fill_in "Name", with: "Remembered by a writer"
       click_button "Save character"
     end
+    assert_no_selector ".modal.show"
     visit universe_characters_path(universe_slug: @universe.slug)
     assert_selector ".draft-pending-row"
 
@@ -205,6 +209,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       fill_in "Name", with: "Waiting in the top bar"
       click_button "Save character"
     end
+    assert_no_selector ".modal.show"
 
     visit universe_characters_path(universe_slug: @universe.slug)
 
@@ -239,6 +244,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       click_button "Use this photo"
       click_button "Save character"
     end
+    assert_no_selector ".modal.show"
 
     visit universe_characters_path(universe_slug: @universe.slug)
 

@@ -56,160 +56,59 @@ function contrastRatio(foreground, background) {
 // control the descriptor's own label rather than a word of its own — the same
 // bare container `shared/_photo_field` renders, and the same label.
 export default class extends Controller {
-  static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String, editable: Boolean }
+  static values = { modelParam: String, createUrl: String, createTitle: String, modalFields: String, fieldName: String, editable: Boolean }
 
   connect() {
     if (!this.editableValue) return
 
     this.returnFocusTo = null
     this.refreshing = false
-    this.handleOutsideClick = this.handleOutsideClick.bind(this)
     this.handleTurboRender = this.handleTurboRender.bind(this)
-    document.addEventListener("pointerdown", this.handleOutsideClick)
     document.addEventListener("turbo:render", this.handleTurboRender)
-    this.emptyStateTemplate = this.element.querySelector("[data-taxonomy-tree-empty]")?.cloneNode(true)
-    this.refreshSeparators()
     this.updateMoveControls()
     this.restorePendingFocus()
   }
 
   disconnect() {
-    if (this.handleOutsideClick) document.removeEventListener("pointerdown", this.handleOutsideClick)
     if (this.handleTurboRender) document.removeEventListener("turbo:render", this.handleTurboRender)
   }
 
+  // The page's Add button and a row menu's Add child open the same editor. A
+  // row trigger supplies the parent; the page trigger starts at the root. The
+  // create appends at the end of that parent's siblings, which is the order the
+  // old inline create produced.
   add(event) {
     if (!this.editableValue) return
     event.preventDefault()
-    if (this.element.querySelector(".taxonomy-new")) return
-
-    const source = event.currentTarget
-    const parentNode = source.closest("[data-node-id]")
-    const list = parentNode ? this.childList(parentNode) : this.rootList()
-    const parentId = parentNode?.dataset.nodeId || ""
-    const position = this.directNodes(list).length
-    this.removeEmptyState()
-
-    const item = this.buildNewItem(parentId, position)
-    list.append(item)
-    this.refreshSeparators()
-    item.querySelector("input")?.focus()
-  }
-
-  insertAt(event) {
-    if (!this.editableValue) return
-    event.preventDefault()
-    if (this.element.querySelector(".taxonomy-new")) return
-
-    const separator = event.currentTarget.closest(".taxonomy-separator")
-    const parentId = separator?.dataset.parentId || ""
-    const position = Number(separator?.dataset.position || 0)
-    const list = this.listForParent(parentId)
-    if (!list) return
-
-    const item = this.buildNewItem(parentId, position)
-    const reference = this.directNodes(list)[position]
-    list.insertBefore(item, reference || null)
-    separator.remove()
-    this.refreshSeparators()
-    item.querySelector("input")?.focus()
-  }
-
-  insertRelative(event) {
-    if (!this.editableValue) return
-    event.preventDefault()
-    if (this.element.querySelector(".taxonomy-new")) return
-
-    const node = event.currentTarget.closest("[data-node-id]")
-    const list = node?.parentElement
-    if (!node || !list?.matches(".taxonomy-list")) return
-
-    const nodes = this.directNodes(list)
-    const index = nodes.indexOf(node)
-    const position = index + (event.currentTarget.dataset.insertPosition === "after" ? 1 : 0)
-    const item = this.buildNewItem(list.dataset.dropParentId || "", position)
-    list.insertBefore(item, nodes[position] || null)
-    this.refreshSeparators()
-    item.querySelector("input")?.focus()
-  }
-
-  buildNewItem(parentId, position) {
-    const item = document.createElement("li")
-    item.className = "taxonomy-node taxonomy-new"
-
-    const row = document.createElement("div")
-    row.className = "taxonomy-row d-flex align-items-center gap-2 border-bottom"
-    row.append(this.icon("bi-grip-vertical", "text-body-secondary"))
-
-    const form = document.createElement("form")
-    form.className = "taxonomy-create-form d-flex flex-grow-1 gap-2"
-    form.addEventListener("submit", (event) => this.create(event))
-    form.dataset.url = this.createUrlValue
-    form.dataset.parentId = parentId || ""
-    if (position !== undefined && position !== null) form.dataset.position = String(position)
-
-    const input = document.createElement("input")
-    input.className = "form-control form-control-sm"
-    input.name = "name"
-    input.setAttribute("aria-label", t("shared.taxonomy_tree.new_name"))
-    input.required = true
-    const cancel = this.button(t("shared.form.cancel"), "btn btn-sm btn-outline-secondary", "button")
-    cancel.addEventListener("click", (event) => this.cancel(event))
-    form.append(input, this.button(t("shared.taxonomy_tree.save"), "btn btn-sm btn-primary", "submit"), cancel)
-
-    row.append(form)
-    item.append(row)
-    return item
-  }
-
-  async editName(event) {
-    if (!this.editableValue) return
-    event.preventDefault()
-    const node = event.currentTarget.closest("[data-node-id]")
-    if (!node || node.querySelector("input")) return
-    if (this.inlineEditor && this.inlineEditor !== node) await this.saveInlineEditor()
     if (this.modal) return
 
-    const name = node.querySelector('[data-taxonomy-tree-target="name"]')
-    const form = document.createElement("form")
-    form.className = "taxonomy-update-form d-flex flex-grow-1 gap-2"
-    form.addEventListener("submit", (event) => this.update(event))
-
-    const input = document.createElement("input")
-    input.className = "form-control form-control-sm"
-    input.name = "name"
-    input.value = node.dataset.name || ""
-    input.required = true
-    const cancel = this.button(t("shared.form.cancel"), "btn btn-sm btn-outline-secondary", "button")
-    cancel.addEventListener("click", (event) => this.cancel(event))
-    form.append(input, this.button(t("shared.taxonomy_tree.save"), "btn btn-sm btn-primary", "submit"), cancel)
-
-    name.replaceWith(form)
-    node.classList.add("is-editing")
-    this.inlineEditor = node
-    input.focus()
-    input.select()
+    const parentNode = event.currentTarget.closest("[data-node-id]")
+    this.openEditor(null, {
+      create: true,
+      parentId: parentNode?.dataset.nodeId || "",
+      trigger: event.currentTarget
+    })
   }
 
-  async handleOutsideClick(event) {
-    if (!this.inlineEditor || event.target.closest("[data-node-id], .taxonomy-new")) return
-    await this.saveInlineEditor()
-  }
-
-  async edit(event) {
+  edit(event) {
     if (!this.editableValue) return
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
     if (!node) return
-    if (this.inlineEditor) await this.saveInlineEditor()
+    this.openEditor(node, { create: false, trigger: event.currentTarget })
+  }
+
+  openEditor(node, { create, parentId = "", trigger }) {
     if (this.modal) return
 
-    const modal = this.buildModal(node)
+    const modal = this.buildModal(node, { create, parentId })
     document.body.append(modal)
     this.modalElement = modal
-    this.returnFocusTo = this.returnFocusTarget(event.currentTarget)
+    this.modalRecord = node
+    this.modalCreate = create
+    this.returnFocusTo = this.returnFocusTarget(trigger)
     this.refreshing = false
-    this.populateModalFields(modal, node)
+    this.populateModalFields(modal, node, { create, parentId })
     modal.querySelectorAll("select[multiple]").forEach((select) => {
       new window.TomSelect(select, { plugins: [ "remove_button" ], create: false })
     })
@@ -226,6 +125,8 @@ export default class extends Controller {
       modal.remove()
       this.modal = null
       this.modalElement = null
+      this.modalRecord = null
+      this.modalCreate = null
       this.restoreFocus()
     }, { once: true })
     modal.addEventListener("shown.bs.modal", () => {
@@ -244,7 +145,7 @@ export default class extends Controller {
       const region = modal.querySelector("[data-taxonomy-tree-errors]")
       if (region && !region.hidden) region.focus()
     })
-    modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
+    modal.querySelector("form").addEventListener("submit", (submitEvent) => this.submitDetails(submitEvent))
     this.modal.show()
   }
 
@@ -299,8 +200,9 @@ export default class extends Controller {
     target.focus()
   }
 
-  buildModal(node) {
-    const titleId = `taxonomy-edit-title-${node.dataset.nodeId}`
+  buildModal(node, { create = false } = {}) {
+    const recordId = node?.dataset.nodeId || "new"
+    const titleId = `taxonomy-edit-title-${recordId}`
     const modal = document.createElement("div")
     modal.className = "modal fade"
     modal.tabIndex = -1
@@ -319,13 +221,15 @@ export default class extends Controller {
     const title = document.createElement("h2")
     title.className = "modal-title fs-5"
     title.id = titleId
-    title.textContent = t("shared.taxonomy_tree.edit_title", { name: node.dataset.name || "" })
+    title.textContent = create
+      ? this.createTitleValue
+      : t("shared.taxonomy_tree.edit_title", { name: node.dataset.name || "" })
     const close = this.button("", "btn-close", "button", null, t("shared.form.close"))
     close.setAttribute("data-bs-dismiss", "modal")
     header.append(title, close)
 
     const form = document.createElement("form")
-    form.action = node.dataset.updateUrl
+    form.action = create ? this.createUrlValue : node.dataset.updateUrl
     form.method = "post"
     const body = document.createElement("div")
     body.className = "modal-body"
@@ -337,7 +241,7 @@ export default class extends Controller {
     errors.setAttribute("role", "alert")
     errors.tabIndex = -1
     errors.hidden = true
-    body.append(errors, this.modalFields(node))
+    body.append(errors, this.modalFields(node, { create }))
     const footer = document.createElement("div")
     footer.className = "modal-footer"
     const cancel = this.button(t("shared.form.cancel"), "btn btn-secondary", "button")
@@ -350,9 +254,11 @@ export default class extends Controller {
     return modal
   }
 
-  modalFields(node) {
+  modalFields(node, { create }) {
     const fragment = document.createDocumentFragment()
-    const excludedParentIds = new Set([ node.dataset.nodeId, ...[ ...node.querySelectorAll("[data-node-id]") ].map((element) => element.dataset.nodeId) ])
+    const excludedParentIds = create
+      ? new Set()
+      : new Set([ node.dataset.nodeId, ...[ ...node.querySelectorAll("[data-node-id]") ].map((element) => element.dataset.nodeId) ])
     const fields = this.parseJson(this.modalFieldsValue, [])
     // A taxonomy without a background has no pair to judge, and the two
     // non-tag hierarchies this controller also serves have no color at all.
@@ -360,7 +266,7 @@ export default class extends Controller {
     const judgesColors = colors.includes("bgcolor") && colors.includes("fgcolor")
 
     fields.forEach((field) => {
-      const id = `taxonomy-edit-${field.name}-${node.dataset.nodeId}`
+      const id = `taxonomy-edit-${field.name}-${node?.dataset.nodeId || "new"}`
       const name = field.multiple ? `${this.modelParamValue}[${field.name}][]` : `${this.modelParamValue}[${field.name}]`
       const wrapper = document.createElement("div")
       wrapper.className = field.type === "checkbox" ? "mb-3 form-check" : "mb-3"
@@ -523,13 +429,17 @@ export default class extends Controller {
     return label
   }
 
-  populateModalFields(modal, node) {
-    const values = {
+  populateModalFields(modal, node, { create = false, parentId = "" } = {}) {
+    const values = create ? this.createDefaults() : {
       ...this.parseJson(node.dataset.taxonomyValues, {}),
       name: node.dataset.name || "",
       description: node.dataset.description || ""
     }
-    if (this.hasFieldNameValue) values[this.fieldNameValue] = this.parseJson(node.dataset.taxonomyFieldValue, null)
+    if (create) {
+      values.parent_id = parentId || ""
+    } else if (this.hasFieldNameValue) {
+      values[this.fieldNameValue] = this.parseJson(node.dataset.taxonomyFieldValue, null)
+    }
     const fields = this.parseJson(this.modalFieldsValue, [])
 
     fields.forEach((field) => {
@@ -565,6 +475,17 @@ export default class extends Controller {
     this.bindContrastNotice(modal)
   }
 
+  // A create starts from the descriptors' declared defaults rather than an empty
+  // form, so a boolean the model defaults to true (a tag's `taggable`) is not
+  // silently turned off by the hidden half of its checkbox.
+  createDefaults() {
+    const values = {}
+    this.parseJson(this.modalFieldsValue, []).forEach((field) => {
+      if (field.default !== undefined) values[field.name] = field.default
+    })
+    return values
+  }
+
   findInput(modal, name, field) {
     return [ ...modal.querySelectorAll("[name]") ].find((input) => {
       if (input.name !== name) return false
@@ -589,11 +510,16 @@ export default class extends Controller {
   // A rejected save keeps the editor open and explains itself: a `422` error hash
   // is rendered both in a summary and on the control that caused it, so a failure
   // is never only an announcement. The entered values stay where the author left
-  // them, and the modal is not closed.
-  async updateDetails(event, node) {
+  // them, and the modal is not closed. Creation and update share this path
+  // because they share every rule except the method, the URL, and what gets
+  // focused after the page refreshes.
+  async submitDetails(event) {
     event.preventDefault()
     const form = event.currentTarget
-    const response = await this.request(form.action, "PATCH", this.formValues(form))
+    const create = this.modalCreate
+    const method = create ? "POST" : "PATCH"
+    const url = create ? this.createUrlValue : this.modalRecord.dataset.updateUrl
+    const response = await this.request(url, method, this.formValues(form))
     if (!response) return
 
     if (response.status === 422 && this.modalElement) {
@@ -602,13 +528,22 @@ export default class extends Controller {
     }
 
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.update_failed")), true)
+      const fallback = create
+        ? t("shared.taxonomy_tree.create_failed")
+        : t("shared.taxonomy_tree.update_failed")
+      this.announce(await this.mutationMessage(response, fallback), true)
       return
     }
 
+    const recordId = this.modalRecord?.dataset.nodeId
     this.refreshing = true
     this.modal?.hide()
-    this.refreshAndFocus(node.dataset.nodeId, "name")
+    if (create) {
+      const data = await this.parseResponse(response)
+      this.refreshAndFocus(data.id, "name")
+    } else {
+      this.refreshAndFocus(recordId, "name")
+    }
   }
 
   renderFieldErrors(modal, payload) {
@@ -717,88 +652,14 @@ export default class extends Controller {
       .filter(([ , messages ]) => messages.length > 0)
   }
 
-  // A single-field path (inline rename, create, move, delete) has no summary to
-  // render, so the server's own message is announced instead of a generic one.
+  // A single-field path (move, delete) has no summary to render, so the
+  // server's own message is announced instead of a generic one.
   async mutationMessage(response, fallback) {
     if (response.status !== 422) return fallback
 
     const entries = this.errorEntries(await this.parseResponse(response))
     if (entries.length === 0) return fallback
     return entries.map(([ , messages ]) => messages.join(" ")).join(" ")
-  }
-
-  cancel(event) {
-    event.preventDefault()
-    const item = event.currentTarget.closest(".taxonomy-new")
-    if (item) {
-      const list = item.parentElement
-      item.remove()
-      this.cleanupNewList(list)
-      this.restoreEmptyState()
-      this.refreshSeparators()
-      this.focusAfterCancel(list)
-      return
-    }
-
-    const form = event.currentTarget.closest("form")
-    const node = form?.closest("[data-node-id]")
-    if (!form || !node) return
-    this.restoreName(form)
-    node.classList.remove("is-editing")
-    this.inlineEditor = null
-    form.querySelector('[data-taxonomy-tree-target="name"]')?.focus()
-  }
-
-  async create(event) {
-    if (!this.editableValue) return
-    event.preventDefault()
-    const form = event.currentTarget
-    const values = { name: form.querySelector("[name='name']")?.value || "", parent_id: form.dataset.parentId }
-    if (form.dataset.position !== undefined) values.position = Number(form.dataset.position)
-
-    const response = await this.request(form.dataset.url, "POST", values)
-    if (!response) return
-    if (!response.ok) {
-      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.create_failed")), true)
-      return
-    }
-
-    const data = await this.parseResponse(response)
-    this.refreshAndFocus(data.id, "name")
-  }
-
-  async update(event) {
-    if (!this.editableValue) return
-    event.preventDefault()
-    const form = event.currentTarget
-    const node = form.closest("[data-node-id]")
-    const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
-    if (!response) return
-    if (!response.ok) {
-      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.rename_failed")), true)
-      return
-    }
-
-    this.refreshAndFocus(node.dataset.nodeId, "name")
-  }
-
-  async saveInlineEditor() {
-    if (!this.editableValue) return
-    const node = this.inlineEditor
-    const form = node?.querySelector("form")
-    if (!form) {
-      this.inlineEditor = null
-      return
-    }
-
-    const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
-    if (!response) return
-    if (!response.ok) {
-      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.rename_failed")), true)
-      return
-    }
-
-    this.refreshAndFocus(node.dataset.nodeId, "name")
   }
 
   async remove(event) {
@@ -904,35 +765,6 @@ export default class extends Controller {
     return values
   }
 
-  // The only row fragment this controller builds: cancelling an inline rename
-  // puts the native rename button back. Every other part of a row (the Details
-  // link and the action menu) is server-rendered and then refreshed by the
-  // same-URL Turbo visit, so there is deliberately no second JS copy of the row
-  // layout that could drift from `shared/_taxonomy_node`. The button's own
-  // content is rebuilt from the node's data attributes, including the count
-  // pill, so a cancelled rename restores exactly what the server rendered.
-  buildNameTrigger(data) {
-    const trigger = document.createElement("button")
-    trigger.type = "button"
-    trigger.className = "taxonomy-name-trigger text-break"
-    trigger.dataset.taxonomyTreeTarget = "name"
-    trigger.dataset.action = "click->taxonomy-tree#editName"
-    trigger.setAttribute("aria-label", t("shared.taxonomy_node.rename", { name: data.name }))
-    trigger.append(this.buildNameContent(data))
-    return trigger
-  }
-
-  iconButton(icon, label, action = null) {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = "btn btn-sm btn-light border"
-    button.title = label
-    button.setAttribute("aria-label", label)
-    if (action) button.dataset.action = action
-    button.append(this.icon(icon))
-    return button
-  }
-
   button(label, className, type, action = null, ariaLabel = null) {
     const button = document.createElement("button")
     button.type = type
@@ -943,78 +775,8 @@ export default class extends Controller {
     return button
   }
 
-  icon(name, className = "") {
-    const icon = document.createElement("i")
-    icon.className = `bi ${name} ${className}`.trim()
-    icon.setAttribute("aria-hidden", "true")
-    return icon
-  }
-
-  buildNameContent(data) {
-    const fragment = document.createDocumentFragment()
-    if (this.safeColor(data.bgcolor)) {
-      const badge = document.createElement("span")
-      badge.className = "badge rounded-pill taxonomy-tag text-dark"
-      badge.style.backgroundColor = data.bgcolor
-      if (this.safeColor(data.fgcolor)) badge.style.color = data.fgcolor
-      badge.textContent = data.name
-      fragment.append(badge)
-    } else {
-      const title = document.createElement("span")
-      title.className = "entity-title"
-      title.textContent = data.name
-      fragment.append(title)
-    }
-
-    if (data.recordCountLabel) {
-      const count = document.createElement("span")
-      count.className = "record-count"
-      count.textContent = data.recordCountLabel
-      fragment.append(count)
-    }
-
-    // A content record's row shows its short summary and a tag taxonomy's shows
-    // its description; the server sends the exact line as `rowDescription`, so
-    // the rebuilt trigger matches what was rendered. A node from an older page
-    // without the attribute falls back to the description.
-    const rowDescription = data.rowDescription === undefined ? data.description : data.rowDescription
-    if (rowDescription) {
-      const description = document.createElement("span")
-      description.className = "entity-description d-block"
-      description.textContent = rowDescription
-      fragment.append(description)
-    }
-    return fragment
-  }
-
-  safeColor(value) {
-    return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value)
-  }
-
-  restoreName(form) {
-    const node = form.closest("[data-node-id]")
-    if (!node) return
-    const values = this.parseJson(node.dataset.taxonomyValues, {})
-    // Cancelling a rename puts back what the server rendered, not the text the
-    // author was typing: a row must never show a name the database does not have.
-    const data = { ...values, name: values.name || node.dataset.name, description: node.dataset.description,
-      rowDescription: node.dataset.rowDescription }
-    // The server sends the already-formatted count text, so no pluralization is
-    // duplicated here.
-    if (node.dataset.recordCountLabel) data.recordCountLabel = node.dataset.recordCountLabel
-    const trigger = this.buildNameTrigger(data)
-    form.replaceWith(trigger)
-    this.updateMoveControls()
-    trigger.focus()
-  }
-
   rootList() {
     return this.element.querySelector(":scope > .taxonomy-surface > .taxonomy-list")
-  }
-
-  listForParent(parentId) {
-    if (!parentId) return this.rootList()
-    return [ ...this.element.querySelectorAll(".taxonomy-list") ].find((list) => list.dataset.dropParentId === String(parentId))
   }
 
   directNodes(list) {
@@ -1028,66 +790,10 @@ export default class extends Controller {
       list.className = "taxonomy-list list-unstyled ms-4 ps-3"
       list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       list.dataset.dropParentId = node.dataset.nodeId
-      list.dataset.newList = "true"
       if (this.draggedNode) list.dataset.dragPreview = "true"
       node.append(list)
     }
     return list
-  }
-
-  cleanupNewList(list) {
-    if (!list || list === this.rootList() || this.directNodes(list).length > 0) return
-    if (list.dataset.newList === "true" || list.dataset.dragPreview === "true") list.remove()
-  }
-
-  removeEmptyState() {
-    this.element.querySelector("[data-taxonomy-tree-empty]")?.remove()
-  }
-
-  restoreEmptyState() {
-    // A remembered create is rendered as a read-only row, so it carries neither
-    // `data-node-id` nor `.taxonomy-node`. The empty state still must not come
-    // back while one is on the page: the server suppresses it for exactly that
-    // case, and re-adding it here would show the reader both.
-    if (this.element.querySelector("[data-node-id]") || this.element.querySelector(".taxonomy-pending")) return
-    if (!this.emptyStateTemplate) return
-    this.element.querySelector(".taxonomy-surface")?.prepend(this.emptyStateTemplate.cloneNode(true))
-  }
-
-  focusAfterCancel(list) {
-    const node = list?.closest("[data-node-id]")?.querySelector('[data-taxonomy-tree-target="name"]')
-    if (node) node.focus()
-    else this.element.querySelector('[data-action="taxonomy-tree#add"]')?.focus()
-  }
-
-  refreshSeparators() {
-    if (!this.editableValue) return
-    this.element.querySelectorAll(".taxonomy-separator").forEach((element) => {
-      element.remove()
-    })
-    const root = this.rootList()
-    if (!root) return
-    const lists = [ root, ...root.querySelectorAll(".taxonomy-list") ]
-    lists.forEach((list) => {
-      const nodes = this.directNodes(list)
-      if (nodes.length === 0) return
-      list.insertBefore(this.buildSeparator(list, 0), nodes[0])
-      nodes.slice(1).forEach((node, index) => {
-        list.insertBefore(this.buildSeparator(list, index + 1), node)
-      })
-      list.append(this.buildSeparator(list, nodes.length))
-    })
-  }
-
-  buildSeparator(list, position) {
-    const separator = document.createElement("li")
-    separator.className = "taxonomy-separator"
-    separator.dataset.parentId = list.dataset.dropParentId || ""
-    separator.dataset.position = String(position)
-    const button = this.iconButton("bi-plus-lg", t("shared.taxonomy_tree.insert_at", { position: position + 1 }), "taxonomy-tree#insertAt")
-    button.className = "taxonomy-separator-add"
-    separator.append(button)
-    return separator
   }
 
   updateMoveControls() {
@@ -1194,8 +900,7 @@ export default class extends Controller {
     const restore = () => {
       if (originalNext) originalNext.before(node)
       else originalParent.append(node)
-      this.refreshSeparators()
-      this.updateMoveControls()
+        this.updateMoveControls()
     }
     if (!updateUrl) {
       restore()
@@ -1218,8 +923,7 @@ export default class extends Controller {
     if (!this.dropHandled) {
       if (this.dragOriginalNext) this.dragOriginalNext.before(this.draggedNode)
       else this.dragOriginalParent.append(this.draggedNode)
-      this.refreshSeparators()
-      this.updateMoveControls()
+        this.updateMoveControls()
     }
     this.cleanupDrag()
   }

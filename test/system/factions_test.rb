@@ -13,9 +13,7 @@ class FactionsTest < ApplicationSystemTestCase
     assert_selector "button[data-action='modal-form#open']", text: "Add faction"
     assert_selector "form[data-modal-form-target='form'] textarea[name='faction[description]']", visible: :all
 
-    within find(".entity-row", text: faction.name) do
-      click_link "Details"
-    end
+    click_row_menu_action find(".entity-row", text: faction.name), "Details"
 
     assert_selector "h1", text: faction.name
     assert_text faction.summary

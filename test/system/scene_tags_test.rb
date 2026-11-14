@@ -13,11 +13,11 @@ class SceneTagsTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Tags"
     assert_selector ".tag-taxonomy-tabs a.active", text: "Scene tags"
     click_button "Add scene tag"
-    within ".taxonomy-new" do
-      find("input[name='name']").set("Browser scene tag")
-      click_button "Save"
+    within ".modal.show" do
+      fill_in "Name", with: "Browser scene tag"
+      click_button "Save changes"
     end
-    assert_selector ".taxonomy-name-trigger", text: "Browser scene tag"
+    assert_selector "a.taxonomy-name-link", text: "Browser scene tag"
 
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
     # The optional fields sit in disclosure groups, so the picker is opened

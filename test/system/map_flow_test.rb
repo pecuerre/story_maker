@@ -21,13 +21,14 @@ class MapFlowTest < ApplicationSystemTestCase
     assert_selector ".map-diagram-node[href='#{universe_location_path(universe_slug: universe.slug, id: child)}']"
     assert_selector ".map-hierarchy-edge[data-parent-id='#{root.id}'][data-child-id='#{child.id}']"
     within ".map-route-row" do
-      assert_link "#{root.name}"
+      assert_link root.name
       assert_selector ".visually-hidden", text: "to"
       assert_link locations(:location_two).name
-      assert_link "Details", href: universe_route_path(universe_slug: universe.slug, id: routes(:route_one))
+      assert_link routes(:route_one).display_string,
+        href: universe_route_path(universe_slug: universe.slug, id: routes(:route_one))
     end
 
-    assert_selector ".map-route-row a.details-link[aria-label='Details for Road one']"
+    assert_no_selector ".map-route-row a.details-link"
   end
 
   test "the diagram remains keyboard-sized, theme-aware, and scrollable on a narrow screen" do

@@ -73,7 +73,7 @@ class SceneAppearancesSectionTest < ApplicationSystemTestCase
     visit universe_item_path(universe_slug: other.slug, id: item)
 
     assert_selector ".empty-title", text: "Select a story to see its scenes"
-    assert_no_selector ".detail-section a.details-link"
+    assert_no_selector ".detail-section a.entity-title-link"
     # The sidebar offers the same destination, so the click is scoped to the
     # section that promised it.
     within "section.detail-section" do
@@ -90,7 +90,7 @@ class SceneAppearancesSectionTest < ApplicationSystemTestCase
 
     within "section.detail-section", text: "Appears in scenes of #{@story.name}" do
       assert_selector ".entity-row", count: 2
-      assert_selector ".details-link", count: 2
+      assert_selector ".entity-title a", count: 2
     end
     assert_no_selector "main form"
     assert_no_selector ".row-actions"

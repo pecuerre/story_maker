@@ -212,15 +212,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-77. **Make list navigation more discoverable.**
-
-   On the [Characters list](../app/views/characters/index.html.erb) and other shared lists, record names
-   are plain text and a separate **Details** link opens the record; the
-   [Scene board](../app/views/scene_boards/show.html.erb) instead links the title. Test whether readers
-   try the names first, and compare linked titles with the existing explicit Details action. Any change
-   must be consistent across relevant list/tree patterns, retain distinct accessible link names and
-   visible actions, and not interfere with the tree's inline rename control.
-
 79. **Clarify what moving a Scene on the board does.**
 
    [`scene_boards/show`](../app/views/scene_boards/show.html.erb) groups cards into Section columns,
@@ -278,6 +269,15 @@ its own alongside the browser baseline follow-ups.
    scroll cues and a way to narrow or jump to a Character, Scene, or Section. Decide whether a narrowed
    view should share the list's filters; keep the full-table equivalent, explicit layer meanings, and
    print behavior. Assess with realistic data before choosing a control.
+
+100. **Review the linked row names and row menus with a screen reader.**
+
+   The owner's reader check confirmed that writers click the record name, and accepted the dark-theme
+   link paint by eye. The surface has not been heard: confirm that a name link, the menu toggle, the
+   **Details** item, and the read-only name-only route are announced with distinct, useful names, and
+   that the taxonomy create/edit modal's focus, errors, and save order read correctly. This is the
+   focused follow-up to the broader accessibility validation in item 96; schedule it much later, after
+   the other UI/UX findings are triaged.
 
 - **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
   post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),

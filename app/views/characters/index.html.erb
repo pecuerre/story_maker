@@ -57,7 +57,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= character.name %></span>
+                <%= record_title_link universe_character_path(id: character), record: character %>
                 <%= entity_tag_badge(character) %>
                 <%= render "shared/draft_pending_badge", record: character %>
                 <% relation_count = character.relations_as_character1.size + character.relations_as_character2.size %>
@@ -70,12 +70,11 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_character_path(id: character), record: character %>
-
             <%# `label` titles the edit menu entry, so it is the record type's own
                 name rather than a finished phrase. %>
             <%= render "shared/row_actions",
               record: character,
+              details_url: universe_character_path(id: character),
               label: t("character", count: 1),
               record_name: character.name,
               confirm_text: t("characters.delete_confirm", name: character.name),

@@ -55,6 +55,49 @@ are linked rather than repeated, so there is one place to keep them current.
     a stale read and passed alone and on the rerun — and setting `--bs-tertiary-bg` to the light
     value on a dark page turns the button light, which is the regression the new case catches.
 
+- **[changed]** **Row name links, Details menu, and modal-only taxonomy editing.**
+  - **The gap.** Backlog item 77 observed that a shared list's record name is plain text beside a
+    separate **Details** action, while the Scene board links its card titles. Whether readers reach
+    for the name first was the open question. After reviewing the Characters slice, the owner chose
+    the final shape: the name is the visible route for every access level, **Details** moves into the
+    writer's row menu, and taxonomy editing stops being inline so every listing edits through the
+    same modal. The owner's reader check then found that writers click the name, which validates the
+    change and closes the item.
+  - **Names and Details.** Every flat list renders its record name through
+    `ApplicationHelper#record_title_link` as an `.entity-title-link`; a taxonomy node uses its own
+    `taxonomy-name-link`, because a tag's name is a badge rather than an `entity-title`. It covers
+    Characters, Items, Events, Relations, Factions, Plots, Canon Rules, Routes, Faction
+    Relationships, Ownerships (both endpoints), the Scenes list, the three Scene participation
+    workspaces, the Scene Events and Narrative order tabs, the Map's Route rows, the Universe page's
+    Story list, the Universe chooser, and both taxonomy and section trees. `record_details_link` is
+    now the first item of every writer's menu — `shared/_row_actions` requires a `details_url` — and
+    carries the menu's information icon. Read-only members and guests get no menu and navigate by the
+    name. The two destinations keep distinct accessible names: the name itself, then **Details** for
+    that record. The Scene board's card titles were the comparison case; they now take the same link
+    color at rest and hover underline, so a linked title paints the same everywhere.
+  - **Modal-only trees.** Inline rename and inline create are gone. The name is a link with
+    `draggable="false"` so a native link drag does not replace the row's drag. The page's Add and a
+    row's Add child open the same DOM-built editor; Add child presets the parent, and creation appends
+    at the end of that parent's siblings. Insert before/after is removed, because the editor has no
+    position field and Move up/Move down already order siblings. A create starts from descriptor
+    defaults (`taggable` true, `show_in_menu` false, the parent preset) rather than a blank form.
+  - **Rejected.** Keeping a visible Details link beside the name: the owner chose the menu, and two
+    visible routes competed for the same glance. Replacing the name link with Details: the name is
+    the only route a read-only member has. Keeping Insert before/after as inline rows: it is the
+    creation path the owner asked to remove. Linking a Scene Element's name: an Element has no page
+    of its own. Leaving the anchor in the title's body color: the row would gain a click target
+    without a visible affordance at rest.
+  - **Verification.** `test/helpers/record_title_link_test.rb`, `record_details_link_test.rb`,
+    `test/controllers/record_title_links_test.rb`, `record_details_links_test.rb`, and the rewritten
+    taxonomy system and Bun tests cover the name links, the menu item, create defaults, parent
+    presetting, and the modal save. The full `bin/rails test` suite passes (3,558 runs, 0 failures),
+    `bin/rails test:system` passes (244 runs, 0 failures), `bun run check:js` passes (277 tests), and
+    the CSS build compiles. The draft-list browser tests now wait for the editor to close before
+    navigating, which the asynchronous save needed once the menu gained an item.
+  - **Not verified.** A measured contrast check of both themes was not run; the owner accepted the
+    dark-theme link paint by eye. A screen-reader review of the name links, row menus, and taxonomy
+    editor is recorded as backlog item 100 for much later. Touch drag was skipped by the owner.
+
 - **[changed]** **Index rollout slice 3: Members and platform pages.**
   - **The gap.** The Members workspace was the last table-shaped workspace. Its access cell carried a
     read-only badge beside a select and Save, and at 390 the select collapsed to **Ac**; the page
@@ -219,6 +262,14 @@ are linked rather than repeated, so there is one place to keep them current.
     forced-colors/high-contrast mode, a real screen-reader pass, the full appearance-grid and map
     workspaces, and the owner's approval of the prototype. The dark-theme file input remains item
     97's defect.
+
+- **[fixed]** **Members grant browser test follows the row list.**
+  - The Index rollout replaced the Members table with `.entity-row` rows, but
+    `test/system/membership_access_test.rb` still waited for `td` and scoped its level check to `tr`,
+    so the grant journey failed after the access was created.
+  - The test now waits for the row by the member's email address and scopes the access select to that
+    row. It passes (4 runs, 72 assertions), and the full system suite passes without it (247 runs,
+    4,662 assertions, 0 failures).
 
 - **[docs]** **Visual directions exploration.**
   - **The gap.** Backlog item 89 asked for two or three distinct directions on representative

@@ -42,7 +42,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= relationship.display_string %></span>
+                <%= record_title_link universe_faction_relationship_path(id: relationship), record: relationship %>
                 <%= render "shared/draft_pending_badge", record: relationship %>
               </div>
               <% if relationship.from_date.present? || relationship.to_date.present? %>
@@ -53,9 +53,9 @@
               <% end %>
             </div>
 
-            <%= record_details_link universe_faction_relationship_path(id: relationship), record: relationship %>
             <%= render "shared/row_actions",
               record: relationship,
+              details_url: universe_faction_relationship_path(id: relationship),
               label: t("faction_relationship", count: 1),
               record_name: t("faction_relationships.endpoints", from: relationship.from_faction.name, to: relationship.to_faction.name),
               edit_url: universe_faction_relationship_path(id: relationship),

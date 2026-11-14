@@ -26,49 +26,35 @@
   max-width: 100%;
 }
 
-.taxonomy-name-trigger,
-.taxonomy-name-text {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  flex-wrap: wrap;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
 // The tree's own indentation already says which parent a node belongs to, so
 // the parent line and the record count sit on the row instead of stacking under
 // the name. A description is clamped to the same single line a list row gives it.
-.taxonomy-name-trigger .entity-description,
-.taxonomy-name-text .entity-description {
+.taxonomy-name-area .entity-description {
   display: -webkit-box !important;
   max-width: 22rem;
   margin-top: 0;
   -webkit-line-clamp: 1;
 }
 
-.taxonomy-name-trigger {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
+// A tag's name is a badge and keeps its author-picked colors; a plain hierarchy
+// name takes the row link color. Both are one anchor, because the name is the
+// record's route now that renaming moved to the row menu.
+.taxonomy-name-link {
+  color: var(--bs-link-color);
+  text-decoration: none;
 }
 
-.taxonomy-name-trigger:hover .entity-title {
+.taxonomy-name-link:hover,
+.taxonomy-name-link:focus-visible {
+  color: var(--bs-link-hover-color);
   text-decoration: underline;
   text-underline-offset: .15em;
 }
 
-.taxonomy-name-trigger:focus-visible {
-  outline: 2px solid var(--bs-primary);
-  outline-offset: 2px;
-}
-
 // The name, its tags, and its count are the left of the row. The right-hand
-// group (Details + the action menu) is always visible: it is not a hover
-// affordance, so the row is equally usable with a keyboard and on touch. It
-// never shrinks, so the name area wraps instead of squeezing the controls.
+// group (the action menu) is always visible: it is not a hover affordance, so
+// the row is equally usable with a keyboard and on touch. It never shrinks, so
+// the name area wraps instead of squeezing the controls.
 .taxonomy-row-end {
   flex-shrink: 0;
 }
@@ -89,55 +75,6 @@
   border-left: 1px solid var(--bs-border-color);
 }
 
-// Hover strip between adjacent nodes exposing a "+" button to insert a node at that position.
-.taxonomy-separator {
-  position: relative;
-  height: 10px;
-  margin-top: -5px;
-  margin-bottom: -5px;
-  z-index: 2;
-  list-style: none;
-}
-
-// The first separator's button is centred on a 10px strip at the very top of the
-// tree, so it would otherwise hang over the hint above it. The root list keeps
-// room for it instead of letting a white circle cover the copy.
-.taxonomy-surface > .taxonomy-list {
-  padding-top: 1.25rem;
-}
-
-.taxonomy-separator-add {
-  position: absolute;
-  top: 50%;
-  left: .75rem;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 1px solid var(--bs-primary);
-  border-radius: 50%;
-  background-color: var(--bs-body-bg);
-  color: var(--bs-primary);
-  font-size: .65rem;
-  line-height: 1;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease-in-out;
-}
-
-.taxonomy-separator:hover .taxonomy-separator-add,
-.taxonomy-separator-add:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.taxonomy-tree--dragging .taxonomy-separator {
-  display: none;
-}
-
 .taxonomy-node--dragging {
   opacity: .65;
 }
@@ -155,20 +92,8 @@
   background-color: var(--um-primary-soft, rgba(29, 79, 122, .08));
 }
 
-.taxonomy-new .taxonomy-row {
-  background: var(--um-primary-soft, rgba(29, 79, 122, .08));
-}
-
-@media (hover: none), (pointer: coarse) {
-  .taxonomy-separator-add {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .taxonomy-row,
-  .taxonomy-separator-add {
+  .taxonomy-row {
     transition: none;
   }
 }

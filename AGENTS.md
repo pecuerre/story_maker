@@ -31,7 +31,9 @@ the subject and read its owner:
 | Tables, columns, indexes, constraints, validations, hierarchies, positions, slugs, soft delete, `db/data/**` manifests | [`docs/data_model.md`](docs/data_model.md) |
 | Code patterns: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers | [`docs/conventions.md`](docs/conventions.md) |
 | Colors, tokens, light/dark, typography, shell, responsive behavior, accessibility, the painted treatment of a view | [`docs/visual_design.md`](docs/visual_design.md) |
-| Visual direction: intended users, character, references, constraints, representative screens | [`docs/visual_design_brief.md`](docs/visual_design_brief.md) |
+| Visual aim: intended users, character, references, constraints, representative screens | [`docs/visual_design_brief.md`](docs/visual_design_brief.md) |
+| Visual directions: proposals, the chosen Index direction, contrast checks, and the review prototype | [`docs/visual_directions.md`](docs/visual_directions.md) |
+| The accepted Index visual direction and why it was chosen | [`docs/adr/0047-adopt-index-as-the-visual-direction.md`](docs/adr/0047-adopt-index-as-the-visual-direction.md) |
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Code-owned starting shapes** for a Story's Sections and Scenes | [`docs/features/story_structures.md`](docs/features/story_structures.md) |

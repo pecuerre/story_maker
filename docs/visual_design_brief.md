@@ -123,8 +123,8 @@ Any direction must respect all of these:
 ## Representative screens
 
 Every proposed direction is shown on this set, so the comparison is like-for-like. The
-rendered-interface audit captures these first; the directions exploration and the prototype reuse
-them.
+rendered-interface audit captured these first; the directions exploration reused them, and the
+prototype will too.
 
 1. The application shell at 1440 CSS pixels: navbar, left sidebar, right tools sidebar, with a
    populated Story selected.
@@ -144,10 +144,13 @@ screens as they render, not against a description of them.
 ## What this brief does not decide
 
 - Palette values, type scale, spacing scale, radii, and component treatments — the directions
-  exploration proposes these and the owner chooses.
+  exploration proposed these and the owner chose Index.
 - Whether the current two-sidebar shell survives, and how navigation is restructured.
 - Any implementation detail, ticket, or rollout order.
 - Whether density improves real writing; only the participant and accessibility work can say that.
 
 The open work that follows this brief is listed in [backlog.md](backlog.md) under the visual design
-initiative: the rendered-interface audit, the directions exploration, and the prototype.
+initiative: the prototype of the chosen direction and its rollout. The rendered-interface audit and
+the directions exploration are complete; the owner chose **Index** on 2026-11-14, recorded in
+[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md), and the three proposals remain in
+[visual_directions.md](visual_directions.md).

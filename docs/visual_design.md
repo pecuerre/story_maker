@@ -12,8 +12,11 @@ and Stimulus. Do not introduce a second component framework or a utility-only CS
 
 The interface should feel like a calm writing workspace. Its aim is the denser **reference atlas**
 recorded in [visual_design_brief.md](visual_design_brief.md): facts and cross-links lead, type and
-alignment carry hierarchy, and chrome recedes. The conventions below are the implementation contract
-until that exploration chooses a direction.
+alignment carry hierarchy, and chrome recedes. The conventions below implement the accepted
+**Index** direction in [visual_directions.md](visual_directions.md) and
+[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md) for the workspace shell and the
+representative screens; the remaining screens inherit the shared tokens and are validated in the
+rollout slices.
 
 - content is the largest and most prominent area;
 - navigation is quiet and scoped;
@@ -47,28 +50,30 @@ Bootstrap variables live in
 typography scale, radii, or component defaults there rather than adding one-off overrides in
 views.
 
-Current starting palette:
+Current palette:
 
 | Token role | Value | Use |
-|---|---:|---|
-| Primary | `#3454d1` | primary buttons, selected navigation, focus/accent |
-| Body background | `#f5f7fb` | page canvas |
-| Body text | `#1f2937` | headings and primary copy |
-| Secondary text | `#667085` | descriptions and metadata |
-| Border | `#dfe3e8` | surfaces, list rows, separators |
-| Success | `#2f855a` | successful status only |
-| Warning | `#9a6700` | warning/attention status only |
-| Danger | `#c92a2a` | destructive actions and errors |
+|---|---|---|
+| Primary | `#1d4f7a` | primary buttons, selected navigation, focus/accent |
+| Body background | `#f6f4ee` | page canvas |
+| Body text | `#1e1d1a` | headings and primary copy |
+| Secondary text | `#5f5a50` | descriptions and metadata |
+| Border | `#d3ccbc` | surfaces, list rows, separators |
+| Surface | `#fffdf8` | cards and content surfaces |
+| Control border | `#8c8371` | form controls and row actions (3:1) |
+| Success | `#2c6b45` | successful status only |
+| Warning | `#835600` | warning/attention status only |
+| Danger | `#a32626` | destructive actions and errors |
 
 The sidebar also has three **scope** hues, declared as `--um-scope-*` custom properties so a block's
 color is set in one place:
 
 | Scope | Strong | Soft | Used by |
-|---|---:|---:|---|
-| Universe | `#263da8` | `#edf0ff` | the universe context block and the Universe Bible header |
-| Story | `#8c2f39` | `#fbeaec` | the story context block and the Story workspace header |
-| Tools | `#1f6f4a` | `#e6f4ec` | the right-sidebar context block and every right-sidebar header |
-| Disabled | `#98a2b3` | — | placeholder navigation and disabled menu items |
+|---|---|---:|---|
+| Universe | `#244a7c` | `#e7edf6` | the universe context label, Universe Bible headings, and its active rows |
+| Story | `#8a2f3a` | `#f6e6e8` | the story context label, Story workspace headings, and the Story workspace header |
+| Tools | `#2a6a4b` | `#e5f0e9` | the right-sidebar context label and every right-sidebar heading |
+| Disabled | `#9a9283` | — | placeholder navigation and disabled menu items |
 
 The story hue is a muted crimson, deliberately **not** the danger red: scope must never be confused
 with "this will delete something". Placeholder navigation uses the disabled gray with no hover
@@ -108,21 +113,29 @@ light-only value is re-tinted in the `[data-bs-theme="dark"]` block of
 
 | Token | Light | Dark | Used by |
 |---|---:|---:|---|
-| `--um-primary-soft` | `#edf0ff` | `rgba(52, 84, 209, .24)` | selected navigation, current-page fills |
-| `--um-primary-strong` | `#263da8` | `#aebcff` | selected navigation text |
-| `--um-sidebar-bg` | `#ffffff` | `--bs-tertiary-bg` | both sidebars |
-| `--um-hover-bg` | `#f3f5f9` | `rgba(255, 255, 255, .06)` | row and link hover |
-| `--um-surface-raised` | `#fbfcfe` | `rgba(255, 255, 255, .025)` | the last sidebar section |
-| `--um-row-hover` | `#fafbfe` | `rgba(255, 255, 255, .04)` | entity and taxonomy row hover |
-| `--um-surface-veil` | `rgba(255, 255, 255, .72)` | `rgba(255, 255, 255, .03)` | empty states, tag scope tabs |
-| `--um-tag-badge-border` | `rgba(31, 41, 55, .12)` | `rgba(255, 255, 255, .22)` | the tag badge's hairline |
-| `--um-scope-universe` | `#263da8` | `#9db1ff` | universe scope text |
-| `--um-scope-universe-soft` | `#edf0ff` | `rgba(52, 84, 209, .22)` | universe scope background |
-| `--um-scope-story` | `#8c2f39` | `#eda3ab` | story scope text |
-| `--um-scope-story-soft` | `#fbeaec` | `rgba(140, 47, 57, .28)` | story scope background |
-| `--um-scope-tools` | `#1f6f4a` | `#84d3a8` | tools scope text |
-| `--um-scope-tools-soft` | `#e6f4ec` | `rgba(31, 111, 74, .26)` | tools scope background |
-| `--um-disabled-text` | `#98a2b3` | `#8a93a3` | placeholder navigation |
+| `--um-primary-soft` | `#e4edf5` | `#22384b` | selected navigation, current-page fills |
+| `--um-primary-strong` | `#173f61` | `#c7ddf0` | selected navigation text |
+| `--um-on-primary` | `#ffffff` | `#0d2237` | text on a filled primary control |
+| `--um-sidebar-bg` | `#fbf9f3` | `#1b1915` | the left rail |
+| `--um-tools-bg` | `#f8f5ed` | `#1a1814` | the right tools rail |
+| `--um-topbar-bg` | `#20242a` | `#101216` | the fixed dark navbar |
+| `--um-hover-bg` | `#efebe2` | `#26221c` | row and link hover |
+| `--um-surface-raised` | `#f8f5ed` | `#1b1915` | the last sidebar section |
+| `--um-row-hover` | `#faf7f0` | `#242019` | entity and taxonomy row hover |
+| `--um-surface-veil` | `rgba(255, 253, 248, .62)` | `rgba(30, 28, 24, .62)` | empty states, tag scope tabs |
+| `--um-tag-badge-border` | `rgba(30, 29, 26, .16)` | `rgba(236, 231, 220, .18)` | the tag badge's hairline |
+| `--um-control-border` | `#8c8371` | `#8b8272` | form controls and row actions |
+| `--um-scope-universe` | `#244a7c` | `#9db7dd` | universe scope text |
+| `--um-scope-universe-soft` | `#e7edf6` | `#223449` | universe scope background |
+| `--um-scope-story` | `#8a2f3a` | `#eda3ab` | story scope text |
+| `--um-scope-story-soft` | `#f6e6e8` | `#3a2427` | story scope background |
+| `--um-scope-tools` | `#2a6a4b` | `#8ccbaa` | tools scope text |
+| `--um-scope-tools-soft` | `#e5f0e9` | `#1e352b` | tools scope background |
+| `--um-disabled-text` | `#9a9283` | `#777061` | placeholder navigation |
+
+Bootstrap's own dark variables are re-pointed in the same block: the warm near-black canvas
+(`#171613`), text (`#ece7dc`), secondary text (`#b3ab9b`), surfaces (`#28241e`), hairlines
+(`#3d382e`), and the pale ink-blue primary (`#9cc0e0`) with dark text on it.
 
 Rules for the dark theme:
 
@@ -144,44 +157,63 @@ Rules for the dark theme:
 
 ## Typography
 
-The default system sans-serif stack is intentional; no web-font dependency is required for the
-normal UI. The current scale starts at:
+The UI is the operating-system sans stack; titles and record prose are the operating-system serif
+stack. No web-font dependency is required, and nothing is loaded over the network.
 
-- `$h1-font-size: 2rem` for page titles;
-- `$h2-font-size: 1.5rem` for major page sections;
-- body text at Bootstrap's `1rem` base with a `1.5` line height;
-- compact metadata at `.8125rem`–`.875rem`.
+- `$font-family-sans-serif` is `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+- `$um-font-serif` is `"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia,
+  "Times New Roman", serif`. The stack ends in generic `serif`, so an unknown platform falls back to
+  its own serif rather than a missing glyph;
+- body text is `.9375rem` at a `1.5` line height;
+- page titles are `1.875rem` at weight 600 and `1.18` line height; card and section titles are
+  `1.1875rem` and `.9375rem`;
+- page descriptions are serif `.9375rem`; record prose is serif `1.0625rem` at `1.68` with a
+  `68ch` measure;
+- metadata and labels are `.75rem`–`.8125rem`; fact labels are `.6875rem` uppercase with `.03em`
+  tracking; page and section kickers are `.65625rem` uppercase with `.11em` tracking.
 
 Use sentence case for page headings and normal sentence case for descriptions. Uppercase is
-reserved for small navigation/section labels such as `STORY WORKSPACE`. Do not make every card
-heading uppercase.
+reserved for small navigation/section labels and fact labels. Do not make every card heading
+uppercase. The serif is the hierarchy device, so a heading does not need a box around it.
 
 ## Spacing and shape
 
 - Use the Bootstrap spacing scale (`8px`, `12px`, `16px`, `24px`, `32px`) through utilities or the
   shared component classes.
-- Interactive rows should generally be at least `40px` high; primary controls should retain a
-  comfortable touch target.
-- Shared page surfaces use a subtle border, `.5rem`–`.75rem` radius, and a very light shadow.
+- Index is flat: surfaces are a 1px hairline with a 4px radius and **no shadow**; buttons and
+  controls use a 3px radius. Resolve hierarchy with type, alignment, and rules, not nested boxes.
+- List rows settle at `46px` on desktop with one clamped summary line; keep at least a `40px`
+  touch target on phones, where a row may grow as its tags or labels wrap.
+- The content column caps at `1040px`; the workspace rails are `14.5rem` and `12.75rem`.
 - Avoid global rules that shrink every `.nav-link` or `.list-group-item`. Component-specific
   classes such as `.sidebar-link`, `.entity-row`, and `.taxonomy-row` own their spacing.
 - Do not use inline `style` attributes for layout or state. Existing tag color values are the
   intentional exception because they come from user data.
+- The Characters filter is a quiet block rather than a second card: its title is a small uppercase
+  kicker, its explanatory sentence is hidden below `md`, and its submit stays an outline button.
 
 ## Application shell
 
 `app/views/layouts/application.html.erb` is the shell:
 
-1. a fixed dark Bootstrap navbar;
-2. a responsive left workspace navigation;
-3. one flexible main content region with a `page-shell` wrapper;
-4. a responsive right utility navigation;
+1. a fixed dark Bootstrap navbar, 50px tall;
+2. a responsive left workspace navigation, `14.5rem` wide;
+3. one flexible main content region with a `page-shell` wrapper, capped at `1040px`;
+4. a responsive right utility navigation, `12.75rem` wide;
 5. a skip link, one shared floating toast region for flash messages, and one floating notice for a
    held live update.
 
-The navbar is intentionally small: three links, one search box, and up to three actions. **What each
+The shell itself caps at `1440px` and centers on wider displays; the navbar stays full width. The
+navbar is intentionally small: three links, one search box, and up to three actions. **What each
 entry contains and links to is in [features/navigation.md](features/navigation.md)** — read that for
 the entries; this is only the shell.
+
+The sidebar rows are 30px on desktop and 40px below `lg`, with a 3px inline-start edge on the
+active row and a soft primary fill.
+The scope hue belongs to the context label and section heading; Index lets the rail's own warm
+surface show through instead of filling each block with a tint. Labels wrap rather than truncate when
+a translated entry is longer than the rail, which is why the Spanish **Solicitudes de revisión** takes
+two lines in the narrow tools column.
 
 A scope link is marked current with `.active` **and** `aria-current="page"` only on the page it points
 at, so the bar never claims a scope that is not the page being viewed. The search box issues no query of
@@ -297,17 +329,17 @@ the rules that keep navigation honest, are in
 
 ### Responsive behavior
 
-- At `lg` and above, the left workspace navigation is a 16rem sticky column.
+- At `lg` and above, the left workspace navigation is a `14.5rem` sticky column.
 - Below `lg`, it becomes a Bootstrap `offcanvas-start`; the main area shows a compact `Menu`
   button and the current universe/story context.
 - Below `lg` the navbar collapses into the toggler menu, and the search box is inside it with the
   account menu — it is one collapsed navigation surface, not a bar that stays partly usable.
-- At `xl` and above, the right utility navigation is a 14rem sticky column.
+- At `xl` and above, the right utility navigation is a `12.75rem` sticky column.
 - Below `xl`, it becomes a Bootstrap `offcanvas-end`; the workspace bar exposes it through a
   `Tools` button. The `Menu` button is only shown below `lg`, when the left panel also needs an
   offcanvas trigger.
 - The main column must have `min-width: 0` so long descriptions and tables do not break the grid.
-- Keep `scroll-padding-top`/sticky offsets aligned with the fixed navbar height.
+- Keep `scroll-padding-top`/sticky offsets aligned with the 50px fixed navbar.
 
 The old `.container-xl` 2/8/2 shell is not the content-arrangement model anymore. Use the shared
 shell classes and let the main region grow.
@@ -324,15 +356,15 @@ Do not restate an entry list here — add the row to the feature document instea
   reader can always tell which scope a link belongs to.
 - Configuration is not in the left column; it belongs to the right utility sidebar, so the left
   column carries universe and story content only.
-- At `lg` and above the left column is a 16rem sticky column; below `lg` it becomes a Bootstrap
-  `offcanvas-start` with a compact **Menu** button. At `xl` and above the right column is a 14rem
-  sticky column; below `xl` it becomes an `offcanvas-end` opened by a **Tools** button. The
-  **Menu** button appears only below `lg`, when the left panel also needs a trigger. The main column
-  must have `min-width: 0`, and sticky offsets stay aligned with the fixed navbar height.
+- At `lg` and above the left column is a `14.5rem` sticky column; below `lg` it becomes a Bootstrap
+  `offcanvas-start` with a compact **Menu** button. At `xl` and above the right column is a
+  `12.75rem` sticky column; below `xl` it becomes an `offcanvas-end` opened by a **Tools** button.
+  The **Menu** button appears only below `lg`, when the left panel also needs a trigger. The main
+  column must have `min-width: 0`, and sticky offsets stay aligned with the 50px navbar.
 - Real entries show `icon_text_count` as aligned `.sidebar-count` pills, and a list row's own count
-  uses the identical `.record-count` pill. Current links use a soft primary background and
-  `aria-current="page"`, so color is never the only state signal. Placeholder navigation is rendered
-  in the flat disabled gray with no hover emphasis.
+  uses the identical `.record-count` pill. Current links use a 3px primary edge and a soft primary
+  background with `aria-current="page"`, so color is never the only state signal. Placeholder
+  navigation is rendered in the flat disabled gray with no hover emphasis.
 - The **Settings** page is a platform page, not universe content, so it is reached from the top bar's
   account menu, is rendered for every visitor including a guest, and has no workspace shell. Its
   content and its vertical tab strip are in [features/settings.md](features/settings.md).
@@ -452,17 +484,21 @@ add `data-bs-toggle="tab"` because each destination is a separate request.
 
 The details page's contract — four shared partials, read-only, guest-readable, one per record — is in
 [conventions.md](conventions.md#record-details-pages). The painted treatment: the identity card with
-the record type, then a `.detail-facts` grid of labelled values where an unset value renders explicit
-copy instead of an empty cell, then one or more related-records sections, each with a count badge and
-its own empty state. The empty copy states what will appear later and must not tell a guest or a
-read-only member to add records. The identity card's two-column layout when a record has a photo is
-in [conventions.md](conventions.md#record-details-pages).
+the record type, then a `.detail-facts` list of labelled values separated by hairlines, where an
+unset value renders explicit copy instead of an empty cell, then one or more related-records
+sections, each with a count badge and its own empty state. The label is a small uppercase kicker at
+the left of the row and the value is sentence case at the right; below `sm` the label sits above the
+value so neither is squeezed. The empty copy states what will appear later and must not tell a guest
+or a read-only member to add records. The identity card's two-column layout when a record has a photo
+is in [conventions.md](conventions.md#record-details-pages). Scene Details uses the same hairline
+list for its identity facts, after the Element prose.
 
-Two variants exist for facts that do not want to be a labelled grid row, and a details page picks per
+Two variants exist for facts that do not want to be a labelled row, and a details page picks per
 fact rather than per record:
 
 - **`.detail-facts-wide`** — the facts span the card's whole measure instead of the column a photo
-  leaves, because they are prose. A tag's description is the case that uses it.
+  leaves, because they are prose. A tag's description is the case that uses it; its value is set at
+  the serif prose measure (`68ch`, `1.0625rem`, `1.68`).
 - **`.detail-footer`** — the record's own *settings* as compact `label: value` pairs on one quiet
   line below a rule, set in the secondary colour. They are configuration rather than something a
   reader scans for. A tag's `scope: universe` and `color: #d3d3d3` are the case that uses it; the

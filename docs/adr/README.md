@@ -70,6 +70,7 @@ reasoning as of its date.
 | [0044](0044-permanent-universe-deletion-is-owner-only.md) | Accepted | Let only the owner permanently delete a Universe, after typing its exact name, through a purge that includes soft-deleted rows and leaves notifications alone |
 | [0045](0045-a-canon-rule-has-a-name-and-a-stable-slug.md) | Accepted | Give a canon rule a name and a stable slug, plus its ledger category and canon type, and supersede ADR 0039's addressed-by-id choice |
 | [0046](0046-an-open-canon-question-is-a-rule-of-type-open.md) | Accepted | Import an open canon question as a canon rule of type `open` instead of reporting it |
+| [0047](0047-adopt-index-as-the-visual-direction.md) | Accepted | Adopt Index — warm paper, system serif titles and prose, 46px rows, two narrower rails — as the reference-atlas visual direction |
 
 ## Format
 

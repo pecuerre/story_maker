@@ -11,7 +11,8 @@ per-universe development-data convention, and the public/private universe access
 | [vision.md](vision.md) | The idea in plain words: what the tool is for, continuity as the core promise, collaboration & analyzers (the "does this fit the goal?" reference) |
 | [../CHANGELOG.md](../CHANGELOG.md) | Date-based history of application, site, data, security, documentation, and tooling changes |
 | [visual_design.md](visual_design.md) | Bootstrap theme tokens, light/dark, typography, spacing, application shell, responsive behavior, accessibility, and the painted treatment of the shared view patterns |
-| [visual_design_brief.md](visual_design_brief.md) | The agreed visual direction: intended users, the reference-atlas character, what "modern" means here, reference products, constraints, and the screens a direction is judged on |
+| [visual_design_brief.md](visual_design_brief.md) | The agreed visual aim: intended users, the reference-atlas character, what "modern" means here, reference products, constraints, and the screens a direction is judged on |
+| [visual_directions.md](visual_directions.md) | Three visual directions, the chosen Index direction, palettes, typography, density, tradeoffs, contrast checks, and the review and applied prototypes |
 | [conventions.md](conventions.md) | The cross-cutting code conventions: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, soft delete, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, production boundary, caching |
@@ -35,7 +36,9 @@ How to use these docs:
   | Schema, columns, constraints, validations, slugs, positions, soft delete | [data_model.md](data_model.md) |
   | Code patterns, page patterns, list rows, details pages, helpers | [conventions.md](conventions.md) |
   | Colors, tokens, theme, shell, responsive behavior, accessibility | [visual_design.md](visual_design.md) |
-  | Visual direction, intended users, references, constraints before a redesign | [visual_design_brief.md](visual_design_brief.md) |
+  | Visual aim, intended users, references, constraints before a redesign | [visual_design_brief.md](visual_design_brief.md) |
+  | Visual directions: proposals, the chosen Index direction, and the review and applied prototypes | [visual_directions.md](visual_directions.md) |
+  | The accepted Index visual direction and why it was chosen | [adr/0047](adr/0047-adopt-index-as-the-visual-direction.md) |
    | Scenes, Elements, participation, the Scene filter | [features/scenes.md](features/scenes.md) |
     | Story-owned Plot arcs and Scene assignments | [features/plots.md](features/plots.md) |
     | Starting a Story from a code-owned Section/Scene shape | [features/story_structures.md](features/story_structures.md) |

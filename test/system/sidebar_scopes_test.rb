@@ -2,8 +2,10 @@ require "application_system_test_case"
 
 # The sidebars are read as scope blocks, and a block's hue is the only thing
 # that tells its blocks apart, so the mapping is asserted in a real browser:
-# every context block wears the same hue as the section it introduces, and the
-# right utility sidebar's tools scope is the greenish one.
+# every context block's label wears the same hue as the section it introduces,
+# and the right utility sidebar's tools scope is the greenish one. Index lets the
+# rail's own surface show through instead of filling each block with a tint, so
+# the shared hue is the text colour rather than the background.
 class SidebarScopesTest < ApplicationSystemTestCase
   test "each context block shares the hue of the section it introduces" do
     universe = universes(:universe_one)
@@ -13,19 +15,19 @@ class SidebarScopesTest < ApplicationSystemTestCase
     visit universe_story_path(universe_slug: universe.slug, id: story)
 
     colors = {
-      universeContext: background_color("#workspace-navigation .sidebar-context--universe"),
-      universeTitle: background_color("#workspace-navigation .sidebar-section--universe .sidebar-section-title"),
-      storyContext: background_color("#workspace-navigation .sidebar-context--story"),
-      storyTitle: background_color("#workspace-navigation .sidebar-section--story .sidebar-section-title"),
-      toolsContext: background_color("#workspace-tools-navigation .sidebar-context--tools"),
-      toolsTitle: background_color("#workspace-tools-navigation .sidebar-section--tools .sidebar-section-title")
+      universeContext: text_color("#workspace-navigation .sidebar-context--universe .sidebar-eyebrow"),
+      universeTitle: text_color("#workspace-navigation .sidebar-section--universe .sidebar-section-title"),
+      storyContext: text_color("#workspace-navigation .sidebar-context--story .sidebar-eyebrow"),
+      storyTitle: text_color("#workspace-navigation .sidebar-section--story .sidebar-section-title"),
+      toolsContext: text_color("#workspace-tools-navigation .sidebar-context--tools .sidebar-eyebrow"),
+      toolsTitle: text_color("#workspace-tools-navigation .sidebar-section--tools .sidebar-section-title")
     }
 
     assert_equal colors[:universeContext], colors[:universeTitle]
     assert_equal colors[:storyContext], colors[:storyTitle]
     assert_equal colors[:toolsContext], colors[:toolsTitle]
 
-    # Three scopes, three distinct soft backgrounds, none of them a reset value.
+    # Three scopes, three distinct hues, none of them a reset value.
     assert_equal 3, colors.values.uniq.size
     assert colors.values.none? { |color| color == "missing" || color == "rgba(0, 0, 0, 0)" }
 
@@ -71,9 +73,9 @@ class SidebarScopesTest < ApplicationSystemTestCase
     # `evaluate_script` wraps the script in `return ...`, so the probe stays one
     # expression and takes the selector through `arguments[0]` instead of
     # interpolating it into the JavaScript.
-    def background_color(selector)
+    def text_color(selector)
       page.evaluate_script(<<~JS, selector)
-        (function (node) { return node ? getComputedStyle(node).backgroundColor : "missing"; })(document.querySelector(arguments[0]))
+        (function (node) { return node ? getComputedStyle(node).color : "missing"; })(document.querySelector(arguments[0]))
       JS
     end
 

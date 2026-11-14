@@ -5,31 +5,41 @@
 @use "sass:color";
 
 :root {
-  --um-navbar-height: 3.5rem;
-  --um-sidebar-width: 16rem;
-  --um-right-sidebar-width: 14rem;
-  --um-page-max-width: 96rem;
-  --um-primary-soft: #edf0ff;
-  --um-primary-strong: #263da8;
-  --um-sidebar-bg: #ffffff;
-  --um-hover-bg: #f3f5f9;
+  // Index's shell measurements: the rails narrow to 232px and 204px, the content
+  // column caps at 1040px, and list rows settle at 46px. The proposal is in
+  // `docs/visual_directions.md`; the built values belong to `docs/visual_design.md`.
+  --um-navbar-height: 3.125rem;
+  --um-sidebar-width: 14.5rem;
+  --um-right-sidebar-width: 12.75rem;
+  --um-page-max-width: 65rem;
+  --um-shell-max-width: 90rem;
+  --um-font-serif: #{$um-font-serif};
+  --um-primary-soft: #e4edf5;
+  --um-primary-strong: #173f61;
+  --um-on-primary: #ffffff;
+  --um-sidebar-bg: #fbf9f3;
+  --um-tools-bg: #f8f5ed;
+  --um-topbar-bg: #20242a;
+  --um-hover-bg: #efebe2;
   // Surfaces that used to be a literal light-only color. They are tokens so the
   // dark theme can re-tint them instead of inheriting a near-white.
-  --um-surface-raised: #fbfcfe;
-  --um-row-hover: #fafbfe;
-  --um-surface-veil: rgba(255, 255, 255, .72);
-  --um-tag-badge-border: rgba(31, 41, 55, .12);
+  --um-surface-raised: #f8f5ed;
+  --um-row-hover: #faf7f0;
+  --um-surface-veil: rgba(255, 253, 248, .62);
+  --um-tag-badge-border: rgba(30, 29, 26, .16);
+  --um-control-border: #8c8371;
+  --bs-card-bg: #fffdf8;
   // Sidebar scopes: the universe context/Bible, the current story/workspace, and the
   // right utility sidebar (its context block, Configuration, and the future tool
   // groups) each get one hue. The story hue is a muted crimson, deliberately not the
   // danger red reserved for destructive actions, and the tools hue is a muted green.
-  --um-scope-universe: #263da8;
-  --um-scope-universe-soft: #edf0ff;
-  --um-scope-story: #8c2f39;
-  --um-scope-story-soft: #fbeaec;
-  --um-scope-tools: #1f6f4a;
-  --um-scope-tools-soft: #e6f4ec;
-  --um-disabled-text: #98a2b3;
+  --um-scope-universe: #244a7c;
+  --um-scope-universe-soft: #e7edf6;
+  --um-scope-story: #8a2f3a;
+  --um-scope-story-soft: #f6e6e8;
+  --um-scope-tools: #2a6a4b;
+  --um-scope-tools-soft: #e5f0e9;
+  --um-disabled-text: #9a9283;
 }
 
 // The dark theme is the browser's own `data-bs-theme` choice on the root element,
@@ -38,26 +48,93 @@
 // value is re-tinted here. Every scope keeps the hue it has in light mode and only
 // changes its value and background, so a block still reads as the same scope.
 [data-bs-theme="dark"] {
-  --um-primary-soft: rgba(52, 84, 209, .24);
-  --um-primary-strong: #aebcff;
-  --um-sidebar-bg: var(--bs-tertiary-bg);
-  --um-hover-bg: rgba(255, 255, 255, .06);
-  --um-surface-raised: rgba(255, 255, 255, .025);
-  --um-row-hover: rgba(255, 255, 255, .04);
-  --um-surface-veil: rgba(255, 255, 255, .03);
-  --um-tag-badge-border: rgba(255, 255, 255, .22);
-  --um-scope-universe: #9db1ff;
-  --um-scope-universe-soft: rgba(52, 84, 209, .22);
+  // Bootstrap flips its own variables, but its light defaults are the old cool
+  // palette. These re-point the rendered surfaces, text, links, and primary at
+  // Index's warm near-black and pale ink blue.
+  --bs-body-bg: #171613;
+  --bs-body-color: #ece7dc;
+  --bs-body-color-rgb: 236, 231, 220;
+  --bs-secondary-color: #b3ab9b;
+  --bs-secondary-color-rgb: 179, 171, 155;
+  --bs-tertiary-color: #b3ab9b;
+  --bs-secondary-bg: #28241e;
+  --bs-tertiary-bg: #28241e;
+  --bs-emphasis-color: #ece7dc;
+  --bs-border-color: #3d382e;
+  --bs-border-color-translucent: rgba(236, 231, 220, .14);
+  --bs-primary: #9cc0e0;
+  --bs-primary-rgb: 156, 192, 224;
+  --bs-link-color: #9cc0e0;
+  --bs-link-color-rgb: 156, 192, 224;
+  --bs-link-hover-color: #c7ddf0;
+  --bs-link-hover-color-rgb: 199, 221, 240;
+
+  --um-primary-soft: #22384b;
+  --um-primary-strong: #c7ddf0;
+  --um-on-primary: #0d2237;
+  --um-sidebar-bg: #1b1915;
+  --um-tools-bg: #1a1814;
+  --um-topbar-bg: #101216;
+  --um-hover-bg: #26221c;
+  --um-surface-raised: #1b1915;
+  --um-row-hover: #242019;
+  --um-surface-veil: rgba(30, 28, 24, .62);
+  --um-tag-badge-border: rgba(236, 231, 220, .18);
+  --um-control-border: #8b8272;
+  --bs-card-bg: #1e1c18;
+  --um-scope-universe: #9db7dd;
+  --um-scope-universe-soft: #223449;
   --um-scope-story: #eda3ab;
-  --um-scope-story-soft: rgba(140, 47, 57, .28);
-  --um-scope-tools: #84d3a8;
-  --um-scope-tools-soft: rgba(31, 111, 74, .26);
-  --um-disabled-text: #8a93a3;
+  --um-scope-story-soft: #3a2427;
+  --um-scope-tools: #8ccbaa;
+  --um-scope-tools-soft: #1e352b;
+  --um-disabled-text: #777061;
+}
+
+// The filled primary is the one control whose dark value differs from the light
+// one in *kind*: pale ink blue with dark ink on it rather than deep blue with
+// white. Bootstrap bakes the light `$primary` into the button's variables, so the
+// dark theme has to restate the pair.
+[data-bs-theme="dark"] .btn-primary {
+  --bs-btn-bg: #9cc0e0;
+  --bs-btn-border-color: #9cc0e0;
+  --bs-btn-color: #0d2237;
+  --bs-btn-hover-bg: #c7ddf0;
+  --bs-btn-hover-border-color: #c7ddf0;
+  --bs-btn-hover-color: #0d2237;
+  --bs-btn-active-bg: #c7ddf0;
+  --bs-btn-active-border-color: #c7ddf0;
+  --bs-btn-active-color: #0d2237;
+  --bs-btn-disabled-bg: #5b6c7d;
+  --bs-btn-disabled-border-color: #5b6c7d;
+  --bs-btn-disabled-color: #171613;
+  --bs-btn-focus-shadow-rgb: 156, 192, 224;
+}
+
+// Row menus and other quiet controls use Bootstrap's `.btn-light`; on a warm
+// near-black canvas a fixed near-white fill would be the brightest thing on the
+// page, so it becomes the sunken surface.
+[data-bs-theme="dark"] .btn-light {
+  --bs-btn-bg: #28241e;
+  --bs-btn-border-color: #3d382e;
+  --bs-btn-color: #ece7dc;
+  --bs-btn-hover-bg: #332e26;
+  --bs-btn-hover-border-color: #4a4437;
+  --bs-btn-hover-color: #ece7dc;
+  --bs-btn-active-bg: #3a342b;
+  --bs-btn-active-border-color: #4a4437;
+  --bs-btn-active-color: #ece7dc;
+}
+
+// Bootstrap's `.card` bakes the light `$card-bg` into its own variable, so a
+// card inside the dark theme would keep the paper surface without this.
+[data-bs-theme="dark"] .card {
+  --bs-card-bg: #1e1c18;
 }
 
 // Bootstrap's dark theme does not re-tint outline buttons: its outline mixin
 // bakes the *light* theme color into every variable, so `.btn-outline-primary`
-// keeps `#3454d1` as its text and border. That is 2.45:1 on the dark canvas —
+// keeps `#1d4f7a` as its text and border. That is 2.4:1 on the dark canvas —
 // unreadable text, and a control boundary that does not meet the 3:1 non-text
 // target. Bootstrap's dark text-emphasis palette is the re-tinted counterpart,
 // so the idle text, the boundary it draws, and the fill that hover and the
@@ -120,14 +197,20 @@ summary:focus-visible {
 
 .navbar {
   min-height: var(--um-navbar-height);
+  background: var(--um-topbar-bg) !important;
+  border-bottom-color: #333941 !important;
 }
 
 .navbar-brand {
-  letter-spacing: -.015em;
+  font-family: var(--um-font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
 }
 
 .navbar .nav-link,
 .navbar .btn {
+  font-size: .8rem;
   white-space: nowrap;
 }
 
@@ -171,8 +254,9 @@ $um-search-indicator: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000
 // translucent versions to, which is the price of the option list being dark.
 $um-search-field-overlay: 8%;
 $um-search-field-hover-overlay: 18%;
-$um-search-field-surface: color.mix(#fff, $dark, $um-search-field-overlay);
-$um-search-field-surface-hover: color.mix(#fff, $dark, $um-search-field-hover-overlay);
+$um-search-bar-bg: #20242a;
+$um-search-field-surface: color.mix(#fff, $um-search-bar-bg, $um-search-field-overlay);
+$um-search-field-surface-hover: color.mix(#fff, $um-search-bar-bg, $um-search-field-hover-overlay);
 
 // The matched run's fill. Kept beside the other bar colors so the one place that
 // paints text on a bright surface has both halves of its pair next to each other:
@@ -185,7 +269,7 @@ $um-search-match: #ffc107;
   --um-search-field-bg: #{$um-search-field-surface};
   --um-search-field-bg-hover: #{$um-search-field-surface-hover};
   --um-search-field-border: rgba(255, 255, 255, .24);
-  --um-search-panel-bg: #1b1f27;
+  --um-search-panel-bg: #171a1f;
   --um-search-panel-border: rgba(255, 255, 255, .16);
   --um-search-hover: rgba(255, 255, 255, .1);
   --um-search-indicator: #{escape-svg($um-search-indicator)};
@@ -512,6 +596,8 @@ $um-search-match: #ffc107;
 .workspace-shell {
   display: grid;
   grid-template-columns: var(--um-sidebar-width) minmax(0, 1fr);
+  max-width: var(--um-shell-max-width);
+  margin-inline: auto;
   min-height: calc(100vh - var(--um-navbar-height));
 }
 
@@ -526,7 +612,7 @@ $um-search-match: #ffc107;
 
 .right-sidebar {
   --bs-offcanvas-width: var(--um-right-sidebar-width);
-  background: var(--um-sidebar-bg);
+  background: var(--um-tools-bg);
 }
 
 .right-sidebar .offcanvas-body {
@@ -537,8 +623,8 @@ $um-search-match: #ffc107;
 // padding and border; only its own copy needs styling here.
 .right-sidebar-intro p {
   margin: 0;
-  color: var(--bs-body-secondary-color);
-  font-size: .8125rem;
+  color: var(--bs-secondary-color);
+  font-size: .78125rem;
   line-height: 1.45;
 }
 
@@ -555,7 +641,7 @@ $um-search-match: #ffc107;
   width: 100%;
   max-width: var(--um-page-max-width);
   margin-inline: auto;
-  padding: 2rem clamp(1rem, 2.5vw, 2rem) 3rem;
+  padding: 1.75rem clamp(1rem, 2.5vw, 2rem) 4rem;
 }
 
 .workspace-main--full .page-shell {
@@ -581,24 +667,24 @@ $um-search-match: #ffc107;
   min-width: 0;
   margin-left: auto;
   overflow: hidden;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .875rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sidebar-context {
-  padding: 1.25rem 1rem 1rem;
-  border-bottom: 1px solid var(--bs-border-color);
+  padding: 1rem 1rem .25rem;
+  border-bottom: 0;
 }
 
 .sidebar-eyebrow,
 .page-eyebrow {
   margin-bottom: .25rem;
-  color: var(--bs-body-secondary-color);
-  font-size: .6875rem;
+  color: var(--bs-secondary-color);
+  font-size: .65625rem;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .11em;
   text-transform: uppercase;
 }
 
@@ -606,78 +692,63 @@ $um-search-match: #ffc107;
 .sidebar-story-name {
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-.sidebar-universe-name {
-  font-size: 1rem;
-  font-weight: 700;
+  font-family: var(--um-font-serif);
+  font-size: .96875rem;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .sidebar-story-name {
-  font-size: 1rem;
-  font-weight: 700;
+  color: var(--um-scope-story);
 }
 
-// The three sidebar context blocks are scope headers, so each one wears the same
-// hue as the section that follows it: universe context + Universe Bible, story
-// context + Story workspace, and the right utility sidebar's tools context +
-// Configuration/Collaboration/Inspector.
+// The three sidebar context blocks are scope headers, so each one keeps its hue
+// on the eyebrow and name. Index lets the rail's own surface show through rather
+// than filling the block with a tint: the coloured word is the scope marker.
 .sidebar-context--universe {
-  background: var(--um-scope-universe-soft);
-  border-bottom: 1px solid var(--bs-border-color);
-
   .sidebar-eyebrow {
     color: var(--um-scope-universe);
   }
 }
 
 .sidebar-context--story {
-  background: var(--um-scope-story-soft);
-  border-bottom: 1px solid var(--bs-border-color);
+  padding-top: 1.25rem;
 
   .sidebar-eyebrow {
     color: var(--um-scope-story);
   }
 }
 
-.sidebar-context--story .sidebar-story-name {
-  color: var(--um-scope-story);
-}
-
 .sidebar-context--tools {
-  background: var(--um-scope-tools-soft);
-  border-bottom: 1px solid var(--bs-border-color);
-
   .sidebar-eyebrow {
     color: var(--um-scope-tools);
   }
 }
 
 .sidebar-context-info {
-  color: var(--bs-body-secondary-color);
-  font-size: .8125rem;
+  color: var(--bs-secondary-color);
+  font-size: .78125rem;
 }
 
 .sidebar-section {
-  padding: .875rem .75rem;
-  border-bottom: 1px solid var(--bs-border-color);
+  padding: .375rem .5rem .75rem;
+  border-bottom: 0;
 }
 
 .sidebar-section:last-child {
-  border-bottom: 0;
-  background: var(--um-surface-raised);
+  background: transparent;
 }
 
 .sidebar-section-title {
-  margin: 0 0 .375rem;
-  padding: .35rem .55rem;
-  border-inline-start: 3px solid var(--um-scope-universe);
-  border-radius: .25rem;
-  background: var(--um-scope-universe-soft);
+  margin: 0 0 .25rem;
+  padding: .375rem .625rem .25rem;
+  border: 0;
+  background: transparent;
   color: var(--um-scope-universe);
-  font-size: .875rem;
+  font-family: var(--bs-body-font-family);
+  font-size: .65625rem;
   font-weight: 700;
-  letter-spacing: .05em;
+  letter-spacing: .1em;
   line-height: 1.2;
   text-transform: uppercase;
 }
@@ -686,20 +757,14 @@ $um-search-match: #ffc107;
 // readable at a glance: universe (default blue), story, tools. The tools hue
 // covers the whole right utility sidebar, which owns Configuration.
 .sidebar-section--universe .sidebar-section-title {
-  border-inline-start-color: var(--um-scope-universe);
-  background: var(--um-scope-universe-soft);
   color: var(--um-scope-universe);
 }
 
 .sidebar-section--story .sidebar-section-title {
-  border-inline-start-color: var(--um-scope-story);
-  background: var(--um-scope-story-soft);
   color: var(--um-scope-story);
 }
 
 .sidebar-section--tools .sidebar-section-title {
-  border-inline-start-color: var(--um-scope-tools);
-  background: var(--um-scope-tools-soft);
   color: var(--um-scope-tools);
 }
 
@@ -713,17 +778,26 @@ $um-search-match: #ffc107;
 .sidebar-taxonomy-link {
   display: flex;
   align-items: center;
-  min-height: 2.25rem;
-  border-radius: var(--bs-border-radius);
+  min-height: 1.875rem;
+  border-radius: var(--bs-border-radius-sm);
   text-decoration: none;
 }
 
 .sidebar-link {
   gap: .5rem;
-  padding: .35rem .625rem;
+  padding: 0 .625rem;
+  border-inline-start: 3px solid transparent;
   color: var(--bs-body-color);
-  font-size: .875rem;
-  font-weight: 550;
+  font-size: .8rem;
+  font-weight: 500;
+}
+
+.sidebar-link .bi {
+  width: 1rem;
+  flex: 0 0 1rem;
+  color: var(--bs-secondary-color);
+  font-size: .75rem;
+  text-align: center;
 }
 
 .sidebar-link:hover,
@@ -734,8 +808,19 @@ $um-search-match: #ffc107;
 }
 
 .sidebar-link.active {
+  border-inline-start-color: var(--bs-primary);
   background: var(--um-primary-soft);
   color: var(--um-primary-strong);
+  font-weight: 650;
+}
+
+.sidebar-link.active .bi {
+  color: var(--bs-primary);
+}
+
+.sidebar-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 // The reader's pending work, above the **Pending changes** entry that leads into
@@ -783,7 +868,7 @@ $um-search-match: #ffc107;
 }
 
 .draft-pending-more {
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .75rem;
 }
 
@@ -806,7 +891,7 @@ $um-search-match: #ffc107;
   border-radius: var(--bs-border-radius);
   background: var(--um-surface-raised);
   font-size: .8125rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
 }
 
 .inspector-row-value {
@@ -880,7 +965,7 @@ $um-search-match: #ffc107;
 
 .sidebar-dropdown-chevron {
   margin-left: auto;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .75rem;
 }
 
@@ -890,7 +975,7 @@ $um-search-match: #ffc107;
 
 .sidebar-tag-menu .dropdown-header {
   padding-inline: .75rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .6875rem;
   font-weight: 700;
   letter-spacing: .06em;
@@ -930,9 +1015,9 @@ $um-search-match: #ffc107;
 }
 
 .sidebar-link-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 // Sidebar entries and list rows show their counts the same way: a bare number in
@@ -940,13 +1025,13 @@ $um-search-match: #ffc107;
 .sidebar-count,
 .record-count {
   min-width: 1.5rem;
-  padding: .15rem .4rem;
+  padding: .0625rem .375rem;
   border-radius: 999px;
-  background: var(--bs-tertiary-bg);
-  color: var(--bs-body-secondary-color);
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
   font-size: .6875rem;
-  font-weight: 700;
-  line-height: 1.25;
+  font-weight: 600;
+  line-height: 1.5;
   text-align: center;
 }
 
@@ -955,7 +1040,7 @@ $um-search-match: #ffc107;
 }
 
 .sidebar-link.active .sidebar-count {
-  background: rgba(52, 84, 209, .14);
+  background: var(--um-primary-soft);
   color: var(--um-primary-strong);
 }
 
@@ -963,7 +1048,7 @@ $um-search-match: #ffc107;
   gap: .5rem;
   margin: .0625rem 0 .1875rem 2.25rem;
   padding: .3rem .5rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -975,7 +1060,7 @@ $um-search-match: #ffc107;
 
 .sidebar-hint {
   margin: .25rem .5rem .75rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -985,20 +1070,26 @@ $um-search-match: #ffc107;
 
 .page-header {
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.25rem;
+  margin-bottom: 1.375rem;
+  padding-bottom: .875rem;
   border-bottom: 1px solid var(--bs-border-color);
 }
 
 .page-title {
   margin-bottom: 0;
-  letter-spacing: -.025em;
+  font-family: var(--um-font-serif);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -.012em;
 }
 
 .page-description {
-  max-width: 46rem;
-  margin: .5rem 0 0;
-  color: var(--bs-body-secondary-color);
+  max-width: 64ch;
+  margin: .375rem 0 0;
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
+  font-size: .9375rem;
+  line-height: 1.5;
 }
 
 // The same sentence, rendered below a tab strip instead of inside the header.
@@ -1006,6 +1097,10 @@ $um-search-match: #ffc107;
 // re-establishes the gap before the list that follows.
 .content-intro {
   margin: -.5rem 0 1.25rem;
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
+  font-size: .875rem;
+  line-height: 1.5;
 }
 
 .page-actions {
@@ -1033,15 +1128,18 @@ $um-search-match: #ffc107;
 }
 
 .content-tabs {
-  gap: .25rem;
+  gap: .125rem;
   border-bottom-color: var(--bs-border-color);
 }
 
 .content-tabs .nav-link {
+  min-height: 2rem;
+  padding: .25rem .625rem;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
+  font-size: .78125rem;
   font-weight: 600;
 }
 
@@ -1100,7 +1198,7 @@ $um-search-match: #ffc107;
 
 .flash-stack .flash-toast {
   margin-bottom: 0;
-  box-shadow: 0 .25rem 1rem rgba(31, 41, 55, .12);
+  box-shadow: 0 .25rem 1rem rgba(30, 29, 26, .12);
 }
 
 // The notice a held live update becomes (`layouts/_live_updates`). It sits where
@@ -1123,7 +1221,7 @@ $um-search-match: #ffc107;
   border: 1px solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
   background: var(--bs-body-bg);
-  box-shadow: 0 .25rem 1rem rgba(31, 41, 55, .12);
+  box-shadow: 0 .25rem 1rem rgba(30, 29, 26, .12);
 }
 
 .live-update-notice--visible {
@@ -1138,20 +1236,20 @@ $um-search-match: #ffc107;
 .surface-card,
 .form-surface {
   border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius-lg);
-  background: var(--bs-body-bg);
-  box-shadow: 0 .125rem .5rem rgba(31, 41, 55, .04);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-card-bg);
+  box-shadow: none;
 }
 
 .content-surface .list-group-item:last-child {
-  border-bottom-right-radius: calc(var(--bs-border-radius-lg) - 1px);
-  border-bottom-left-radius: calc(var(--bs-border-radius-lg) - 1px);
+  border-bottom-right-radius: calc(var(--bs-border-radius) - 1px);
+  border-bottom-left-radius: calc(var(--bs-border-radius) - 1px);
 }
 
 .entity-list .entity-row {
-  min-height: 4rem;
-  padding: 1rem 1.125rem;
-  background: var(--bs-body-bg);
+  min-height: 2.875rem;
+  padding: .4375rem 1rem;
+  background: var(--bs-card-bg);
 }
 
 .entity-row:hover,
@@ -1185,7 +1283,7 @@ $um-search-match: #ffc107;
   align-items: baseline;
   gap: .5rem;
   flex-wrap: wrap;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -1214,7 +1312,7 @@ $um-search-match: #ffc107;
 
 .entity-title {
   color: var(--bs-body-color);
-  font-size: .9375rem;
+  font-size: .875rem;
   font-weight: 650;
   overflow-wrap: anywhere;
 }
@@ -1232,10 +1330,11 @@ $um-search-match: #ffc107;
 .entity-description {
   display: -webkit-box;
   max-width: 52rem;
-  margin-top: .25rem;
+  margin-top: .125rem;
   overflow: hidden;
-  color: var(--bs-body-secondary-color);
-  font-size: .8125rem;
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
+  font-size: .84375rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1312,15 +1411,16 @@ $um-search-match: #ffc107;
   align-items: center;
   gap: .35rem;
   flex-shrink: 0;
-  color: var(--bs-body-secondary-color);
-  font-size: .8125rem;
+  color: var(--bs-link-color);
+  font-size: .78125rem;
+  font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .details-link:hover,
 .details-link:focus {
-  color: var(--um-primary-strong);
+  color: var(--bs-link-hover-color);
   text-decoration: underline;
   text-underline-offset: .15em;
 }
@@ -1355,24 +1455,131 @@ $um-search-match: #ffc107;
   color: var(--bs-danger-text-emphasis) !important;
 }
 
+// Index's count and status chips are hairline rectangles, not filled pills. The
+// application renders most of them through Bootstrap's `text-bg-light` utility,
+// whose own pair is a fixed light fill and black text, so the shared override is
+// what keeps them quiet on both themes.
+.badge.text-bg-light {
+  border-color: var(--bs-border-color) !important;
+  background-color: transparent !important;
+  color: var(--bs-secondary-color) !important;
+  font-weight: 600;
+}
+
+// Row menus and other quiet controls use Bootstrap's `.btn-light`; on the paper
+// canvas a near-white fill would be a second surface, so the row control is a
+// hairline on the card itself. Dark theme re-tints the same variables.
+.btn-light {
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--bs-border-color);
+  --bs-btn-color: var(--bs-secondary-color);
+  --bs-btn-hover-bg: var(--um-hover-bg);
+  --bs-btn-hover-border-color: var(--um-control-border);
+  --bs-btn-hover-color: var(--bs-body-color);
+  --bs-btn-active-bg: var(--um-hover-bg);
+  --bs-btn-active-border-color: var(--um-control-border);
+  --bs-btn-active-color: var(--bs-body-color);
+}
+
 .taxonomy-tag {
   border: 1px solid var(--um-tag-badge-border);
   font-weight: 600;
 }
 
+.character-filter {
+  margin-bottom: 1.25rem;
+}
+
+.character-filter-title {
+  margin: 0 0 .75rem;
+  color: var(--bs-secondary-color);
+  font-family: var(--bs-body-font-family);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.character-filter-description {
+  max-width: 64ch;
+  margin: -.5rem 0 .75rem;
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 767.98px) {
+  .character-filter-description {
+    display: none;
+  }
+}
+
+// The first-session guide is a page-level instruction, not a system alert: it
+// reads as a quiet surface with a primary rule instead of a filled info banner.
+.starting-guide {
+  border: 1px solid var(--bs-border-color);
+  border-left: 3px solid var(--bs-primary);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-card-bg);
+  color: var(--bs-body-color);
+}
+
+.starting-guide .alert-link {
+  color: var(--bs-link-color);
+}
+
+.access-notice {
+  border-color: var(--bs-border-color);
+  border-left: 3px solid var(--um-scope-universe);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-card-bg);
+  color: var(--bs-body-color);
+}
+
+// At phone widths the Scene Element row gives the prose the full column and
+// holds its Edit/Move/menu group on its own line beneath, rather than squeezing
+// the writing into the width the four controls leave.
+@media (max-width: 575.98px) {
+  .scene-elements .entity-row {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: .5rem .75rem;
+  }
+
+  .scene-elements .entity-row > .entity-copy {
+    min-width: 0;
+  }
+
+  .scene-elements .entity-row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start !important;
+  }
+
+  .detail-fact {
+    display: block;
+  }
+
+  .detail-fact dt {
+    margin-bottom: .125rem;
+  }
+}
+
 .taxonomy-surface {
   overflow: visible;
   border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius-lg);
-  background: var(--bs-body-bg);
-  box-shadow: 0 .125rem .5rem rgba(31, 41, 55, .04);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-card-bg);
+  box-shadow: none;
 }
 
 .taxonomy-hint {
   margin: 0;
-  padding: .75rem 1rem;
+  padding: .625rem 1rem;
   border-bottom: 1px solid var(--bs-border-color);
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
   font-size: .8125rem;
 }
 
@@ -1382,8 +1589,8 @@ $um-search-match: #ffc107;
 
 .empty-state {
   padding: clamp(2rem, 6vw, 4rem) 1.25rem;
-  border: 1px dashed var(--bs-border-color);
-  border-radius: var(--bs-border-radius-lg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
   background: var(--um-surface-veil);
   text-align: center;
 }
@@ -1392,28 +1599,44 @@ $um-search-match: #ffc107;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: .875rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: .75rem;
   border-radius: 50%;
   background: var(--um-primary-soft);
-  color: var(--um-primary-strong);
-  font-size: 1.25rem;
+  color: var(--bs-primary);
+  font-size: 1rem;
 }
 
 .empty-state .empty-title {
   margin-bottom: .375rem;
+  font-family: var(--um-font-serif);
 }
 
 .empty-state .empty-description {
-  max-width: 34rem;
+  max-width: 36rem;
   margin: 0 auto;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
+  font-family: var(--um-font-serif);
+  font-size: .875rem;
 }
 
 .form-surface {
   max-width: 44rem;
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: 1rem;
+}
+
+.form-label {
+  margin-bottom: .25rem;
+  color: var(--bs-body-color);
+  font-size: .6875rem;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+
+.form-text {
+  color: var(--bs-secondary-color);
+  font-size: .71875rem;
 }
 
 // A Scene editor group whose optional fields stay closed until the author asks
@@ -1422,13 +1645,14 @@ $um-search-match: #ffc107;
 // state text is what the closed group still reports. A hairline separates groups
 // instead of a card each, so a form with six of them stays calm.
 .form-disclosure {
-  padding-block: .75rem;
+  padding-block: .625rem;
   border-top: 1px solid var(--bs-border-color);
 }
 
 .form-disclosure > summary {
   cursor: pointer;
-  font-weight: 600;
+  font-size: .8125rem;
+  font-weight: 650;
 }
 
 .form-disclosure[open] > summary {
@@ -1476,7 +1700,7 @@ $um-search-match: #ffc107;
 .settings-navigation .nav-link {
   border: 0;
   border-radius: var(--bs-border-radius);
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .875rem;
   font-weight: 600;
   text-align: start;
@@ -1512,12 +1736,12 @@ $um-search-match: #ffc107;
 .settings-panel-description {
   max-width: 46rem;
   margin-bottom: 1.25rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
 }
 
 .settings-hint {
   margin-bottom: 1rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
   line-height: 1.5;
 }
@@ -1568,7 +1792,7 @@ $um-search-match: #ffc107;
 }
 
 .theme-option .form-check-input:focus-visible + .theme-option-label {
-  box-shadow: 0 0 0 .25rem rgba(52, 84, 209, .25);
+  box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .25);
 }
 
 .theme-option-copy {
@@ -1581,7 +1805,7 @@ $um-search-match: #ffc107;
 }
 
 .theme-option-description {
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -1626,29 +1850,65 @@ $um-search-match: #ffc107;
 // Details pages: one identity card followed by related-records sections. The
 // structure is stable on purpose, because each record type adds its own facts
 // and sections to it as the universe grows.
+//
+// Index reads like a reference volume: facts are one labelled grid separated by
+// hairlines, not a stack of tiles. A label is a small uppercase kicker and a value
+// is sentence case, so the eye follows the left edge down the page.
 .detail-facts {
+  display: block;
+  margin: .75rem 0 0;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.detail-fact {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem 1.5rem;
+  grid-template-columns: minmax(6rem, .42fr) minmax(0, 1fr);
+  gap: .875rem;
+  padding: .4375rem 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.detail-fact dt {
+  color: var(--bs-secondary-color);
+  font-size: .6875rem;
+  font-weight: 650;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.detail-fact-value {
   margin: 0;
 }
 
 // Facts that belong to the card's whole measure rather than to the column a
 // photo leaves. A description is prose, and prose set in a third of the width
 // wraps into a column of two or three words per line.
-//
-// The card's own width is the measure here, deliberately with no `max-width` of
-// its own: the point of the variant is that the description is no longer boxed in
-// beside the photo, and the main column already keeps a readable line length. The
-// grid collapses to one column so the pair reads as a block rather than as one
-// fact in a row of several.
 .detail-facts-wide {
-  margin-top: 1.5rem;
-  grid-template-columns: 1fr;
+  margin-top: 1.25rem;
 }
 
-.detail-fact-value {
-  margin: 0;
+// A prose answer is not a labelled fact in a row: its label sits above the
+// measured text, so the whole width reads as one block.
+.detail-facts-wide .detail-fact {
+  display: block;
+  padding: .625rem 0;
+}
+
+.detail-facts-wide .detail-fact dd {
+  max-width: 68ch;
+  margin-top: .25rem;
+  font-family: var(--um-font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.68;
+}
+
+.detail-facts-wide .detail-fact dd > :last-child {
+  margin-bottom: 0;
+}
+
+.detail-facts-wide .detail-fact dd h2,
+.detail-facts-wide .detail-fact dd h3 {
+  font-size: 1rem;
 }
 
 // The card's own settings, as one quiet line at its bottom edge: `scope: universe`
@@ -1663,7 +1923,7 @@ $um-search-match: #ffc107;
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--bs-border-color);
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -1710,7 +1970,7 @@ $um-search-match: #ffc107;
 }
 
 .turn-parenthetical {
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
 }
 
 .turn-actions {
@@ -1747,23 +2007,51 @@ $um-search-match: #ffc107;
   flex: 0 0 9rem;
 }
 
+.scene-identity {
+  margin-top: 1.25rem;
+}
+
+.scene-identity .scene-facts {
+  display: block;
+  margin-top: .75rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.scene-identity .scene-facts > [class*="col-"] {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.scene-identity .scene-facts > [class*="col-"] > .page-eyebrow {
+  margin-bottom: .125rem;
+}
+
+.scene-identity .scene-facts p {
+  margin-bottom: 0;
+}
+
+.scene-identity .scene-facts .form-text {
+  margin-top: .125rem;
+}
+
 .detail-section {
   margin-top: 1.5rem;
 }
 
 .detail-section .content-surface .entity-row:last-child {
-  border-bottom-right-radius: calc(var(--bs-border-radius-lg) - 1px);
-  border-bottom-left-radius: calc(var(--bs-border-radius-lg) - 1px);
+  border-bottom-right-radius: calc(var(--bs-border-radius) - 1px);
+  border-bottom-left-radius: calc(var(--bs-border-radius) - 1px);
 }
 
 .story-card {
-  transition: border-color 120ms ease-in-out, box-shadow 120ms ease-in-out, transform 120ms ease-in-out;
+  transition: border-color 120ms ease-in-out;
 }
 
 .story-card:hover {
-  border-color: rgba(52, 84, 209, .4);
-  box-shadow: 0 .5rem 1.25rem rgba(31, 41, 55, .08);
-  transform: translateY(-1px);
+  border-color: var(--um-primary-strong);
 }
 
 .story-card-title {
@@ -1773,19 +2061,17 @@ $um-search-match: #ffc107;
 .quick-link {
   display: flex;
   align-items: center;
-  min-height: 3rem;
-  gap: .625rem;
-  padding: .625rem .75rem;
-  border: 1px solid var(--bs-border-color);
-  border-radius: var(--bs-border-radius);
-  background: var(--bs-body-bg);
+  min-height: 2.5rem;
+  gap: .5rem;
+  padding: .375rem .5rem;
+  border-bottom: 1px solid var(--bs-border-color);
   color: var(--bs-body-color);
+  font-size: .8125rem;
   text-decoration: none;
 }
 
 .quick-link:hover {
-  border-color: rgba(52, 84, 209, .35);
-  background: var(--um-primary-soft);
+  background: var(--um-row-hover);
   color: var(--um-primary-strong);
   text-decoration: none;
 }
@@ -1795,7 +2081,7 @@ $um-search-match: #ffc107;
 // number its page will list once, instead of a button cluster followed by the
 // same facts as a separate list.
 .structure-links {
-  margin-top: 1rem;
+  margin-top: .75rem;
   border-top: 1px solid var(--bs-border-color);
 }
 
@@ -1806,7 +2092,7 @@ $um-search-match: #ffc107;
   justify-content: space-between;
   gap: .75rem;
   min-height: 2.5rem;
-  padding: .5rem 0;
+  padding: .4375rem 0;
   border-bottom: 1px solid var(--bs-border-color);
   color: var(--bs-body-color);
 }
@@ -1828,8 +2114,9 @@ $um-search-match: #ffc107;
 
 .structure-link-count {
   flex-shrink: 0;
-  color: var(--bs-body-secondary-color);
-  font-size: .875rem;
+  color: var(--bs-secondary-color);
+  font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .status-dot {
@@ -1848,6 +2135,11 @@ $um-search-match: #ffc107;
 @media (max-width: 991.98px) {
   .workspace-shell {
     display: block;
+  }
+
+  .sidebar-link,
+  .sidebar-taxonomy-link {
+    min-height: 2.5rem;
   }
 
   .workspace-sidebar {
@@ -2100,13 +2392,13 @@ $um-search-match: #ffc107;
 }
 
 .notification-moment {
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .75rem;
 }
 
 .notification-notes {
   margin-top: .35rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .8125rem;
 }
 
@@ -2149,7 +2441,7 @@ $um-search-match: #ffc107;
 .landing-lede {
   max-width: 54ch;
   margin-bottom: 0;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: 1.0625rem;
 }
 
@@ -2162,7 +2454,7 @@ $um-search-match: #ffc107;
 
 .landing-note {
   margin: .75rem 0 0;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .875rem;
 }
 
@@ -2175,7 +2467,7 @@ $um-search-match: #ffc107;
 
 .landing-facts-title {
   margin-bottom: 1rem;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .75rem;
   font-weight: 600;
   letter-spacing: .08em;
@@ -2224,7 +2516,7 @@ $um-search-match: #ffc107;
 .landing-section-heading p {
   max-width: 62ch;
   margin-bottom: 0;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
 }
 
 .landing-card-grid {
@@ -2251,7 +2543,7 @@ $um-search-match: #ffc107;
 
 .landing-card p {
   margin-bottom: 0;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .9375rem;
 }
 
@@ -2272,7 +2564,7 @@ $um-search-match: #ffc107;
 
 .landing-footer-tagline {
   margin-bottom: 0;
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   font-size: .875rem;
 }
 
@@ -2283,7 +2575,7 @@ $um-search-match: #ffc107;
 }
 
 .landing-footer a {
-  color: var(--bs-body-secondary-color);
+  color: var(--bs-secondary-color);
   text-decoration: none;
 }
 

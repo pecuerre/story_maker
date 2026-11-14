@@ -38,6 +38,17 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-14
+
+### changed
+
+- **Index prototype.** The workspace shell and the Story overview, empty overview, Characters list, Tags tree, Character details, Scene details, and Scene editor now render the Index palette, serif display type, 46px rows, and hairline fact rules in both themes.
+
+### docs
+
+- **Index chosen.** The owner chose Index as the visual direction on 2026-11-14; ADR 0047 records the decision and the prototype stage is unblocked.
+- **Visual directions exploration.** Three directions — Index, Ledger, and Folio — are presented with light and dark palettes, typography, density, contrast checks, tradeoffs, and a recommendation in `docs/visual_directions.md`, with a review prototype in `docs/visual_directions_prototype.html`.
+
 ## 2026-11-13
 
 ### added

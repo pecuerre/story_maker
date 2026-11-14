@@ -69,7 +69,7 @@
         <h2 class="h4"><%= t("stories.structures.heading") %></h2>
         <p class="text-body-secondary"><%= t("stories.structures.description") %></p>
 
-        <%= form_with url: apply_structure_universe_story_path(id: @story), method: :post, class: "form-surface" do |form| %>
+        <%= form_with url: apply_structure_universe_story_path(id: @story), method: :post do |form| %>
           <fieldset>
             <legend class="form-label"><%= t("stories.structures.choose") %></legend>
             <% @story_structure_options.each do |entry| %>
@@ -104,14 +104,14 @@
               </div>
             <% end %>
           </fieldset>
-          <%= form.submit t("stories.structures.submit"), class: "btn btn-primary" %>
+          <%= form.submit t("stories.structures.submit"), class: "btn btn-outline-secondary" %>
         <% end %>
       </div>
     </div>
   <% end %>
 
   <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
+    <div class="surface-card h-100 p-3">
       <%# The Story's photo sits in the left column of the structure card, the
           same place it takes on every record whose page has an identity card.
           With no photo the card reads exactly as it did before photos existed. %>
@@ -175,7 +175,7 @@
   </div>
 
   <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
+    <div class="surface-card h-100 p-3">
       <div class="page-eyebrow"><%= t("tropes.assignments.story_eyebrow") %></div>
       <h2 class="h4"><%= t("tropes.assignments.story_heading") %></h2>
       <%= render "shared/trope_assignments_summary", assignments: @story_tropes %>
@@ -186,7 +186,7 @@
   </div>
 
   <div class="col-12">
-    <div class="surface-card p-4">
+    <div class="surface-card p-3">
       <div class="page-eyebrow"><%= t("stories.show.cast_eyebrow") %></div>
       <h2 class="h4"><%= t("stories.show.cast_heading") %></h2>
 
@@ -211,7 +211,7 @@
   </div>
 
   <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
+    <div class="surface-card h-100 p-3">
       <div class="page-eyebrow"><%= t("stories.show.sections_eyebrow") %></div>
       <h2 class="h4"><%= t("stories.show.sections_heading") %></h2>
       <% if @sections.any? %>
@@ -251,7 +251,7 @@
   </div>
 
   <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
+    <div class="surface-card h-100 p-3">
       <div class="page-eyebrow"><%= t("stories.show.recent_eyebrow") %></div>
       <h2 class="h4"><%= t("stories.show.recent_heading") %></h2>
       <% if @recent_sections.any? %>
@@ -273,7 +273,7 @@
   </div>
 
   <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
+    <div class="surface-card h-100 p-3">
       <div class="page-eyebrow"><%= t("stories.show.bible_eyebrow") %></div>
       <h2 class="h4"><%= t("stories.show.bible_heading") %></h2>
       <p class="text-body-secondary"><%= t("stories.show.bible_description", universe: Current.universe.name) %></p>

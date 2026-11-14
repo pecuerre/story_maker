@@ -1,6 +1,6 @@
 <% counts = local_assigns.fetch(:counts) %>
 <% entries = counts.entries %>
-<% row_height = 34 %>
+<% row_height = 28 %>
 <% label_length = 36 %>
 
 <figure class="character-scene-chart">
@@ -21,8 +21,8 @@
           <title><%= label %></title>
           <text class="character-scene-chart-label" x="0" y="<%= top + 13 %>"><%= truncate(entry.character.name, length: label_length) %></text>
           <text class="character-scene-chart-value" x="100%" y="<%= top + 13 %>" text-anchor="end"><%= t("stories.show.cast_chart_value", count: entry.scene_count, total: counts.scene_count) %></text>
-          <rect class="character-scene-chart-track" x="0" y="<%= top + 20 %>" width="100%" height="8" rx="4"></rect>
-          <rect class="character-scene-chart-bar" x="0" y="<%= top + 20 %>" width="<%= share %>%" height="8" rx="4"></rect>
+          <rect class="character-scene-chart-track" x="0" y="<%= top + 18 %>" width="100%" height="7" rx="1"></rect>
+          <rect class="character-scene-chart-bar" x="0" y="<%= top + 18 %>" width="<%= share %>%" height="7" rx="1"></rect>
         <% end %>
       <% end %>
     </svg>

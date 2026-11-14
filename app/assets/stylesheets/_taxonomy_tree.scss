@@ -7,9 +7,9 @@
 }
 
 .taxonomy-row {
-  min-height: 3.25rem;
-  padding: .75rem 1rem;
-  background: var(--bs-body-bg);
+  min-height: 2.875rem;
+  padding: .4375rem 1rem;
+  background: var(--bs-card-bg);
   transition: background-color 120ms ease-in-out;
 }
 
@@ -28,8 +28,23 @@
 
 .taxonomy-name-trigger,
 .taxonomy-name-text {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+// The tree's own indentation already says which parent a node belongs to, so
+// the parent line and the record count sit on the row instead of stacking under
+// the name. A description is clamped to the same single line a list row gives it.
+.taxonomy-name-trigger .entity-description,
+.taxonomy-name-text .entity-description {
+  display: -webkit-box !important;
+  max-width: 22rem;
+  margin-top: 0;
+  -webkit-line-clamp: 1;
 }
 
 .taxonomy-name-trigger {
@@ -69,8 +84,8 @@
 
 .taxonomy-list .taxonomy-list {
   position: relative;
-  margin-left: 1.5rem;
-  padding-left: .75rem;
+  margin-left: 1.375rem;
+  padding-left: .625rem;
   border-left: 1px solid var(--bs-border-color);
 }
 
@@ -137,11 +152,11 @@
 
 .taxonomy-node--dragging.taxonomy-node--drop-move > .taxonomy-row {
   outline: 2px solid var(--bs-primary);
-  background-color: var(--um-primary-soft, rgba(52, 84, 209, .08));
+  background-color: var(--um-primary-soft, rgba(29, 79, 122, .08));
 }
 
 .taxonomy-new .taxonomy-row {
-  background: var(--um-primary-soft, rgba(52, 84, 209, .08));
+  background: var(--um-primary-soft, rgba(29, 79, 122, .08));
 }
 
 @media (hover: none), (pointer: coarse) {

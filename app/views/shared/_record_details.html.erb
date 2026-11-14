@@ -46,11 +46,11 @@
   title: title,
   eyebrow: local_assigns.fetch(:eyebrow),
   description: local_assigns[:description] || record.description do %>
-  <%= link_to local_assigns.fetch(:back_label), local_assigns.fetch(:back_url),
-    class: "btn btn-outline-secondary" %>
   <% if local_assigns[:editor].present? && can_write_universe? %>
     <%= local_assigns[:editor] %>
   <% end %>
+  <%= link_to local_assigns.fetch(:back_label), local_assigns.fetch(:back_url),
+    class: "btn btn-outline-secondary" %>
   <%= local_assigns[:actions] %>
 <% end %>
 
@@ -69,7 +69,7 @@
     the badge's state, so the identity block's badge derives its own word and its
     own tooltip from one source. %>
 
-<div class="surface-card p-4">
+<div class="surface-card p-3">
   <% if photo %>
     <div class="row g-4 align-items-start">
       <div class="col-12 col-sm-5 col-md-4 col-lg-3">

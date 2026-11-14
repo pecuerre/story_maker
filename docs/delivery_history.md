@@ -27,6 +27,86 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-11-14
+
+- **[changed]** **Index applied as the Rails prototype.**
+  - **The gap.** Backlog item 90 asked for Index to be applied to the workspace shell and a small set
+    of representative screens, reviewed through real screenshots at desktop, tablet, and phone
+    widths in both themes and in Spanish, before any site-wide rollout. The static review prototype
+    had fixed the palette, type scale, density, and component shapes; it could not show what happens
+    when Bootstrap, the real view markup, and the system fonts render them together.
+  - **The change.** `_theme.scss` now carries Index's palette, serif heading stack, base and heading
+    sizes, 3–4px radii, 46px row density, and flat component defaults. `_application_custom.scss`
+    owns the narrowed rails (232px and 204px), the 1040px content cap, the 50px dark top bar, warm
+    surfaces, hairline fact lists, quiet row actions and count chips, and the scope hues as text
+    rather than filled sidebar blocks. The Story overview, empty overview, Characters list, Tags
+    tree, Character details, Scene details, and Scene editor were checked and adjusted: the
+    Characters filter lost its card, the empty-story guide became a quiet surface with a primary
+    rule, Scene identity facts became a hairline list, and phone-width Element rows put their
+    controls on their own line.
+  - **Scope.** The shared tokens reach every workspace page because the shell wraps every page; the
+    detailed view work and screenshot review stayed on the representative screens. The remaining
+    workspaces are item 91's rollout slices, and the local defects in items 97–99 were deliberately
+    not fixed here.
+  - **Rejected.** Copying the static prototype's markup wholesale (it is a mock, not the application's
+    page patterns or localization); scoping the palette to a body class so other pages kept the old
+    tokens (it would have produced two visual systems and hidden real integration problems); and
+    treating the phone review as a smaller desktop (the Element row squeezed its prose to one word
+    per line until the controls moved below it).
+  - **Verification.** The rendered app was captured at 1440, 768, and 390 CSS pixels in Light and
+    Dark for the seven representative screens, with a Spanish pass at 1440 and 390; a 720px layout
+    (the reflow a 1440px window gets at 200% zoom) showed no horizontal overflow, and the keyboard
+    pass found the 2px primary focus ring on the sidebar links. Captures are in
+    `/tmp/opencode/visual-index-prototype-2026-11-14/` (temporary, not committed). The full request
+    suite passes (`3547 runs, 0 failures`). The full browser suite finishes at 243 runs with one
+    timing-sensitive `character_filter_test` failure (and three similar cases on an earlier run);
+    every one of those passes when run on its own, so they are recorded as parallel-load flakes
+    rather than caused by this change. `test/system/sidebar_scopes_test.rb` now asserts the scope
+    hue on the context label and section heading, which is the treatment Index uses.
+  - **Not verified.** Operating-system serif substitution beyond Linux, Windows/Android/iOS, print,
+    forced-colors/high-contrast mode, a real screen-reader pass, the full appearance-grid and map
+    workspaces, and the owner's approval of the prototype. The dark-theme file input remains item
+    97's defect.
+
+- **[docs]** **Visual directions exploration.**
+  - **The gap.** Backlog item 89 asked for two or three distinct directions on representative
+    screens, with palettes, typography, density, component treatments, contrast and font checks,
+    tradeoffs, and a recommendation, before any implementation. The brief fixed the aim and
+    constraints but deliberately chose no palette, type scale, spacing scale, or shell.
+  - **The decision.** Three directions were developed and compared on the same content: **Index**
+    (warm paper, system serif titles and prose, ink-blue accent, 46px rows, two narrower rails),
+    **Ledger** (cool monochrome, system sans throughout, dense 40px rows, square surfaces, deep-green
+    accent), and **Folio** (warm neutral, serif prose, one rail plus a tools drawer, 54px rows,
+    rounded cards, plum accent). **Index** was recommended because it matches the reference atlas,
+    improves the measured density and hierarchy without changing the page patterns, and carries the
+    least rollout risk; the owner chose it on 2026-11-14, and Ledger's tabular treatment and Folio's
+    prose measure are named as later borrowings rather than mixed into the direction now.
+  - **Where it lives.** `docs/visual_directions.md` owns the proposals, tradeoffs, contrast and font
+    verification, and recommendation. `docs/visual_directions_prototype.html` is a self-contained
+    review prototype with direction, theme, language, and screen switches; it covers the shell,
+    populated and empty Story overviews, Characters list, Tags tree, Character details, read-only
+    Scene details, and Scene editor. [ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md)
+    records the accepted choice; the brief and the visual-design document point to it, and the
+    remaining backlog item prototypes Index before a rollout.
+  - **Rejected.** Applying the directions to the Rails app before the owner chose one (it would mix
+    exploration with implementation and make screenshots depend on the working tree); web fonts and
+    a hosted font service (the brief excludes the dependency, and the system stacks need no loading,
+    licensing redistribution, or fallback metrics); a fourth "hybrid" direction (it would hide the
+    decision in a mix of all three); and judging the directions from written token tables alone
+    (the prototype and screenshots are what show density and hierarchy together).
+  - **Verification.** A WCAG 2.x relative-luminance script checked body, secondary, link, button,
+    control-boundary, status, and scope pairs in all six direction/theme combinations; every text
+    pair passes 4.5:1 and every control boundary 3:1. The prototype was rendered at 1440, 768, and
+    390 CSS pixels in both themes in Chrome, with temporary representative-screen screenshots in
+    `/tmp/opencode/visual-directions-2026-11-14/shots/`; a label-only Spanish stress mode checked
+    the longest interface strings at all three widths. The phone pass caught and removed a top-bar
+    overflow before the captures. The doc links were covered by `test/docs_test.rb`; no application
+    code, data, or behavior changed.
+  - **Not verified.** Real Rails rendering after Bootstrap variables are applied, operating-system
+    font substitution, Windows/Android/iOS, print, forced-colors, a real screen reader, participant
+    behavior, and the selected direction's eventual Bootstrap translation. The prototype is a
+    static mock, not a second application.
+
 ### 2026-11-13
 
 - **[changed]** **Rendered-audit hierarchy and feedback fixes.**

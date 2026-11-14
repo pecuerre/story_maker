@@ -1,7 +1,7 @@
 <%# The identity facts inside Scene Details' card, with or without the photo
     beside them. Split out so the two layouts in `scenes/show` render exactly
     the same block and cannot drift apart. %>
-<div class="row g-4">
+<div class="row g-4 scene-facts">
   <div class="col-md-4">
     <div class="page-eyebrow"><%= t("scenes.show.facts.title") %></div>
     <p class="mb-0 text-break"><%= scene.name %></p>

@@ -1,50 +1,157 @@
 // Bootstrap theme tokens. Keep this file before the Bootstrap import so Sass compiles the
 // palette, typography, and component defaults consistently across the application.
+//
+// The values are the **Index** direction accepted in ADR 0047: warm paper and ink,
+// a system serif for titles and prose, an ink-blue primary, flat surfaces with
+// 3–4px corners, and hierarchy from type and hairline rules rather than boxes.
+// The proposal and its measured contrast live in `docs/visual_directions.md`; the
+// built system is described in `docs/visual_design.md`.
 
-$primary: #3454d1;
-$secondary: #667085;
-$success: #2f855a;
-$info: #2563eb;
-$warning: #9a6700;
-$danger: #c92a2a;
-$light: #f8fafc;
-$dark: #1f2937;
+// Operating-system serif only: no `@font-face`, no network request, no layout
+// shift. The generic `serif` at the end keeps an unknown platform legible.
+$um-font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
 
-$body-bg: #f5f7fb;
-$body-color: #1f2937;
-$body-secondary-color: #667085;
-$border-color: #dfe3e8;
+$primary: #1d4f7a;
+$secondary: #5f5a50;
+$success: #2c6b45;
+$info: #1d4f7a;
+$warning: #835600;
+$danger: #a32626;
+$light: #fffdf8;
+$dark: #1e1d1a;
+
+$body-bg: #f6f4ee;
+$body-color: #1e1d1a;
+$body-secondary-color: #5f5a50;
+$body-secondary-bg: #ece8dd;
+$body-tertiary-bg: #ece8dd;
+$body-emphasis-color: #1e1d1a;
+$border-color: #d3ccbc;
+$border-color-translucent: rgba(30, 29, 26, .14);
+
+$body-bg-dark: #171613;
+$body-color-dark: #ece7dc;
+$body-secondary-color-dark: #b3ab9b;
+$body-secondary-bg-dark: #28241e;
+$body-tertiary-bg-dark: #28241e;
+$body-emphasis-color-dark: #ece7dc;
+$border-color-dark: #3d382e;
+$border-color-translucent-dark: rgba(236, 231, 220, .14);
+
+// Text-emphasis values are what Bootstrap derives its outline buttons and
+// subtle backgrounds from. They carry the light and dark halves of every
+// semantic colour, so an outline button stays legible in both themes.
+$primary-text-emphasis: #173f61;
+$primary-text-emphasis-dark: #c7ddf0;
+$secondary-text-emphasis: #4b463d;
+$secondary-text-emphasis-dark: #d0c8b9;
+$success-text-emphasis: #24573a;
+$success-text-emphasis-dark: #84c59e;
+$info-text-emphasis: #173f61;
+$info-text-emphasis-dark: #c7ddf0;
+$warning-text-emphasis: #6b4500;
+$warning-text-emphasis-dark: #ddb05c;
+$danger-text-emphasis: #7d1d1d;
+$danger-text-emphasis-dark: #f09999;
+
+$primary-bg-subtle: #e4edf5;
+$primary-bg-subtle-dark: #22384b;
+$secondary-bg-subtle: #ece8dd;
+$secondary-bg-subtle-dark: #28241e;
+$success-bg-subtle: #e5f0e9;
+$success-bg-subtle-dark: #1e352b;
+$info-bg-subtle: #e4edf5;
+$info-bg-subtle-dark: #22384b;
+$warning-bg-subtle: #f4ead3;
+$warning-bg-subtle-dark: #3a2e16;
+$danger-bg-subtle: #f6e3e3;
+$danger-bg-subtle-dark: #3a2424;
+
+$primary-border-subtle: #c3d5e4;
+$primary-border-subtle-dark: #37536d;
+$secondary-border-subtle: #d3ccbc;
+$secondary-border-subtle-dark: #3d382e;
+$success-border-subtle: #c4ddcd;
+$success-border-subtle-dark: #2d5240;
+$info-border-subtle: #c3d5e4;
+$info-border-subtle-dark: #37536d;
+$warning-border-subtle: #e2d1ad;
+$warning-border-subtle-dark: #5b4720;
+$danger-border-subtle: #e6c4c4;
+$danger-border-subtle-dark: #5a3636;
+
+$link-color: $primary;
+$link-hover-color: #173f61;
+$link-color-dark: #9cc0e0;
+$link-hover-color-dark: #c7ddf0;
 
 $font-family-sans-serif: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-$font-size-base: 1rem;
+$font-size-base: .9375rem;
 $line-height-base: 1.5;
-$headings-font-weight: 700;
+$headings-font-family: $um-font-serif;
+$headings-font-weight: 600;
+$headings-line-height: 1.3;
 
-$h1-font-size: 2rem;
-$h2-font-size: 1.5rem;
-$h3-font-size: 1.25rem;
-$h4-font-size: 1.125rem;
-$h5-font-size: 1rem;
-$h6-font-size: .875rem;
+$h1-font-size: 1.875rem;
+$h2-font-size: 1.1875rem;
+$h3-font-size: .9375rem;
+$h4-font-size: 1.1875rem;
+$h5-font-size: .9375rem;
+$h6-font-size: .8125rem;
 
-$border-radius: .5rem;
-$border-radius-sm: .375rem;
-$border-radius-lg: .75rem;
-$border-radius-xl: 1rem;
+$border-radius: .25rem;
+$border-radius-sm: .1875rem;
+$border-radius-lg: .25rem;
+$border-radius-xl: .25rem;
+$border-radius-xxl: .25rem;
 
-$btn-font-weight: 600;
-$btn-padding-y: .5rem;
-$btn-padding-x: .875rem;
-$btn-border-radius: $border-radius;
-$input-btn-padding-y: .5rem;
-$input-btn-padding-x: .75rem;
+$btn-font-size: .8rem;
+$btn-font-weight: 650;
+$btn-padding-y: .40625rem;
+$btn-padding-x: .75rem;
+$btn-border-radius: .1875rem;
+$btn-border-radius-sm: .1875rem;
+$btn-border-radius-lg: .25rem;
+$btn-box-shadow: none;
+$btn-focus-width: .15rem;
 
+$input-btn-font-size: .84375rem;
+$input-btn-padding-y: .375rem;
+$input-btn-padding-x: .5625rem;
+$input-font-size: .84375rem;
+$input-padding-y: .375rem;
+$input-padding-x: .5625rem;
+$input-border-radius: .1875rem;
+$input-border-color: #8c8371;
+$input-focus-border-color: $primary;
+$input-focus-box-shadow: 0 0 0 .15rem rgba($primary, .22);
+
+$form-label-font-size: .8125rem;
+$form-text-font-size: .75rem;
+$form-select-font-size: .84375rem;
+
+$badge-font-size: .6875rem;
+$badge-font-weight: 600;
+$badge-padding-y: .1rem;
+$badge-padding-x: .4rem;
+
+$card-bg: #fffdf8;
 $card-border-color: $border-color;
-$card-box-shadow: 0 .125rem .5rem rgba($dark, .04);
+$card-border-radius: .25rem;
+$card-box-shadow: none;
+$card-cap-bg: transparent;
+
 $dropdown-border-color: $border-color;
-$dropdown-box-shadow: 0 .75rem 1.5rem rgba($dark, .12);
+$dropdown-border-radius: .25rem;
+$dropdown-box-shadow: 0 .75rem 1.5rem rgba(30, 29, 26, .12);
 $modal-content-border-color: $border-color;
-$modal-content-box-shadow: 0 1.25rem 3rem rgba($dark, .18);
+$modal-content-border-radius: .25rem;
+$modal-content-box-shadow: 0 1.25rem 3rem rgba(30, 29, 26, .18);
+
+$nav-tabs-border-color: $border-color;
+$nav-tabs-link-active-border-color: $primary;
+$table-border-color: $border-color;
+$tooltip-bg: #1e1d1a;
 
 $link-decoration: none;
 $link-hover-decoration: underline;

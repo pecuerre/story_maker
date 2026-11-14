@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en" data-dir="index" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universe Maker — visual directions review prototype</title>
+<style>
+  /* ============================================================
+     Review chrome. Not part of any proposed direction.
+     ============================================================ */
+  :root { --review-h: 52px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg, #e9e7e2); }
+  body.presentation { --review-h: 0px; }
+  body.presentation .reviewbar { display: none; }
+  .reviewbar {
+    position: sticky; top: 0; z-index: 100; min-height: var(--review-h);
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 8px 16px; background: #14171a; color: #edf0f2;
+    font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar strong { font-size: 14px; letter-spacing: .01em; }
+  .reviewbar .sep { width: 1px; height: 22px; background: #394047; }
+  .reviewbar .group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .reviewbar .group-label { color: #aab4bc; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin-right: 2px; }
+  .reviewbar button {
+    appearance: none; border: 1px solid #3c454d; background: #20262b; color: #e8edf0;
+    border-radius: 4px; padding: 5px 9px; font: inherit; cursor: pointer;
+  }
+  .reviewbar button:hover { background: #2b3339; }
+  .reviewbar button[aria-pressed="true"] { background: #e8edf0; border-color: #e8edf0; color: #15191c; font-weight: 650; }
+  .reviewbar .note { margin-left: auto; color: #9aa5ad; font-size: 11.5px; }
+  .reviewbar a { color: #c9d6df; }
+
+  /* ============================================================
+     Shared prototype shell. All values come from direction tokens.
+     ============================================================ */
+  .mock {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--base);
+    line-height: var(--lh);
+    min-height: calc(100vh - var(--review-h));
+  }
+  .mock a { color: var(--primary); text-decoration: none; }
+  .mock a:hover { text-decoration: underline; }
+  .mock button, .mock select, .mock input, .mock textarea { font: inherit; color: inherit; }
+  .topbar {
+    height: var(--topbar-h); display: flex; align-items: center; gap: 14px;
+    padding: 0 var(--topbar-pad); background: var(--topbar-bg); color: var(--topbar-text);
+    border-bottom: 1px solid var(--topbar-border);
+  }
+  .brand { font-family: var(--font-display); font-size: var(--brand-size); font-weight: var(--brand-weight); letter-spacing: var(--brand-tracking); white-space: nowrap; }
+  .context { color: var(--topbar-muted); font-size: var(--meta-size); white-space: nowrap; }
+  .context b { color: var(--topbar-text); font-weight: 600; }
+  .search { margin-left: auto; display: flex; align-items: stretch; min-width: 240px; max-width: 520px; flex: 1 1 340px; height: 32px; }
+  .search .field {
+    flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+    border: 1px solid var(--topbar-control-border); border-right: 0;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    background: var(--topbar-field); color: var(--topbar-muted); font-size: var(--meta-size);
+  }
+  .search .scope {
+    display: flex; align-items: center; gap: 8px; padding: 0 10px;
+    border: 1px solid var(--topbar-control-border); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--topbar-field); color: var(--topbar-text); font-size: var(--meta-size); white-space: nowrap;
+  }
+  .top-actions { display: flex; align-items: center; gap: 6px; }
+  .top-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 9px;
+    border: 1px solid var(--topbar-control-border); border-radius: var(--radius-sm);
+    background: transparent; color: var(--topbar-text); font-size: var(--meta-size); cursor: pointer;
+  }
+  .top-btn .count { font-variant-numeric: tabular-nums; border-radius: 999px; padding: 0 5px; background: var(--topbar-text); color: var(--topbar-bg); font-size: 10px; font-weight: 700; }
+  .menu-trigger, .tools-trigger { display: none; }
+  .app {
+    display: grid; grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--tools-w);
+    align-items: start;
+    max-width: var(--shell-max); margin: 0 auto;
+  }
+  .rail {
+    position: sticky; top: 0; align-self: start; max-height: calc(100vh - var(--review-h));
+    min-height: calc(100vh - var(--review-h));
+    overflow: auto; background: var(--rail-bg); border-right: 1px solid var(--border);
+    padding: var(--rail-pad) 0;
+  }
+  .rail-right { border-right: 0; border-left: 1px solid var(--border); background: var(--tools-bg); }
+  .scope-block { padding: 0 var(--rail-pad); margin-bottom: var(--rail-gap); }
+  .scope-kicker { display: block; font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--scope-universe); margin-bottom: 3px; }
+  .scope-name { display: block; font-family: var(--font-display); font-size: var(--scope-name-size); font-weight: var(--scope-name-weight); line-height: 1.25; color: var(--text); }
+  .scope-name.story { color: var(--scope-story); }
+  .nav-heading {
+    display: flex; align-items: center; gap: 6px; padding: 6px var(--rail-pad) 4px;
+    font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .nav-heading.universe { color: var(--scope-universe); }
+  .nav-heading.story { color: var(--scope-story); }
+  .nav-heading.tools { color: var(--scope-tools); }
+  .nav-heading.analytics { color: var(--scope-story); }
+  .nav-list { list-style: none; margin: 0 0 var(--rail-gap); padding: 0 var(--rail-gap-inline); }
+  .nav-list a, .nav-list .disabled {
+    display: flex; align-items: center; gap: 8px; min-height: var(--nav-row-h);
+    padding: 0 10px; border-radius: var(--radius-sm); font-size: var(--nav-size); line-height: 1.2;
+    color: var(--text); border-left: 3px solid transparent;
+  }
+  .nav-list a:hover { background: var(--hover); text-decoration: none; }
+  .nav-list a.active { background: var(--primary-soft); border-left-color: var(--primary); color: var(--primary-strong); font-weight: 650; }
+  .nav-list .icon { width: 16px; flex: 0 0 16px; text-align: center; font-size: 12px; color: var(--muted); }
+  .nav-list a.active .icon { color: var(--primary); }
+  .nav-list .count { margin-left: auto; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); background: var(--surface-2); border-radius: 999px; padding: 1px 6px; }
+  .nav-list .disabled { color: var(--disabled); }
+  .scope-head { margin: 0 0 6px; padding: 0 var(--rail-pad); font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .rail-right .nav-heading:first-of-type { margin-top: 0; }
+  .inspector { margin: var(--rail-gap) var(--rail-pad) 0; padding-top: var(--rail-gap); border-top: 1px solid var(--border); }
+  .inspector p { margin: 0 0 10px; color: var(--muted); font-size: var(--meta-size); line-height: 1.5; }
+  .inspector dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; font-size: var(--meta-size); }
+  .inspector dt { color: var(--muted); }
+  .inspector dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .main { min-width: 0; padding: var(--main-pad); }
+  .page { max-width: var(--content-max); margin: 0 auto; }
+  .backlink { display: inline-block; margin-bottom: 8px; font-size: var(--meta-size); color: var(--muted); }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: var(--head-pad); border-bottom: 1px solid var(--border); margin-bottom: var(--section-gap); }
+  .eyebrow { margin: 0 0 4px; font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--eyebrow-color); }
+  h1 { margin: 0; font-family: var(--font-display); font-size: var(--h1-size); font-weight: var(--h1-weight); line-height: var(--h1-lh); letter-spacing: var(--h1-tracking); }
+  .title-count { display: inline-block; vertical-align: middle; margin-left: 8px; padding: 1px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-family: var(--font-ui); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .page-desc { max-width: 64ch; margin: 6px 0 0; color: var(--muted); font-size: var(--desc-size); line-height: 1.5; }
+  .page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-top: 4px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: var(--btn-h); padding: 0 var(--btn-pad-x); border-radius: var(--radius-sm);
+    border: 1px solid transparent; background: var(--primary); color: var(--on-primary);
+    font-size: var(--btn-size); font-weight: 650; line-height: 1; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { text-decoration: none; filter: brightness(1.04); }
+  .btn-outline { background: transparent; border-color: var(--control-border); color: var(--text); }
+  .btn-outline:hover { background: var(--hover); }
+  .btn-quiet { background: transparent; border-color: transparent; color: var(--primary); padding: 0 6px; }
+  .btn-sm { min-height: calc(var(--btn-h) - 5px); font-size: calc(var(--btn-size) - 1px); }
+  .icon-btn { width: var(--btn-h); padding: 0; background: transparent; border-color: transparent; color: var(--muted); font-size: 15px; }
+  .icon-btn:hover { background: var(--hover); color: var(--text); }
+  .layout-2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--grid-gap); align-items: start; }
+  .surface { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: var(--card-pad); }
+  .surface + .surface { margin-top: var(--grid-gap); }
+  .surface-title { margin: 0; font-family: var(--font-display); font-size: var(--h2-size); font-weight: var(--h2-weight); line-height: 1.3; }
+  .surface-kicker { margin: 0 0 3px; font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .surface-copy { margin: 4px 0 0; color: var(--muted); font-size: var(--desc-size); line-height: 1.5; }
+  .dest-list { margin: var(--gap) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+  .dest-list a { display: flex; align-items: center; gap: 10px; min-height: var(--row-h); border-bottom: 1px solid var(--border); color: var(--text); }
+  .dest-list a:hover { background: var(--row-hover); text-decoration: none; }
+  .dest-list .name { font-weight: 600; }
+  .dest-list .count { margin-left: auto; color: var(--muted); font-size: var(--meta-size); font-variant-numeric: tabular-nums; }
+  .dest-list .arrow { color: var(--muted); font-size: 12px; }
+  .empty-copy { margin: var(--gap) 0; color: var(--muted); }
+  .meta-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 var(--section-gap); padding: 0; list-style: none; font-size: var(--meta-size); color: var(--muted); }
+  .meta-strip b { color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .chart { margin-top: var(--gap); }
+  .chart-row { display: grid; grid-template-columns: minmax(90px, 150px) 1fr 52px; gap: 12px; align-items: center; min-height: var(--chart-row-h); font-size: var(--meta-size); }
+  .chart-row .name { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+  .chart-track { height: var(--bar-h); background: var(--surface-2); border-radius: var(--bar-radius); overflow: hidden; }
+  .chart-bar { height: 100%; background: var(--primary); border-radius: var(--bar-radius); }
+  .chart-count { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chart-note { margin: var(--gap) 0 0; color: var(--muted); font-size: var(--meta-size); }
+
+  .filter { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: var(--section-gap); }
+  .filter .control { display: flex; flex-direction: column; gap: 3px; }
+  .filter label { font-size: var(--eyebrow-size); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .filter input, .filter select, .field-input, .field-select, .field-area {
+    min-height: var(--input-h); padding: 0 9px; border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: var(--input-size);
+  }
+  .filter .grow { flex: 1 1 220px; }
+  .filter .grow input { width: 100%; }
+  .filter .clear { align-self: center; margin-top: 14px; font-size: var(--meta-size); }
+  .result-note { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; color: var(--muted); font-size: var(--meta-size); }
+  .list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .row-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: var(--row-h); padding: var(--row-pad-y) var(--card-pad); border-bottom: 1px solid var(--border); }
+  .row-item:last-child { border-bottom: 0; }
+  .row-item:hover { background: var(--row-hover); }
+  .row-main { min-width: 0; }
+  .row-name { font-size: var(--row-name-size); font-weight: 650; color: var(--text); text-decoration: none; }
+  .row-name:hover { text-decoration: underline; }
+  .row-desc { margin: 2px 0 0; color: var(--muted); font-size: var(--meta-size); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .row-side { display: flex; align-items: center; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border: 1px solid var(--border); border-radius: var(--chip-radius); background: var(--surface-2); color: var(--muted); font-size: 11px; line-height: 1.5; white-space: nowrap; }
+  .chip.strong { color: var(--text); border-color: var(--control-border); }
+  .count-pill { padding: 1px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .details-link { font-size: var(--meta-size); font-weight: 600; color: var(--primary); white-space: nowrap; }
+
+  .details-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, .9fr); gap: var(--grid-gap); align-items: start; }
+  .identity { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: start; }
+  .portrait { width: 92px; height: 112px; border-radius: var(--portrait-radius); border: 1px solid var(--border); background: var(--surface-2); display: grid; place-items: center; color: var(--muted); font-family: var(--font-display); font-size: 26px; }
+  .facts { margin: var(--gap) 0 0; border-top: 1px solid var(--border); }
+  .fact { display: grid; grid-template-columns: minmax(96px, .42fr) minmax(0, 1fr); gap: 14px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: var(--meta-size); }
+  .fact dt { color: var(--muted); font-size: var(--fact-label-size); letter-spacing: .03em; }
+  .fact dd { margin: 0; }
+  .prose { max-width: var(--prose-measure); font-family: var(--font-prose); font-size: var(--prose-size); line-height: var(--prose-lh); }
+  .prose p { margin: 0 0 1em; }
+  .prose .mention { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .related { margin-top: var(--grid-gap); }
+  .related-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
+  .related-head h2 { margin: 0; font-family: var(--font-display); font-size: var(--h3-size); font-weight: var(--h3-weight); }
+  .mini-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
+  .mini-list a { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); color: var(--text); font-size: var(--meta-size); }
+  .mini-list a:hover { text-decoration: none; background: var(--row-hover); }
+  .mini-list .muted { margin-left: auto; color: var(--muted); }
+  .pos { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border: 1px solid var(--control-border); border-radius: var(--pos-radius); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+  .form-grid { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: var(--grid-gap); align-items: start; }
+  .form-row { margin-bottom: var(--gap); }
+  .form-row label { display: block; margin-bottom: 4px; font-size: var(--fact-label-size); font-weight: 650; }
+  .form-row .field-input, .form-row .field-select { width: 100%; }
+  .form-row .field-area { width: 100%; min-height: 108px; padding: 9px; resize: vertical; line-height: 1.55; }
+  .form-help { margin: 3px 0 0; color: var(--muted); font-size: 11.5px; }
+  .form-actions { display: flex; gap: 8px; align-items: center; padding-top: var(--gap); border-top: 1px solid var(--border); }
+  .element { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); padding: 10px 12px; margin-bottom: 8px; }
+  .element-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .element-head .kind { font-weight: 700; color: var(--text); }
+  .element-head .spacer { margin-left: auto; }
+  .element .prose { font-size: calc(var(--prose-size) - 2px); line-height: 1.55; }
+  .element .prose p { margin: 0; }
+  .disclosure { border-top: 1px solid var(--border); padding: 9px 0 0; margin-top: 10px; }
+  .disclosure summary { cursor: pointer; font-size: var(--meta-size); font-weight: 650; }
+  .disclosure p { margin: 6px 0 0; color: var(--muted); font-size: var(--meta-size); }
+  .aside-note { color: var(--muted); font-size: var(--meta-size); line-height: 1.5; }
+  .aside-note strong { color: var(--text); }
+
+  [data-screen] { display: none; }
+  .mock[data-active="overview"] [data-screen="overview"],
+  .mock[data-active="empty"] [data-screen="empty"],
+  .mock[data-active="characters"] [data-screen="characters"],
+  .mock[data-active="tags"] [data-screen="tags"],
+  .mock[data-active="character"] [data-screen="character"],
+  .mock[data-active="scene-details"] [data-screen="scene-details"],
+  .mock[data-active="scene"] [data-screen="scene"] { display: block; }
+
+  .tabs { display: flex; gap: 2px; margin: 0 0 var(--gap); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tabs a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-bottom: 2px solid transparent; color: var(--muted); font-size: var(--meta-size); white-space: nowrap; }
+  .tabs a.active { border-bottom-color: var(--primary); color: var(--primary-strong); font-weight: 650; }
+  .tabs a:hover { text-decoration: none; color: var(--text); }
+  .tree { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px var(--card-pad) 8px calc(var(--card-pad) + var(--tree-indent, 0px)); }
+  .tree-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: var(--row-h); border-bottom: 1px solid var(--border); padding-left: calc(var(--depth, 0) * 22px); }
+  .tree-row:last-child { border-bottom: 0; }
+  .tree-row:hover { background: var(--row-hover); }
+  .tree-row .name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--row-name-size); font-weight: 600; }
+  .tree-row .name .twisty { color: var(--muted); font-size: 10px; width: 10px; }
+  .tree-row .name .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--surface-2); border: 1px solid var(--control-border); }
+  .tree-row .side { display: flex; align-items: center; gap: 8px; }
+  .readonly-note { margin: 0 0 var(--section-gap); padding: 9px 12px; border: 1px solid var(--border); border-left: 3px solid var(--scope-story); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: var(--meta-size); }
+
+  /* ============================================================
+     DIRECTION A — INDEX (reference atlas)
+     ============================================================ */
+  html[data-dir="index"] {
+    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --font-prose: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --base: 15px; --lh: 1.5; --nav-size: 12.8px; --meta-size: 12.5px; --desc-size: 14px;
+    --eyebrow-size: 10.5px; --fact-label-size: 11px;
+    --h1-size: 30px; --h1-weight: 600; --h1-lh: 1.18; --h1-tracking: -.012em;
+    --h2-size: 19px; --h2-weight: 600; --h3-size: 15px; --h3-weight: 650;
+    --prose-size: 17px; --prose-lh: 1.68; --prose-measure: 68ch;
+    --scope-name-size: 15.5px; --scope-name-weight: 600;
+    --brand-size: 18px; --brand-weight: 600; --brand-tracking: -.01em;
+    --btn-size: 12.8px; --btn-h: 32px; --btn-pad-x: 12px; --input-size: 13.5px; --input-h: 34px;
+    --radius: 4px; --radius-sm: 3px; --chip-radius: 3px; --portrait-radius: 3px; --pos-radius: 3px; --bar-radius: 1px;
+    --nav-w: 232px; --tools-w: 204px; --shell-max: 1440px; --content-max: 1040px;
+    --main-pad: 28px 32px 64px; --rail-pad: 16px; --rail-gap: 20px; --rail-gap-inline: 8px;
+    --nav-row-h: 30px; --row-h: 46px; --row-pad-y: 7px; --row-name-size: 14px;
+    --grid-gap: 16px; --gap: 12px; --section-gap: 22px; --head-pad: 14px; --card-pad: 16px;
+    --chart-row-h: 28px; --bar-h: 7px; --topbar-h: 50px; --topbar-pad: 16px;
+    --shadow: none;
+  }
+  html[data-dir="index"][data-theme="light"] {
+    color-scheme: light;
+    --bg: #f6f4ee; --surface: #fffdf8; --surface-2: #ece8dd; --text: #1e1d1a; --muted: #5f5a50;
+    --border: #d3ccbc; --control-border: #8c8371; --primary: #1d4f7a; --primary-strong: #173f61;
+    --on-primary: #ffffff; --primary-soft: #e4edf5; --hover: #efebe2; --row-hover: #faf7f0;
+    --disabled: #9a9283; --focus: #1d4f7a;
+    --success: #2c6b45; --warning: #835600; --danger: #a32626;
+    --scope-universe: #244a7c; --scope-universe-soft: #e7edf6;
+    --scope-story: #8a2f3a; --scope-story-soft: #f6e6e8;
+    --scope-tools: #2a6a4b; --scope-tools-soft: #e5f0e9;
+    --topbar-bg: #20242a; --topbar-text: #f1eee6; --topbar-muted: #b4b2a9; --topbar-border: #333941;
+    --topbar-field: #2b3037; --topbar-control-border: #4b535d;
+    --rail-bg: #fbf9f3; --tools-bg: #f8f5ed; --eyebrow-color: var(--scope-universe);
+  }
+  html[data-dir="index"][data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #171613; --surface: #1e1c18; --surface-2: #28241e; --text: #ece7dc; --muted: #b3ab9b;
+    --border: #3d382e; --control-border: #8b8272; --primary: #9cc0e0; --primary-strong: #c7ddf0;
+    --on-primary: #0d2237; --primary-soft: #22384b; --hover: #26221c; --row-hover: #242019;
+    --disabled: #777061; --focus: #9cc0e0;
+    --success: #84c59e; --warning: #ddb05c; --danger: #f09999;
+    --scope-universe: #9db7dd; --scope-universe-soft: #223449;
+    --scope-story: #eda3ab; --scope-story-soft: #3a2427;
+    --scope-tools: #8ccbaa; --scope-tools-soft: #1e352b;
+    --topbar-bg: #101216; --topbar-text: #ece7dc; --topbar-muted: #a6a196; --topbar-border: #2c2f35;
+    --topbar-field: #1c2026; --topbar-control-border: #414951;
+    --rail-bg: #1b1915; --tools-bg: #1a1814; --eyebrow-color: var(--scope-universe);
+  }
+  html[data-dir="index"] .surface-title { letter-spacing: -.005em; }
+  html[data-dir="index"] .page-desc { font-family: var(--font-prose); font-size: 15px; }
+  html[data-dir="index"] .surface-copy { font-family: var(--font-prose); font-size: 13.5px; }
+  html[data-dir="index"] .fact dt { text-transform: uppercase; }
+  html[data-dir="index"] .row-desc { font-family: var(--font-prose); font-size: 13.5px; }
+  html[data-dir="index"] .filter .control label { letter-spacing: .08em; }
+
+  /* ============================================================
+     DIRECTION B — LEDGER (dense data surface)
+     ============================================================ */
+  html[data-dir="ledger"] {
+    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-prose: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --base: 13.5px; --lh: 1.45; --nav-size: 12px; --meta-size: 11.5px; --desc-size: 12.5px;
+    --eyebrow-size: 10px; --fact-label-size: 10.5px;
+    --h1-size: 24px; --h1-weight: 680; --h1-lh: 1.18; --h1-tracking: -.02em;
+    --h2-size: 15.5px; --h2-weight: 680; --h3-size: 13.5px; --h3-weight: 680;
+    --prose-size: 15.5px; --prose-lh: 1.6; --prose-measure: 64ch;
+    --scope-name-size: 14px; --scope-name-weight: 650;
+    --brand-size: 16px; --brand-weight: 700; --brand-tracking: -.01em;
+    --btn-size: 12px; --btn-h: 29px; --btn-pad-x: 10px; --input-size: 12.5px; --input-h: 30px;
+    --radius: 2px; --radius-sm: 2px; --chip-radius: 2px; --portrait-radius: 2px; --pos-radius: 2px; --bar-radius: 0;
+    --nav-w: 216px; --tools-w: 184px; --shell-max: 1440px; --content-max: 1180px;
+    --main-pad: 22px 24px 56px; --rail-pad: 13px; --rail-gap: 16px; --rail-gap-inline: 6px;
+    --nav-row-h: 26px; --row-h: 40px; --row-pad-y: 5px; --row-name-size: 13px;
+    --grid-gap: 12px; --gap: 9px; --section-gap: 16px; --head-pad: 10px; --card-pad: 13px;
+    --chart-row-h: 24px; --bar-h: 5px; --topbar-h: 46px; --topbar-pad: 14px;
+    --shadow: none;
+  }
+  html[data-dir="ledger"][data-theme="light"] {
+    color-scheme: light;
+    --bg: #f8f9fa; --surface: #ffffff; --surface-2: #eef1f3; --text: #15181b; --muted: #566069;
+    --border: #cdd5db; --control-border: #818d95; --primary: #0c6b5d; --primary-strong: #085247;
+    --on-primary: #ffffff; --primary-soft: #e2f1ee; --hover: #eef2f4; --row-hover: #f4f7f8;
+    --disabled: #8b979f; --focus: #0c6b5d;
+    --success: #1d7a4b; --warning: #7d5600; --danger: #b42318;
+    --scope-universe: #1e4f86; --scope-universe-soft: #e8eef6;
+    --scope-story: #8a2533; --scope-story-soft: #f9e7e9;
+    --scope-tools: #176b4d; --scope-tools-soft: #e2f2eb;
+    --topbar-bg: #0d1113; --topbar-text: #e9eef1; --topbar-muted: #9fabb2; --topbar-border: #252d32;
+    --topbar-field: #171c1f; --topbar-control-border: #384249;
+    --rail-bg: #ffffff; --tools-bg: #fbfcfc; --eyebrow-color: var(--scope-universe);
+  }
+  html[data-dir="ledger"][data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101416; --surface: #171c1f; --surface-2: #20262a; --text: #e4e9ec; --muted: #a2b1ba;
+    --border: #313b42; --control-border: #7e8d96; --primary: #6ad8c3; --primary-strong: #9be6d6;
+    --on-primary: #05201b; --primary-soft: #1d3a35; --hover: #1d2428; --row-hover: #1b2226;
+    --disabled: #75848c; --focus: #6ad8c3;
+    --success: #7acb9c; --warning: #e3b45c; --danger: #ffa09a;
+    --scope-universe: #8fb8e8; --scope-universe-soft: #1d2f40;
+    --scope-story: #f09aa4; --scope-story-soft: #3a2024;
+    --scope-tools: #7ad3ab; --scope-tools-soft: #173127;
+    --topbar-bg: #0a0d0f; --topbar-text: #e4e9ec; --topbar-muted: #9aa8b0; --topbar-border: #222a2f;
+    --topbar-field: #14191c; --topbar-control-border: #333d44;
+    --rail-bg: #14191c; --tools-bg: #121719; --eyebrow-color: var(--scope-universe);
+  }
+  html[data-dir="ledger"] .context { font-variant-numeric: tabular-nums; }
+  html[data-dir="ledger"] .page-head { background: linear-gradient(to bottom, var(--surface), transparent); margin-left: calc(var(--main-pad) * -1); margin-right: calc(var(--main-pad) * -1); padding-left: 24px; padding-right: 24px; }
+  html[data-dir="ledger"] .page-desc { max-width: 72ch; }
+  html[data-dir="ledger"] .surface-kicker { color: var(--muted); }
+  html[data-dir="ledger"] .fact { grid-template-columns: minmax(92px, .35fr) minmax(0, 1fr); padding: 5px 0; }
+  html[data-dir="ledger"] .fact dt { text-transform: uppercase; letter-spacing: .07em; }
+  html[data-dir="ledger"] .list { counter-reset: ledgerrow; }
+  html[data-dir="ledger"] .row-item { counter-increment: ledgerrow; padding-left: calc(var(--card-pad) + 30px); }
+  html[data-dir="ledger"] .row-item::before { content: counter(ledgerrow, decimal-leading-zero); position: absolute; left: var(--card-pad); top: calc(50% - 8px); color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  html[data-dir="ledger"] .row-name { font-size: 12.8px; }
+  html[data-dir="ledger"] .chip { background: transparent; }
+  html[data-dir="ledger"] .btn { text-transform: none; letter-spacing: .01em; }
+  html[data-dir="ledger"] .chart-count { font-size: 10.5px; }
+
+  /* ============================================================
+     DIRECTION C — FOLIO (editorial, one rail)
+     ============================================================ */
+  html[data-dir="folio"] {
+    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --font-prose: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --base: 15.5px; --lh: 1.55; --nav-size: 13.5px; --meta-size: 12.5px; --desc-size: 14.5px;
+    --eyebrow-size: 10.5px; --fact-label-size: 11.5px;
+    --h1-size: 34px; --h1-weight: 500; --h1-lh: 1.12; --h1-tracking: -.018em;
+    --h2-size: 21px; --h2-weight: 500; --h3-size: 16.5px; --h3-weight: 600;
+    --prose-size: 18px; --prose-lh: 1.72; --prose-measure: 64ch;
+    --scope-name-size: 16.5px; --scope-name-weight: 600;
+    --brand-size: 19px; --brand-weight: 500; --brand-tracking: -.015em;
+    --btn-size: 13.5px; --btn-h: 34px; --btn-pad-x: 14px; --input-size: 14px; --input-h: 36px;
+    --radius: 10px; --radius-sm: 7px; --chip-radius: 999px; --portrait-radius: 8px; --pos-radius: 999px; --bar-radius: 999px;
+    --nav-w: 248px; --tools-w: 0px; --shell-max: 1440px; --content-max: 1060px;
+    --main-pad: 34px 40px 72px; --rail-pad: 18px; --rail-gap: 24px; --rail-gap-inline: 10px;
+    --nav-row-h: 34px; --row-h: 54px; --row-pad-y: 10px; --row-name-size: 15px;
+    --grid-gap: 20px; --gap: 16px; --section-gap: 30px; --head-pad: 20px; --card-pad: 20px;
+    --chart-row-h: 32px; --bar-h: 9px; --topbar-h: 54px; --topbar-pad: 18px;
+    --shadow: 0 1px 2px rgba(30, 20, 24, .05), 0 8px 24px rgba(30, 20, 24, .04);
+  }
+  html[data-dir="folio"][data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f3ef; --surface: #fffdfb; --surface-2: #efe8e2; --text: #211e1b; --muted: #685f57;
+    --border: #dccfc4; --control-border: #958273; --primary: #6b3f5e; --primary-strong: #543047;
+    --on-primary: #ffffff; --primary-soft: #f2e7ef; --hover: #f3ece7; --row-hover: #fbf6f3;
+    --disabled: #a89a90; --focus: #6b3f5e;
+    --success: #356a4c; --warning: #835600; --danger: #a52f2f;
+    --scope-universe: #2c4a7a; --scope-universe-soft: #e9eef7;
+    --scope-story: #8a3040; --scope-story-soft: #f8e8ea;
+    --scope-tools: #2f6a4f; --scope-tools-soft: #e8f1ec;
+    --topbar-bg: #2b2326; --topbar-text: #f5ede9; --topbar-muted: #c1b3ac; --topbar-border: #42373a;
+    --topbar-field: #382e31; --topbar-control-border: #5a4c50;
+    --rail-bg: #fbf7f3; --tools-bg: #fbf7f3; --eyebrow-color: var(--scope-universe);
+  }
+  html[data-dir="folio"][data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1718; --surface: #221e20; --surface-2: #2c2529; --text: #efe8e4; --muted: #b9aca3;
+    --border: #443b3f; --control-border: #8e7d84; --primary: #d6a7c7; --primary-strong: #e8c6dd;
+    --on-primary: #2c1225; --primary-soft: #3b2a35; --hover: #2a2327; --row-hover: #282124;
+    --disabled: #8b7d81; --focus: #d6a7c7;
+    --success: #86c7a4; --warning: #e0b25b; --danger: #f39b98;
+    --scope-universe: #a3b9df; --scope-universe-soft: #25313f;
+    --scope-story: #f0a4ae; --scope-story-soft: #3b2428;
+    --scope-tools: #8bc9a8; --scope-tools-soft: #20352b;
+    --topbar-bg: #151214; --topbar-text: #efe8e4; --topbar-muted: #b0a49d; --topbar-border: #322b2e;
+    --topbar-field: #221d20; --topbar-control-border: #4b3f43;
+    --rail-bg: #1e1a1c; --tools-bg: #1e1a1c; --eyebrow-color: var(--scope-universe);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 28px rgba(0, 0, 0, .18);
+  }
+  html[data-dir="folio"] .app { grid-template-columns: var(--nav-w) minmax(0, 1fr); }
+  html[data-dir="folio"] .rail-right { display: none; }
+  html[data-dir="folio"] .tools-trigger { display: inline-flex; }
+  html[data-dir="folio"] .page-head { border-bottom: 0; padding-bottom: 0; }
+  html[data-dir="folio"] .page-head::after { content: ""; display: block; }
+  html[data-dir="folio"] .eyebrow { display: flex; align-items: center; gap: 8px; }
+  html[data-dir="folio"] .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--primary); }
+  html[data-dir="folio"] .page-desc { font-family: var(--font-prose); font-size: 15.5px; }
+  html[data-dir="folio"] .surface-copy { font-family: var(--font-prose); font-size: 14px; }
+  html[data-dir="folio"] .row-desc { font-family: var(--font-prose); font-size: 14px; }
+  html[data-dir="folio"] .fact { padding: 9px 0; }
+  html[data-dir="folio"] .facts { border-top: 0; }
+  html[data-dir="folio"] .fact:first-child { border-top: 1px solid var(--border); }
+  html[data-dir="folio"] .nav-list a { border-left-width: 0; border-radius: 8px; }
+  html[data-dir="folio"] .nav-list a.active { border-left-width: 0; }
+  html[data-dir="folio"] .main { background: transparent; }
+  .folio-rule { display: none; }
+  html[data-dir="folio"] .folio-rule { display: block; height: 1px; background: var(--border); margin: var(--section-gap) 0; }
+
+  /* Tools drawer, used by Folio's one-rail shell. */
+  .tools-drawer { position: fixed; inset: var(--review-h) 0 0 auto; z-index: 90; width: 300px; max-width: 86vw; background: var(--rail-bg, #fbf7f3); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform .18s ease; padding: 16px; overflow: auto; }
+  html[data-theme="dark"] .tools-drawer { background: var(--rail-bg, #1e1a1c); }
+  html[data-theme="light"] .tools-drawer { background: var(--rail-bg, #fbf7f3); }
+  .tools-drawer.open { transform: translateX(0); }
+  .tools-drawer .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .tools-drawer h2 { margin: 0; font-family: var(--font-display); font-size: 19px; }
+
+  /* ============================================================
+     Responsive shell
+     ============================================================ */
+  @media (max-width: 1180px) {
+    .app { grid-template-columns: var(--nav-w) minmax(0, 1fr) !important; }
+    .rail-right { display: none; }
+    .tools-trigger { display: inline-flex; }
+  }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: minmax(0, 1fr) !important; }
+    .rail-left { display: none; }
+    .menu-trigger { display: inline-flex; }
+    .context { display: none; }
+    .search { display: none; }
+    .topbar { gap: 6px; padding: 0 10px; }
+    .top-btn { padding: 0 7px; }
+    .top-actions .optional { display: none; }
+    .brand { font-size: 15px; }
+    .main { padding: 20px 18px 48px; }
+    .page-head { flex-direction: column; }
+    .page-actions { justify-content: flex-start; width: 100%; }
+    .page-actions .btn { flex: 1 1 auto; }
+    .page-actions .icon-btn { flex: 0 0 auto; margin-left: auto; }
+    .layout-2, .details-grid, .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .identity { grid-template-columns: minmax(0, 1fr); }
+    .portrait { width: 72px; height: 86px; }
+    .filter .control { flex: 1 1 100%; }
+    .filter .grow { flex-basis: 100%; }
+    .row-item { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .row-side { justify-content: flex-start; }
+    .chart-row { grid-template-columns: minmax(80px, 120px) 1fr 52px; }
+  }
+  @media (max-width: 560px) {
+    .top-actions .draft, .menu-label { display: none; }
+  }
+  @media (max-width: 430px) {
+    .brand { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+  a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--focus); outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="reviewbar">
+  <strong>Visual directions · 2026-11-14</strong>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Direction">
+    <span class="group-label">Direction</span>
+    <button type="button" data-set-dir="index" aria-pressed="true">A · Index</button>
+    <button type="button" data-set-dir="ledger" aria-pressed="false">B · Ledger</button>
+    <button type="button" data-set-dir="folio" aria-pressed="false">C · Folio</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Theme">
+    <span class="group-label">Theme</span>
+    <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+    <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Language">
+    <span class="group-label">Language</span>
+    <button type="button" data-set-locale="en" aria-pressed="true">English</button>
+    <button type="button" data-set-locale="es" aria-pressed="false">Español (labels)</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Screen">
+    <span class="group-label">Screen</span>
+    <button type="button" data-set-screen="overview" aria-pressed="true">Story overview</button>
+    <button type="button" data-set-screen="empty" aria-pressed="false">Empty overview</button>
+    <button type="button" data-set-screen="characters" aria-pressed="false">Characters</button>
+    <button type="button" data-set-screen="tags" aria-pressed="false">Tags tree</button>
+    <button type="button" data-set-screen="character" aria-pressed="false">Character details</button>
+    <button type="button" data-set-screen="scene-details" aria-pressed="false">Scene details</button>
+    <button type="button" data-set-screen="scene" aria-pressed="false">Scene editor</button>
+  </div>
+  <span class="note">Review mockup · not production · <a href="visual_directions.md">recommendation</a></span>
+</div>
+
+<div class="mock" data-active="overview">
+  <header class="topbar">
+    <button class="top-btn menu-trigger" type="button" aria-label="Open menu">☰ <span class="menu-label">Menu</span></button>
+    <span class="brand">Universe Maker</span>
+    <span class="context">Universe: <b>Meridian</b> · Story: <b>The Fifth Cabinet</b></span>
+    <form class="search" role="search" onsubmit="return false">
+      <label class="field" aria-label="Search this universe">⌕ <input style="border:0;background:transparent;color:inherit;width:100%;outline:none" placeholder="Search this universe" aria-label="Search this universe"></label>
+      <span class="scope">This universe⌄</span>
+    </form>
+    <div class="top-actions">
+      <button class="top-btn draft" type="button">Draft <span class="count">2</span></button>
+      <button class="top-btn optional" type="button" aria-label="Notifications, 3 unread">◔ <span class="count">3</span></button>
+      <button class="top-btn" type="button">Account ⌄</button>
+      <button class="top-btn tools-trigger" type="button" data-open-tools>Tools</button>
+    </div>
+  </header>
+
+  <div class="app">
+    <nav class="rail rail-left" aria-label="Workspace">
+      <div class="scope-block">
+        <span class="scope-kicker">Current universe</span>
+        <span class="scope-name">Meridian</span>
+      </div>
+      <div class="nav-heading universe">Universe Bible</div>
+      <ul class="nav-list">
+        <li><a href="#" class="active"><span class="icon">◈</span>Characters<span class="count">19</span></a></li>
+        <li><a href="#"><span class="icon">◫</span>Factions<span class="count">7</span></a></li>
+        <li><a href="#"><span class="icon">⌖</span>Locations<span class="count">9</span></a></li>
+        <li><a href="#"><span class="icon">◷</span>Events<span class="count">24</span></a></li>
+        <li><a href="#"><span class="icon">◇</span>Items<span class="count">6</span></a></li>
+        <li><a href="#"><span class="icon">§</span>Canon<span class="count">164</span></a></li>
+      </ul>
+      <div class="scope-block">
+        <span class="scope-kicker" style="color:var(--scope-story)">Current story</span>
+        <span class="scope-name story">The Fifth Cabinet</span>
+      </div>
+      <div class="nav-heading story">Story Workspace</div>
+      <ul class="nav-list">
+        <li><a href="#"><span class="icon">⌂</span>Story overview</a></li>
+        <li><a href="#"><span class="icon">☰</span>Sections<span class="count">19</span></a></li>
+        <li><a href="#"><span class="icon">▤</span>Scenes<span class="count">24</span></a></li>
+        <li><a href="#"><span class="icon">⌁</span>Plots<span class="count">7</span></a></li>
+        <li><a href="#"><span class="icon">⇩</span>Export</a></li>
+      </ul>
+      <div class="nav-heading analytics">Story Analytics</div>
+      <ul class="nav-list">
+        <li><a href="#"><span class="icon">↕</span>Narrative order</a></li>
+        <li><a href="#"><span class="icon">▦</span>Appearances</a></li>
+        <li><a href="#"><span class="icon">▩</span>Scene matrix</a></li>
+      </ul>
+    </nav>
+
+    <main class="main">
+      <div class="page">
+        <!-- ================= OVERVIEW ================= -->
+        <section data-screen="overview" aria-label="Story overview">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Story workspace</p>
+              <h1>The Fifth Cabinet <span class="title-count">19 sections</span></h1>
+              <p class="page-desc">Plan the plot and structure for this story.</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Open scenes</button>
+              <button class="btn btn-outline" type="button">Edit story</button>
+              <button class="btn btn-outline" type="button">Discuss</button>
+              <button class="btn icon-btn" type="button" aria-label="More story actions">⋯</button>
+            </div>
+          </div>
+          <ul class="meta-strip">
+            <li><b>24</b> scenes</li>
+            <li><b>7</b> plots</li>
+            <li><b>38,232</b> words</li>
+            <li><b>19</b> characters</li>
+          </ul>
+          <div class="layout-2">
+            <section class="surface" aria-labelledby="structure-title">
+              <p class="surface-kicker">Structure</p>
+              <h2 class="surface-title" id="structure-title">Story structure</h2>
+              <p class="surface-copy">Organize this story into a hierarchy such as acts, chapters, books, or seasons, and write it as an ordered sequence of scenes.</p>
+              <ul class="dest-list">
+                <li><a href="#"><span class="name">Sections</span><span class="count">19 sections</span><span class="arrow">→</span></a></li>
+                <li><a href="#"><span class="name">Plots</span><span class="count">7 plots</span><span class="arrow">→</span></a></li>
+                <li><a href="#"><span class="name">Scenes</span><span class="count">24 scenes</span><span class="arrow">→</span></a></li>
+              </ul>
+            </section>
+            <section class="surface" aria-labelledby="planning-title">
+              <p class="surface-kicker">Planning</p>
+              <h2 class="surface-title" id="planning-title">Trope references</h2>
+              <p class="surface-copy">Reusable patterns this story draws on. None are recorded yet.</p>
+              <p class="empty-copy">No tropes recorded.</p>
+              <button class="btn btn-outline btn-sm" type="button">Edit story tropes</button>
+            </section>
+          </div>
+          <section class="surface" aria-labelledby="balance-title" style="margin-top:var(--grid-gap)">
+            <p class="surface-kicker">Story balance</p>
+            <h2 class="surface-title" id="balance-title">Scenes per character</h2>
+            <p class="surface-copy">How many scenes in this story include each character. Every bar is measured against the whole story.</p>
+            <div class="chart" role="img" aria-label="Scenes per character: Elaine Prosser 4, Maren Kessler 4, Renata Cordeiro 4, Yannai Su 4, Tobias Vale 3, Sister Amaranth 2 of 24">
+              <div class="chart-row"><a class="name" href="#">Elaine Prosser</a><div class="chart-track"><div class="chart-bar" style="width:66%"></div></div><span class="chart-count">4 of 24</span></div>
+              <div class="chart-row"><a class="name" href="#">Maren Kessler</a><div class="chart-track"><div class="chart-bar" style="width:66%"></div></div><span class="chart-count">4 of 24</span></div>
+              <div class="chart-row"><a class="name" href="#">Renata Cordeiro</a><div class="chart-track"><div class="chart-bar" style="width:66%"></div></div><span class="chart-count">4 of 24</span></div>
+              <div class="chart-row"><a class="name" href="#">Yannai Su</a><div class="chart-track"><div class="chart-bar" style="width:66%"></div></div><span class="chart-count">4 of 24</span></div>
+              <div class="chart-row"><a class="name" href="#">Tobias Vale</a><div class="chart-track"><div class="chart-bar" style="width:50%"></div></div><span class="chart-count">3 of 24</span></div>
+              <div class="chart-row"><a class="name" href="#">Sister Amaranth</a><div class="chart-track"><div class="chart-bar" style="width:33%"></div></div><span class="chart-count">2 of 24</span></div>
+            </div>
+            <p class="chart-note">Open the appearance grid for every character and scene. A table equivalent is available below the chart on the real page.</p>
+          </section>
+        </section>
+
+        <!-- ================= EMPTY OVERVIEW ================= -->
+        <section data-screen="empty" aria-label="Empty Story overview">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Story workspace</p>
+              <h1>Untitled Story <span class="title-count">0 scenes</span></h1>
+              <p class="page-desc">Plan the plot and structure for this story.</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Open sections</button>
+              <button class="btn btn-outline" type="button">Edit story</button>
+              <button class="btn btn-outline" type="button">Discuss</button>
+              <button class="btn icon-btn" type="button" aria-label="More story actions">⋯</button>
+            </div>
+          </div>
+          <div class="layout-2">
+            <section class="surface" aria-labelledby="empty-start-title">
+              <p class="surface-kicker">Start here</p>
+              <h2 class="surface-title" id="empty-start-title">Two ways to begin</h2>
+              <p class="surface-copy">Apply a code-owned starting shape, or build the first Section and Scene yourself. A template is optional, and so are tags.</p>
+              <div class="dest-list">
+                <a href="#"><span class="name">Apply a starting structure</span><span class="count">3 shapes</span><span class="arrow">→</span></a>
+                <a href="#"><span class="name">Build it yourself</span><span class="count">Open sections</span><span class="arrow">→</span></a>
+              </div>
+            </section>
+            <section class="surface" aria-labelledby="empty-next-title">
+              <p class="surface-kicker">Story planning</p>
+              <h2 class="surface-title" id="empty-next-title">Trope references</h2>
+              <p class="surface-copy">Reusable patterns this story draws on. None are recorded yet.</p>
+              <p class="empty-copy">No tropes recorded.</p>
+              <button class="btn btn-outline btn-sm" type="button">Edit story tropes</button>
+            </section>
+          </div>
+          <section class="surface" aria-labelledby="empty-sections-title" style="margin-top:var(--grid-gap)">
+            <p class="surface-kicker">Structure</p>
+            <h2 class="surface-title" id="empty-sections-title">No sections yet</h2>
+            <p class="surface-copy">Sections appear here once a starting structure is applied or the first one is added. Scenes are written inside Sections.</p>
+            <button class="btn btn-outline btn-sm" type="button">Open sections</button>
+          </section>
+        </section>
+
+        <!-- ================= CHARACTERS ================= -->
+        <section data-screen="characters" aria-label="Characters">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Universe Bible</p>
+              <h1>Characters <span class="title-count">19</span></h1>
+              <p class="page-desc">People and other minds recorded in Meridian.</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Add character</button>
+            </div>
+          </div>
+          <form class="filter" onsubmit="return false">
+            <div class="control grow"><label for="find-character">Find characters</label><input id="find-character" placeholder="Name, description, or tag"></div>
+            <div class="control"><label for="faction">Faction</label><select id="faction"><option>Any faction</option><option>The Fifth Cabinet</option><option>The Ashen Court</option></select></div>
+            <div class="control"><label for="tag">Tag</label><select id="tag"><option>Any tag</option><option>Protagonist</option><option>Archivist</option></select></div>
+            <button class="btn btn-outline" type="submit">Filter characters</button>
+            <a class="clear" href="#">Clear filters</a>
+          </form>
+          <div class="result-note"><span>Showing 6 of 19 characters.</span><span>Ordered by name</span></div>
+          <div class="list">
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Elaine Prosser</a><p class="row-desc">Archivist who catalogues the cabinet's contents and remembers what the index omits.</p></div>
+              <div class="row-side"><span class="chip strong">Protagonist</span><span class="chip">Fifth Cabinet</span><span class="count-pill">4 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Elaine Prosser">⋯</button></div>
+            </div>
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Maren Kessler</a><p class="row-desc">Keeper of the western stacks, suspicious of anyone who asks for a sealed drawer.</p></div>
+              <div class="row-side"><span class="chip">Fifth Cabinet</span><span class="count-pill">4 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Maren Kessler">⋯</button></div>
+            </div>
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Renata Cordeiro</a><p class="row-desc">A cartographer whose maps record rooms that the building no longer contains.</p></div>
+              <div class="row-side"><span class="chip strong">Cartographer</span><span class="count-pill">4 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Renata Cordeiro">⋯</button></div>
+            </div>
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Yannai Su</a><p class="row-desc">A courier carrying letters between the cabinet and the harbour.</p></div>
+              <div class="row-side"><span class="chip">Courier</span><span class="count-pill">4 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Yannai Su">⋯</button></div>
+            </div>
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Tobias Vale</a><p class="row-desc">Former archivist, now the only person who admits the index has gaps.</p></div>
+              <div class="row-side"><span class="chip">Fifth Cabinet</span><span class="count-pill">3 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Tobias Vale">⋯</button></div>
+            </div>
+            <div class="row-item">
+              <div class="row-main"><a class="row-name" href="#">Sister Amaranth</a><p class="row-desc">A visitor from the Ashen Court who asks about the cabinet's oldest lock.</p></div>
+              <div class="row-side"><span class="chip">Ashen Court</span><span class="count-pill">2 scenes</span><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Sister Amaranth">⋯</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAGS TREE ================= -->
+        <section data-screen="tags" aria-label="Tags tree">
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Configuration</p>
+              <h1>Tags <span class="title-count">42</span></h1>
+              <p class="page-desc">Taxonomies shared by Meridian and its stories. Tags are optional on every record.</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Add tag</button>
+            </div>
+          </div>
+          <nav class="tabs" aria-label="Tag scope">
+            <a class="active" href="#" aria-current="page">Universe tags</a>
+            <a href="#">Story tags</a>
+          </nav>
+          <p class="page-desc" style="margin:0 0 var(--section-gap)">Character tags organize the cast. The type switch is not shown here; backlog item 99 owns its treatment.</p>
+          <form class="filter" onsubmit="return false">
+            <div class="control grow"><label for="find-tag">Find tags</label><input id="find-tag" placeholder="Tag name"></div>
+            <button class="btn btn-outline" type="submit">Filter tags</button>
+            <a class="clear" href="#">Clear filters</a>
+          </form>
+          <div class="tree">
+            <div class="tree-row" style="--depth:0">
+              <div class="name"><span class="twisty">▾</span><span class="dot"></span>Characters<span class="count-pill">4 tags</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Characters">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:1">
+              <div class="name"><span class="twisty"></span><span class="dot"></span>Protagonist<span class="count-pill">6 characters</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Protagonist">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:1">
+              <div class="name"><span class="twisty"></span><span class="dot"></span>Antagonist<span class="count-pill">2 characters</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Antagonist">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:1">
+              <div class="name"><span class="twisty"></span><span class="dot"></span>Supporting<span class="count-pill">9 characters</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Supporting">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:0">
+              <div class="name"><span class="twisty">▸</span><span class="dot"></span>Factions<span class="count-pill">3 tags</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Factions">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:0">
+              <div class="name"><span class="twisty">▸</span><span class="dot"></span>Locations<span class="count-pill">5 tags</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Locations">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:0">
+              <div class="name"><span class="twisty">▸</span><span class="dot"></span>Events<span class="count-pill">4 tags</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Events">⋯</button></div>
+            </div>
+            <div class="tree-row" style="--depth:0">
+              <div class="name"><span class="twisty">▸</span><span class="dot"></span>Items<span class="count-pill">2 tags</span></div>
+              <div class="side"><a class="details-link" href="#">Details</a><button class="btn icon-btn" type="button" aria-label="Actions for Items">⋯</button></div>
+            </div>
+          </div>
+          <p class="aside-note" style="margin-top:var(--gap)">Every row keeps its Details link and overflow menu visible at every access level. Touch insertion targets stay 44×44.</p>
+        </section>
+
+        <!-- ================= CHARACTER DETAILS ================= -->
+        <section data-screen="character" aria-label="Character details">
+          <a class="backlink" href="#">← All characters</a>
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Character</p>
+              <h1>Elaine Prosser</h1>
+              <p class="page-desc">Archivist · The Fifth Cabinet · Meridian</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Edit character</button>
+              <button class="btn btn-outline" type="button">Discuss</button>
+              <button class="btn icon-btn" type="button" aria-label="More character actions">⋯</button>
+            </div>
+          </div>
+          <div class="details-grid">
+            <div>
+              <section class="surface" aria-labelledby="identity-title">
+                <div class="identity">
+                  <div class="portrait" aria-hidden="true">EP</div>
+                  <div>
+                    <p class="surface-kicker">Identity</p>
+                    <h2 class="surface-title" id="identity-title">Elaine Prosser</h2>
+                    <dl class="facts">
+                      <div class="fact"><dt>Faction</dt><dd><a href="#">The Fifth Cabinet</a></dd></div>
+                      <div class="fact"><dt>Status</dt><dd>Alive</dd></div>
+                      <div class="fact"><dt>First appearance</dt><dd><a href="#">Scene 4 · The Locked Cabinet</a></dd></div>
+                      <div class="fact"><dt>Scenes</dt><dd>4</dd></div>
+                      <div class="fact"><dt>Stories</dt><dd>1 · The Fifth Cabinet</dd></div>
+                      <div class="fact"><dt>Tags</dt><dd><span class="chip strong">Protagonist</span> <span class="chip">Archivist</span></dd></div>
+                    </dl>
+                  </div>
+                </div>
+              </section>
+              <section class="surface related" aria-labelledby="profile-title">
+                <p class="surface-kicker">Profile</p>
+                <h2 class="surface-title" id="profile-title">Recorded description</h2>
+                <div class="prose" style="margin-top:var(--gap)">
+                  <p>Elaine keeps the cabinet's index, and she is the only archivist who writes down what the index leaves out. She arrives at <a class="mention" href="#">the Fifth Cabinet</a> before dawn, when the reading room is still cold and the catalogue drawers are easy to open.</p>
+                  <p>Her notes on <a class="mention" href="#">Maren Kessler</a> are careful, but they never mention the sealed drawer in the western stacks. <a class="mention" href="#">Tobias Vale</a> says that omission is the closest thing to a confession she has ever written.</p>
+                </div>
+              </section>
+              <section class="surface related" aria-labelledby="appears-title">
+                <div class="related-head"><h2 id="appears-title">Appears in scenes</h2><span class="count-pill">4 scenes</span></div>
+                <ul class="mini-list">
+                  <li><a href="#"><span class="pos">4</span>The Locked Cabinet<span class="muted">1 element</span></a></li>
+                  <li><a href="#"><span class="pos">7</span>A Room Without a Map<span class="muted">2 elements</span></a></li>
+                  <li><a href="#"><span class="pos">12</span>The Index of Missing Things<span class="muted">3 elements</span></a></li>
+                  <li><a href="#"><span class="pos">18</span>What the Drawer Kept<span class="muted">1 element</span></a></li>
+                </ul>
+              </section>
+            </div>
+            <aside>
+              <section class="surface" aria-labelledby="relations-title">
+                <p class="surface-kicker">Connections</p>
+                <h2 class="surface-title" id="relations-title">Relations</h2>
+                <ul class="mini-list" style="margin-top:var(--gap)">
+                  <li><a href="#">Elaine Prosser → Maren Kessler<span class="muted">trusts</span></a></li>
+                  <li><a href="#">Elaine Prosser → Tobias Vale<span class="muted">avoids</span></a></li>
+                </ul>
+              </section>
+              <section class="surface" aria-labelledby="ownerships-title">
+                <p class="surface-kicker">Universe index</p>
+                <h2 class="surface-title" id="ownerships-title">Appears in</h2>
+                <p class="surface-copy">1 story · 4 scenes · 2 relations</p>
+              </section>
+              <section class="surface" aria-labelledby="profile-help-title">
+                <p class="surface-kicker">Reading note</p>
+                <h2 class="surface-title" id="profile-help-title">Guest view</h2>
+                <p class="surface-copy">A guest sees the same facts and links, without the edit or discuss controls.</p>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ================= SCENE DETAILS (READ-ONLY) ================= -->
+        <section data-screen="scene-details" aria-label="Scene details, read-only">
+          <a class="backlink" href="#">← All scenes</a>
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Story: The Fifth Cabinet</p>
+              <h1>The Locked Cabinet <span class="pos">4</span></h1>
+              <p class="page-desc">Draft · Act I / The Archive · 412 words</p>
+            </div>
+          </div>
+          <p class="readonly-note">You are reading this scene as a guest. Editing controls are not shown, but every fact and link remains visible.</p>
+          <section class="surface" aria-labelledby="readonly-elements-title">
+            <div class="related-head"><h2 id="readonly-elements-title" style="font-size:var(--h2-size)">Elements</h2><span class="count-pill">2 elements</span></div>
+            <article class="element">
+              <div class="element-head"><span class="kind">Narration</span></div>
+              <div class="prose"><p>The reading room was empty except for <a class="mention" href="#">Elaine Prosser</a>, who had already opened every drawer in the catalogue except one.</p></div>
+            </article>
+            <article class="element">
+              <div class="element-head"><span class="kind">Dialogue</span></div>
+              <div class="prose"><p>“The index is not wrong,” she said. “It is only incomplete.”</p></div>
+            </article>
+          </section>
+          <section class="surface" aria-labelledby="readonly-facts-title" style="margin-top:var(--grid-gap)">
+            <p class="surface-kicker">Scene record</p>
+            <h2 class="surface-title" id="readonly-facts-title">Identity and facts</h2>
+            <dl class="facts">
+              <div class="fact"><dt>Position</dt><dd>4 of 24</dd></div>
+              <div class="fact"><dt>Point of view</dt><dd>Elaine Prosser</dd></div>
+              <div class="fact"><dt>In-world time</dt><dd>Not recorded</dd></div>
+              <div class="fact"><dt>Location</dt><dd>The Archive</dd></div>
+              <div class="fact"><dt>Events</dt><dd>No events linked</dd></div>
+              <div class="fact"><dt>Tags</dt><dd><span class="chip">Discovery</span> <span class="chip">Archive</span></dd></div>
+            </dl>
+          </section>
+          <section class="surface" aria-labelledby="readonly-contract-title" style="margin-top:var(--grid-gap)">
+            <p class="surface-kicker">Drafting contract</p>
+            <h2 class="surface-title" id="readonly-contract-title">This scene in one line</h2>
+            <div class="prose" style="margin-top:var(--gap)"><p>Elaine finds the drawer that the index does not list, and chooses not to write it down.</p></div>
+          </section>
+        </section>
+
+        <!-- ================= SCENE EDITOR ================= -->
+        <section data-screen="scene" aria-label="Scene editor">
+          <a class="backlink" href="#">← All scenes</a>
+          <div class="page-head">
+            <div>
+              <p class="eyebrow">Story: The Fifth Cabinet</p>
+              <h1>Edit scene · The Locked Cabinet <span class="pos">4</span></h1>
+              <p class="page-desc">Draft scene · Section: Act I / The Archive</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn" type="button">Save changes</button>
+              <button class="btn btn-outline" type="button">Cancel</button>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div>
+              <section class="surface" aria-labelledby="scene-fields-title">
+                <p class="surface-kicker">Scene record</p>
+                <h2 class="surface-title" id="scene-fields-title">The essentials</h2>
+                <div style="margin-top:var(--gap)">
+                  <div class="form-row"><label for="scene-title">Title</label><input class="field-input" id="scene-title" value="The Locked Cabinet"></div>
+                  <div class="form-row"><label for="scene-desc">Short description</label><input class="field-input" id="scene-desc" value="Elaine finds the drawer that the index does not list."></div>
+                  <div class="form-row"><label for="scene-status">Status</label><select class="field-select" id="scene-status"><option>Draft</option><option>Revised</option><option>Final</option></select></div>
+                  <div class="form-row"><label for="scene-section">Section</label><select class="field-select" id="scene-section"><option>Act I / The Archive</option><option>Act I / The Harbour</option></select></div>
+                </div>
+              </section>
+              <section class="surface" aria-labelledby="elements-title" style="margin-top:var(--grid-gap)">
+                <div class="related-head"><h2 id="elements-title" style="font-size:var(--h2-size)">Elements</h2><span class="count-pill">2 elements</span></div>
+                <article class="element">
+                  <div class="element-head"><span class="kind">Narration</span><span class="spacer"></span><button class="btn btn-quiet btn-sm" type="button">Edit</button><button class="btn icon-btn" type="button" aria-label="Narration actions">⋯</button></div>
+                  <div class="prose"><p>The reading room was empty except for <a class="mention" href="#">Elaine Prosser</a>, who had already opened every drawer in the catalogue except one.</p></div>
+                </article>
+                <article class="element">
+                  <div class="element-head"><span class="kind">Dialogue</span><span class="spacer"></span><button class="btn btn-quiet btn-sm" type="button">Edit</button><button class="btn icon-btn" type="button" aria-label="Dialogue actions">⋯</button></div>
+                  <div class="prose"><p>“The index is not wrong,” she said. “It is only incomplete.”</p></div>
+                </article>
+                <button class="btn btn-outline btn-sm" type="button">Add element</button>
+                <div class="disclosure"><details><summary>Tags, plots, and events</summary><p>Optional references share one searchable picker. Tags remain optional.</p></details></div>
+                <div class="disclosure"><details><summary>Scene metadata</summary><p>Point of view, in-world time, and location are recorded here.</p></details></div>
+              </section>
+            </div>
+            <aside class="surface">
+              <p class="surface-kicker">Scene facts</p>
+              <h2 class="surface-title">At a glance</h2>
+              <dl class="facts">
+                <div class="fact"><dt>Position</dt><dd>4 of 24</dd></div>
+                <div class="fact"><dt>Point of view</dt><dd>Elaine Prosser</dd></div>
+                <div class="fact"><dt>In-world time</dt><dd>Not recorded</dd></div>
+                <div class="fact"><dt>Location</dt><dd>The Archive</dd></div>
+                <div class="fact"><dt>Words</dt><dd>412</dd></div>
+              </dl>
+              <p class="aside-note" style="margin-top:var(--gap)"><strong>Read-only state:</strong> a guest sees the prose and facts, but this form is replaced by the Scene details view and no editing controls render.</p>
+            </aside>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <aside class="rail rail-right" aria-label="Universe tools">
+      <div class="scope-block">
+        <span class="scope-kicker" style="color:var(--scope-tools)">Universe tools</span>
+        <span class="scope-name">Meridian</span>
+      </div>
+      <p class="inspector" style="border-top:0;margin-top:0;padding-top:0">The inspector below shows what the page in front of you is about: a story's sections and scenes, and a record's relations and ownerships.</p>
+      <div class="nav-heading tools">Configuration</div>
+      <ul class="nav-list">
+        <li><a href="#"><span class="icon">⌗</span>Tags</a></li>
+        <li><a href="#"><span class="icon">◔</span>Members</a></li>
+        <li><a href="#"><span class="icon">⇩</span>Backup</a></li>
+      </ul>
+      <div class="nav-heading tools">Collaboration</div>
+      <ul class="nav-list">
+        <li><a href="#"><span class="icon">✉</span>Review requests<span class="count">0</span></a></li>
+      </ul>
+      <div class="nav-heading tools">Inspector</div>
+      <div class="inspector">
+        <dl>
+          <dt>Sections</dt><dd>19</dd>
+          <dt>Plots</dt><dd>7</dd>
+          <dt>Scenes</dt><dd>24</dd>
+        </dl>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="tools-drawer" id="tools-drawer" aria-label="Universe tools" aria-hidden="true">
+  <div class="drawer-head"><h2>Universe tools</h2><button class="btn btn-outline btn-sm" type="button" data-close-tools>Close</button></div>
+  <p class="aside-note">The one-rail shell opens this drawer from the top bar at every width. Configuration, collaboration, and the inspector live here instead of in a permanent third column.</p>
+  <div class="nav-heading tools">Configuration</div>
+  <ul class="nav-list">
+    <li><a href="#"><span class="icon">⌗</span>Tags</a></li>
+    <li><a href="#"><span class="icon">◔</span>Members</a></li>
+    <li><a href="#"><span class="icon">⇩</span>Backup</a></li>
+  </ul>
+  <div class="nav-heading tools">Collaboration</div>
+  <ul class="nav-list"><li><a href="#"><span class="icon">✉</span>Review requests<span class="count">0</span></a></li></ul>
+  <div class="nav-heading tools">Inspector</div>
+  <div class="inspector"><dl><dt>Sections</dt><dd>19</dd><dt>Plots</dt><dd>7</dd><dt>Scenes</dt><dd>24</dd></dl></div>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var mock = document.querySelector(".mock");
+    var drawer = document.getElementById("tools-drawer");
+    var params = new URLSearchParams(location.search);
+    var textOriginals = new WeakMap();
+    var attrOriginals = new WeakMap();
+    var localeMap = {
+      "Menu": "Menú", "Account": "Cuenta", "Tools": "Herramientas", "Draft": "Borrador",
+      "Account ⌄": "Cuenta ⌄", "Characters": "Personajes",
+      "Story overview": "Resumen de la historia", "This universe⌄": "Este universo⌄",
+      "Universe:": "Universo:", "Story:": "Historia:", "Search this universe": "Buscar en este universo",
+      "This universe": "Este universo", "Current universe": "Universo actual",
+      "Universe Bible": "Biblia del universo", "Factions": "Facciones", "Locations": "Ubicaciones",
+      "Events": "Eventos", "Items": "Objetos", "Current story": "Historia actual",
+      "Story Workspace": "Espacio de la historia", "Sections": "Secciones", "Scenes": "Escenas",
+      "Plots": "Tramas", "Export": "Exportar", "Story Analytics": "Analítica de la historia",
+      "Narrative order": "Orden narrativo", "Appearances": "Apariciones",
+      "Scene matrix": "Matriz de escenas", "Universe tools": "Herramientas del universo",
+      "Configuration": "Configuración", "Tags": "Etiquetas", "Members": "Miembros",
+      "Backup": "Copia de seguridad", "Collaboration": "Colaboración",
+      "Review requests": "Solicitudes de revisión", "Inspector": "Inspector",
+      "Story workspace": "Espacio de la historia", "Open scenes": "Abrir escenas",
+      "Edit story": "Editar historia", "Discuss": "Comentar", "Structure": "Estructura",
+      "Story structure": "Estructura de la historia", "Planning": "Planificación",
+      "Trope references": "Referencias de tropos", "No tropes recorded.": "No hay tropos registrados.",
+      "Edit story tropes": "Editar tropos de la historia", "Story balance": "Equilibrio de la historia",
+      "Scenes per character": "Escenas por personaje", "Find characters": "Buscar personajes",
+      "Name, description, or tag": "Nombre, descripción o etiqueta", "Faction": "Facción",
+      "Any faction": "Cualquier facción", "Tag": "Etiqueta", "Any tag": "Cualquier etiqueta",
+      "Filter characters": "Filtrar personajes", "Clear filters": "Borrar filtros",
+      "Add character": "Añadir personaje", "Details": "Detalles",
+      "Showing 6 of 19 characters.": "Mostrando 6 de 19 personajes.",
+      "Ordered by name": "Ordenado por nombre", "All characters": "Todos los personajes",
+      "Character": "Personaje", "Edit character": "Editar personaje", "Identity": "Identidad",
+      "Alive": "Vivo", "First appearance": "Primera aparición", "Stories": "Historias",
+      "Profile": "Perfil", "Recorded description": "Descripción registrada",
+      "Appears in scenes": "Aparece en escenas", "Connections": "Conexiones",
+      "Relations": "Relaciones", "Universe index": "Índice del universo",
+      "Appears in": "Aparece en", "Reading note": "Nota de lectura", "Guest view": "Vista de invitado",
+      "All scenes": "Todas las escenas", "Elements": "Elementos", "Narration": "Narración",
+      "Dialogue": "Diálogo", "Scene record": "Registro de la escena",
+      "Identity and facts": "Identidad y datos", "Position": "Posición",
+      "Point of view": "Punto de vista", "In-world time": "Tiempo interno",
+      "Location": "Ubicación", "Drafting contract": "Contrato de redacción",
+      "This scene in one line": "Esta escena en una línea", "The essentials": "Lo esencial",
+      "Title": "Título", "Short description": "Descripción breve", "Section": "Sección",
+      "Save changes": "Guardar cambios", "Cancel": "Cancelar", "At a glance": "De un vistazo",
+      "Words": "Palabras", "Add element": "Añadir elemento",
+      "Tags, plots, and events": "Etiquetas, tramas y eventos",
+      "Scene metadata": "Metadatos de la escena", "Scene facts": "Datos de la escena",
+      "Universe tags": "Etiquetas del universo", "Story tags": "Etiquetas de la historia",
+      "Find tags": "Buscar etiquetas", "Tag name": "Nombre de la etiqueta",
+      "Filter tags": "Filtrar etiquetas", "Add tag": "Añadir etiqueta", "Start here": "Empieza aquí",
+      "Two ways to begin": "Dos formas de empezar",
+      "Apply a starting structure": "Aplicar una estructura inicial",
+      "Build it yourself": "Crearla tú mismo", "No sections yet": "Aún no hay secciones",
+      "Story planning": "Planificación de la historia", "Untitled Story": "Historia sin título",
+      "Read-only state:": "Estado de solo lectura:", "Open menu": "Abrir menú",
+      "Notifications, 3 unread": "Notificaciones, 3 sin leer",
+      "More story actions": "Más acciones de la historia",
+      "More character actions": "Más acciones del personaje",
+      "scenes": "escenas", "sections": "secciones", "plots": "tramas",
+      "characters": "personajes", "elements": "elementos", "tags": "etiquetas",
+      "stories": "historias", "words": "palabras", "relations": "relaciones"
+    };
+
+    function translateCounts(value) {
+      return value
+        .replace(/\b([\d,]+) of ([\d,]+)\b/g, "$1 de $2")
+        .replace(/\b([\d,]+) scenes?\b/g, "$1 escenas")
+        .replace(/\b([\d,]+) sections?\b/g, "$1 secciones")
+        .replace(/\b([\d,]+) plots?\b/g, "$1 tramas")
+        .replace(/\b([\d,]+) characters?\b/g, "$1 personajes")
+        .replace(/\b([\d,]+) elements?\b/g, "$1 elementos")
+        .replace(/\b([\d,]+) tags?\b/g, "$1 etiquetas")
+        .replace(/\b([\d,]+) stories?\b/g, "$1 historias")
+        .replace(/\b([\d,]+) words?\b/g, "$1 palabras")
+        .replace(/\b([\d,]+) relations?\b/g, "$1 relaciones");
+    }
+
+    function applyLocale(value) {
+      var walker = document.createTreeWalker(mock, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          var parent = node.parentElement;
+          if (!parent || parent.closest("script, style, .prose, .surface-copy, .row-desc")) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      while (walker.nextNode()) {
+        var node = walker.currentNode;
+        if (!textOriginals.has(node)) textOriginals.set(node, node.nodeValue);
+        var original = textOriginals.get(node);
+        if (value === "es") {
+          var trimmed = original.trim();
+          var replacement = localeMap[trimmed];
+          node.nodeValue = replacement ? original.replace(trimmed, replacement) : translateCounts(original);
+        } else {
+          node.nodeValue = original;
+        }
+      }
+      mock.querySelectorAll("[placeholder], [aria-label], [title]").forEach(function (element) {
+        if (!attrOriginals.has(element)) attrOriginals.set(element, {});
+        var originals = attrOriginals.get(element);
+        ["placeholder", "aria-label", "title"].forEach(function (attr) {
+          if (!element.hasAttribute(attr)) return;
+          if (!(attr in originals)) originals[attr] = element.getAttribute(attr);
+          var original = originals[attr];
+          if (value === "es") {
+            element.setAttribute(attr, localeMap[original] || original);
+          } else {
+            element.setAttribute(attr, original);
+          }
+        });
+      });
+      root.setAttribute("lang", value === "es" ? "es" : "en");
+    }
+
+    function setButton(selector, attr, value) {
+      document.querySelectorAll(selector).forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.getAttribute(attr) === value));
+      });
+    }
+    function setDirection(value) {
+      root.setAttribute("data-dir", value);
+      setButton("[data-set-dir]", "data-set-dir", value);
+    }
+    function setTheme(value) {
+      root.setAttribute("data-theme", value);
+      setButton("[data-set-theme]", "data-set-theme", value);
+    }
+    function setScreen(value) {
+      mock.setAttribute("data-active", value);
+      setButton("[data-set-screen]", "data-set-screen", value);
+    }
+    function setLocale(value) {
+      applyLocale(value);
+      setButton("[data-set-locale]", "data-set-locale", value);
+    }
+    function closeDrawer() {
+      drawer.classList.remove("open");
+      drawer.setAttribute("aria-hidden", "true");
+    }
+
+    document.querySelectorAll("[data-set-dir]").forEach(function (button) {
+      button.addEventListener("click", function () { setDirection(button.getAttribute("data-set-dir")); });
+    });
+    document.querySelectorAll("[data-set-theme]").forEach(function (button) {
+      button.addEventListener("click", function () { setTheme(button.getAttribute("data-set-theme")); });
+    });
+    document.querySelectorAll("[data-set-screen]").forEach(function (button) {
+      button.addEventListener("click", function () { setScreen(button.getAttribute("data-set-screen")); });
+    });
+    document.querySelectorAll("[data-set-locale]").forEach(function (button) {
+      button.addEventListener("click", function () { setLocale(button.getAttribute("data-set-locale")); });
+    });
+    document.querySelectorAll("[data-open-tools]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        drawer.classList.add("open");
+        drawer.setAttribute("aria-hidden", "false");
+      });
+    });
+    document.querySelectorAll("[data-close-tools]").forEach(function (button) {
+      button.addEventListener("click", closeDrawer);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeDrawer();
+    });
+
+    if (params.get("dir")) setDirection(params.get("dir"));
+    if (params.get("theme")) setTheme(params.get("theme"));
+    if (params.get("screen")) setScreen(params.get("screen"));
+    if (params.get("locale")) setLocale(params.get("locale"));
+    if (params.get("chrome") === "0") document.body.classList.add("presentation");
+  })();
+</script>
+</body>
+</html>

@@ -15,8 +15,8 @@ visible is scoped to that choice.
    route — a short statement of the continuity promise, the universe/story model, the collaboration
    rules, and the public universes that can be read without an account — while a signed-in reader
    gets the plain **chooser**, whose only task is selecting or creating a universe.
-2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
-   and as a left offcanvas below `lg`. At `xl` and above, a 14rem right utility sidebar is also
+2. **Universe selected** (`Current.universe`): a 14.5rem workspace sidebar appears on large screens
+   and as a left offcanvas below `lg`. At `xl` and above, a 12.75rem right utility sidebar is also
    visible.
 3. **Story selected** (`Current.story`): the left sidebar gains the **Story workspace** (Story
    overview, Sections, Scenes, Plots, Export) and the **Story analytics** block (Narrative order,
@@ -120,17 +120,17 @@ always knows which scope a link belongs to:
 
 Configuration is **not** in this column: this one stays about universe and story content only.
 
-Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
-background and `aria-current="page"`. Placeholder entries are flat gray with no hover emphasis, and
-nothing here depends on hover. The sidebar never gains a create action: creation belongs to the page
-that lists the records.
+Real entries show `icon_text_count`; counts are aligned pills. Active entries use a 3px primary
+inline-start edge and a soft primary background, with `aria-current="page"`. Placeholder entries are
+flat gray with no hover emphasis, and nothing here depends on hover. The sidebar never gains a create
+action: creation belongs to the page that lists the records.
 
 ## Right sidebar — `app/views/layouts/_right_sidebar.html.erb`
 
-Renders only when `Current.universe` is present. It is a permanent 14rem column at `xl` and above,
+Renders only when `Current.universe` is present. It is a permanent 12.75rem column at `xl` and above,
 and a Bootstrap `offcanvas-end` below `xl` (opened from the **Tools** button on the mobile workspace
-bar). It is one continuous tools scope, so it opens with a green **Universe tools** context block and
-then the sections that follow it:
+bar). It is one continuous tools scope, so it opens with a green-accented **Universe tools** context
+block and then the sections that follow it:
 
 - **Configuration**: **Tags**, which opens the shared taxonomy workspace with **Universe Tags**
   selected by default and **Story Tags** for the story-scoped taxonomies, plus the universe

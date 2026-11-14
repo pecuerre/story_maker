@@ -292,32 +292,30 @@ modern visual direction. The stages are in suggested order, with owner decisions
 is prototyped and before it is rolled out. These are pending ideas, not approval for a redesign.
 Coordinate with the existing visual/task baseline and visual hierarchy audit rather than repeating
 the same observations; use their findings to inform the other UI/UX items. The agreed starting point
-is [visual_design_brief.md](visual_design_brief.md). The rendered interface has been audited, and its
+is [visual_design_brief.md](visual_design_brief.md). The rendered interface has been audited, its
 measured findings and screenshots are recorded in
-[delivery_history.md](delivery_history.md#2026-11-13).
+[delivery_history.md](delivery_history.md#2026-11-13), and the owner chose **Index** on 2026-11-14
+from [visual_directions.md](visual_directions.md), recorded in
+[ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md).
 
-89. **Explore and recommend visual directions.**
+90. **Review and refine the Index prototype.**
 
-   Present two or three distinct directions using representative screens, screenshots or prototypes,
-   with an explanation of tradeoffs and a recommended choice. For each, propose light/dark neutral,
-   accent, and semantic colors; font candidates, sizes, weights, line heights, and prose readability;
-   navigation and menu placement, page headers, content widths, and mobile layout; component treatments;
-   and a spacing and density scale. Check contrast and font licensing, loading, and fallbacks rather
-   than assuming they are suitable. Ask the owner to choose a direction before implementation.
-
-90. **Prototype the chosen design on representative screens.**
-
-   Apply the selected direction to the workspace shell and a small set of representative screens,
-   not the entire application. Review actual screenshots at useful desktop and mobile sizes, in both
-   themes, with zoom and keyboard focus; check translations and preserve existing workflows. Refine
-   the direction with the owner and obtain approval before a site-wide rollout.
+   Index now runs on the workspace shell, Story overview and empty overview, Characters list, Tags
+   tree, Character details, Scene details, and Scene editor; the built values are in
+   [visual_design.md](visual_design.md) and the temporary captures are in
+   `/tmp/opencode/visual-index-prototype-2026-11-14/shots/`. Walk the actual screens at desktop,
+   tablet, and phone widths in both themes, including the Spanish labels, zoom, and keyboard focus;
+   check the system-serif fallback on the machines the owner uses, the warm palette against
+   author-chosen tag colours, and the phone touch targets. Record the refinements here and apply
+   them to this prototype before item 91 translates the result into rollout slices.
 
 91. **Roll out the approved visual system in slices.**
 
-   Translate the approved prototype into the existing Bootstrap and theme-token system, then update
-   related screens in manageable groups. Validate accessibility, responsive behavior, translations,
-   and existing workflows as each slice lands. Keep changes reversible, avoid a new framework or
-   other dependencies unless justified, and update the owning design documentation as behavior changes.
+   Carry the prototype's Bootstrap and theme-token values through the remaining workspaces in
+   manageable groups, rather than restyling everything at once. Validate accessibility, responsive
+   behavior, translations, and existing workflows as each slice lands. Keep changes reversible,
+   avoid a new framework or other dependencies unless justified, and update the owning design
+   documentation as behavior changes.
 
 The 2026-11-13 audit also found three defects that do not depend on the direction. They are local
 inconsistencies with controls the pages already use, not approval to restyle a screen.

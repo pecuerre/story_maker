@@ -81,27 +81,31 @@ class StoryInterchangeTest < ActiveSupport::TestCase
       plot.sections.map(&:heading)
 
     # Chapters are directories, so the report carries the Story, the directory
-    # name, and the `#` heading its README supplies as the display name.
+    # name, and the reader-facing `full_title` its README supplies as the display
+    # name. `act` names the act Section that will hold it.
     assert_equal [ "01-arrival", "02-winter" ], report.chapters.map(&:slug)
     assert_equal [ "synthetic-story", "synthetic-story" ], report.chapters.map(&:story_slug)
-    assert_equal [ "The Arrival Gate", "Winter" ], report.chapters.map(&:name)
+    assert_equal [ "Chapter 1 - The Arrival Gate", "Chapter 2 - Winter" ], report.chapters.map(&:name)
+    assert_equal [ "Act I - The Anomaly", "Act II - The Race" ], report.chapters.map(&:act)
 
-    # A chapter README's frontmatter is its machine-readable record: `title`
-    # names the Section, `summary` is its short summary, and the other keys are
-    # carried in the description. Everything after the frontmatter is
-    # documentation and is skipped.
+    # A chapter README's frontmatter is its machine-readable record:
+    # `full_title` names the Section, `summary` is its short summary, `act`
+    # groups it, and the other keys are carried in the description. Everything
+    # after the frontmatter is documentation and is skipped.
     arrival = report.chapters.first
     assert_equal "Ada reaches the gate at the edge of the keep and follows the hall beyond it.",
       arrival.short_summary
-    assert_includes arrival.description, "act: I"
     assert_includes arrival.description, "band: 1"
     assert_includes arrival.description, "pov:\n- ada"
     assert_includes arrival.description, "locations:\n- keep"
     assert_includes arrival.description, "plots:\n- the-lantern"
     refute_includes arrival.description, "summary:"
     refute_includes arrival.description, "title:"
+    refute_includes arrival.description, "full_title:"
+    refute_includes arrival.description, "act:"
     refute_includes arrival.description, "Documentation for this chapter directory"
-    assert_nil report.chapters.last.short_summary
+    assert_equal "The season closes over the keep and the lantern has to last it.",
+      report.chapters.last.short_summary
     assert_nil report.chapters.last.description
 
     # A Scene is parsed like an entity too; its chapter and sequence are the

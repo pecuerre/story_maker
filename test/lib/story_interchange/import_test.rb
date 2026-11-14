@@ -317,34 +317,49 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     ], reported_items(StoryInterchange::Importers::Plots.reported(report))
   end
 
-  test "writes each chapter as a section and each scene with its point of view, location, and prose" do
+  test "writes each chapter as a section under its act and each scene with its point of view, location, and prose" do
     universe = import.call.universe
     story = universe.stories.find_by!(slug: "synthetic-story")
 
+    # The chapter's `act` names a Section of its own, created once per Story and
+    # act name, and the chapter is its child.
+    act_one = story.sections.find_by!(slug: "act-i-the-anomaly")
+    assert_equal "Act I - The Anomaly", act_one.name
+    assert_equal 0, act_one.position
+    assert_nil act_one.parent
+    assert_empty act_one.section_tags
+    act_two = story.sections.find_by!(slug: "act-ii-the-race")
+    assert_equal "Act II - The Race", act_two.name
+    assert_equal 1, act_two.position
+    assert_nil act_two.parent
+
     arrival = story.sections.find_by!(slug: "01-arrival")
-    assert_equal "The Arrival Gate", arrival.name
+    # `full_title` is the reader-facing chapter name.
+    assert_equal "Chapter 1 - The Arrival Gate", arrival.name
+    assert_equal act_one, arrival.parent
     assert_equal 0, arrival.position
-    assert_nil arrival.parent
     # The README's frontmatter is the machine-readable record: `summary` fills
     # `short_summary`, and the other keys are carried in the description.
     # Everything after the frontmatter is documentation and is skipped.
     assert_equal "Ada reaches the gate at the edge of the keep and follows the hall beyond it.",
       arrival.short_summary
-    assert_includes arrival.description, "act: I"
     assert_includes arrival.description, "band: 1"
     assert_includes arrival.description, "pov:\n- ada"
+    refute_includes arrival.description, "act:"
+    refute_includes arrival.description, "full_title:"
     assert_not_includes arrival.description, "summary:"
     assert_not_includes arrival.description, "title:"
     assert_not_includes arrival.description, "Documentation for this chapter directory"
     assert_not_includes arrival.description, "## What is here"
 
     winter = story.sections.find_by!(slug: "02-winter")
-    assert_equal "Winter", winter.name
-    assert_equal 1, winter.position
+    assert_equal "Chapter 2 - Winter", winter.name
+    assert_equal act_two, winter.parent
+    assert_equal 0, winter.position
     assert_empty winter.scenes
 
     # The run creates one Chapter Section Tag per Story and labels every imported
-    # chapter with it.
+    # chapter with it. The act Sections are structural parents, not chapters.
     chapter_tag = story.section_tags.find_by!(slug: "chapter")
     assert_equal "Chapter", chapter_tag.name
     assert_equal [ chapter_tag ], story.section_tags.to_a
@@ -408,6 +423,25 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     all_bodies = gate_elements.map(&:body).join("\n") + hall_elements.map(&:body).join("\n")
     assert_not_includes all_bodies, "## The gate"
     assert_not_includes all_bodies, "DRAFTING CONTRACT"
+  end
+
+  test "keeps a chapter without an act at the top level and falls back to its title" do
+    write("stories/synthetic-story/chapters/03-spring/README.md", <<~MARKDOWN)
+      ---
+      title: Chapter 03 — Spring
+      summary: A chapter from an older source.
+      ---
+
+      # Chapter 03 — Spring
+    MARKDOWN
+
+    story = import.call.universe.stories.find_by!(slug: "synthetic-story")
+    spring = story.sections.find_by!(slug: "03-spring")
+
+    assert_equal "Spring", spring.name
+    assert_nil spring.parent
+    assert_equal 2, spring.position
+    assert_equal "A chapter from an older source.", spring.short_summary
   end
 
   test "writes one event per scene, dates it from moment, and links it to the scene" do
@@ -584,7 +618,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     # A chapter README's body is documentation, so nothing from it is reported.
     assert_empty reported_items(StoryInterchange::Importers::Sections.reported(report))
     section_list = StoryInterchange::Importers::Sections.records(report)
-    assert_equal [ "The Arrival Gate", "Winter" ], section_list.map(&:label)
+    assert_equal [ "Chapter 1 - The Arrival Gate", "Chapter 2 - Winter" ], section_list.map(&:label)
     assert_equal [ false, false ], section_list.map(&:reported?)
 
     plots = reported_items(StoryInterchange::Importers::Plots.reported(report))
@@ -627,7 +661,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     # The chapter writes its frontmatter whole, so its documentation body is
     # never a note either.
     arrival = StoryInterchange::Importers::Sections.records(report).first
-    assert_equal "The Arrival Gate", arrival.label
+    assert_equal "Chapter 1 - The Arrival Gate", arrival.label
     assert_empty arrival.notes
     assert_not arrival.reported?
   end

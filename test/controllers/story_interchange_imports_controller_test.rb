@@ -92,9 +92,9 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/\d+ words/, response.body)
     # The chapter README's body is documentation, so neither it nor its
     # subsection is reported beside the Section the run writes from the
-    # frontmatter. The chapter with no README is still listed.
-    assert_select "li", text: /The Arrival Gate/
-    assert_select "li", text: /Winter/
+    # frontmatter.
+    assert_select "li", text: /Chapter 1 - The Arrival Gate/
+    assert_select "li", text: /Chapter 2 - Winter/
     assert_not_includes response.body, "What is here"
     assert_includes response.body, "Records and notes"
     assert_not_includes response.body, "keep: Open questions"
@@ -153,9 +153,9 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
     assert_select "li", text: /The Wardens/
-    assert_select "li", text: /The Arrival Gate/
+    assert_select "li", text: /Chapter 1 - The Arrival Gate/
     assert_select "li", text: /Ada/
-    assert_select "li", text: /Winter/
+    assert_select "li", text: /Chapter 2 - Winter/
     assert_not_includes response.body, "What is here"
     assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
@@ -175,13 +175,13 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :see_other
     run = StoryInterchangeRun.sole
-    record = run.slices.flat_map(&:records).find { |candidate| candidate.label == "The Arrival Gate" }
+    record = run.slices.flat_map(&:records).find { |candidate| candidate.label == "Chapter 1 - The Arrival Gate" }
     assert_empty record.notes
     assert_not record.reported?
 
     follow_redirect!
     assert_response :success
-    assert_select "li", text: /The Arrival Gate/
+    assert_select "li", text: /Chapter 1 - The Arrival Gate/
     assert_no_match(/Unmapped note/, response.body)
   end
 

@@ -611,6 +611,7 @@ module StoryInterchange
             story_slug: story_slug,
             slug: chapter,
             name: chapter_name(chapter, document, frontmatter),
+            act: chapter_act(frontmatter),
             short_summary: chapter_short_summary(frontmatter),
             description: chapter_description(frontmatter)
           )
@@ -632,14 +633,26 @@ module StoryInterchange
         document&.frontmatter.to_h.transform_keys(&:to_s)
       end
 
-      # `title` names the Section. A README without frontmatter still falls back
-      # to its `#` heading, and then to the slug part, so an older source keeps
-      # importing.
+      # `full_title` names the Section: the reader-facing chapter title, such as
+      # `Chapter 1 - The Watch`. A README without it still falls back to
+      # `title`, whose leading `Chapter NN —` is presentation and is removed,
+      # then to its `#` heading, and then to the slug part, so an older source
+      # keeps importing. `act` names the parent Section and is read separately.
       def chapter_name(slug, document, frontmatter)
+        full_title = frontmatter["full_title"].to_s.strip
+        return full_title if full_title.present?
+
         heading = frontmatter["title"].to_s.strip
         heading = document&.title.to_s.strip if heading.blank?
         heading = heading.sub(/\Achapter\s+\d{2}\s*[—–:-]\s*/i, "").strip
         heading.presence || slug.sub(/\A\d{2}-/, "").tr("-", " ").titleize
+      end
+
+      # The act the chapter belongs to, such as `Act I - The Anomaly`. It is the
+      # name of the parent Section the import creates, and a blank value leaves
+      # the chapter top-level for an older source that names no act.
+      def chapter_act(frontmatter)
+        frontmatter["act"].to_s.strip.presence
       end
 
       def chapter_short_summary(frontmatter)
@@ -647,10 +660,12 @@ module StoryInterchange
       end
 
       # The rest of the frontmatter is carried whole in the Section's
-      # description as YAML; `title` already names the Section and `summary`
-      # already fills `short_summary`.
+      # description as YAML; `full_title` already names the Section, `summary`
+      # already fills `short_summary`, and `act` is the parent Section's name, so
+      # the three are consumed rather than repeated. `title` is the short name
+      # `full_title` is built from, so it is consumed too.
       def chapter_description(frontmatter)
-        metadata = frontmatter.except("title", "summary")
+        metadata = frontmatter.except("title", "full_title", "summary", "act")
         return nil if metadata.empty?
 
         metadata.to_yaml.sub(/\A---\n/, "").strip.presence

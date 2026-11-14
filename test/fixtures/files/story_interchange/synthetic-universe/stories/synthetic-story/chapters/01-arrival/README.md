@@ -1,8 +1,9 @@
 ---
 title: The Arrival Gate
+full_title: Chapter 1 - The Arrival Gate
 summary: >
   Ada reaches the gate at the edge of the keep and follows the hall beyond it.
-act: "I"
+act: "Act I - The Anomaly"
 band: 1
 pov:
   - ada

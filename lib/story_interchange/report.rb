@@ -50,10 +50,11 @@ module StoryInterchange
 
     # One chapter directory. A chapter has no record file, so its source facts
     # are the directory name, the Story that holds it, and the README's YAML
-    # frontmatter: `title` names it, `summary` is the Section's short summary,
-    # and every other key is carried in `description` as YAML. Everything after
-    # the frontmatter is documentation and is skipped.
-    Chapter = Data.define(:story_slug, :slug, :name, :short_summary, :description)
+    # frontmatter: `full_title` names it, `act` groups it under its act Section,
+    # `summary` is the Section's short summary, and every other key is carried in
+    # `description` as YAML. Everything after the frontmatter is documentation and
+    # is skipped.
+    Chapter = Data.define(:story_slug, :slug, :name, :act, :short_summary, :description)
 
     attr_reader :universe_slug, :universe_name, :stories, :chapters, :counts, :issues,
       :canon_rules, :canon_questions
@@ -84,9 +85,10 @@ module StoryInterchange
 
     # One chapter directory, in the source's sorted order. The order is the
     # Section position the import writes, and the README's frontmatter is what
-    # the Sections slice writes.
-    def add_chapter(story_slug:, slug:, name:, short_summary:, description:)
-      @chapters << Chapter.new(story_slug: story_slug, slug: slug, name: name,
+    # the Sections slice writes. `act` is the act Section the chapter sits under,
+    # or nil for a source that names no act.
+    def add_chapter(story_slug:, slug:, name:, act:, short_summary:, description:)
+      @chapters << Chapter.new(story_slug: story_slug, slug: slug, name: name, act: act,
         short_summary: short_summary, description: description)
     end
 

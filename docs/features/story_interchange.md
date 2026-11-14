@@ -113,17 +113,21 @@ turn it into a record by accident.
   column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
   child of that is a scene file `NN-slug.md`; a chapter's own `README.md` is documentation and is
-  not a scene, but its YAML frontmatter supplies the Section record. A chapter becomes one
-  top-level Section whose slug is the directory name (`01-arrival`) and whose name is the
-  frontmatter `title`, with the leading `Chapter NN —` removed (`Chapter 01 — The Arrival Gate` →
-  `The Arrival Gate`); without frontmatter the name falls back to the README's first `#` heading,
-  then to the slug part titleized (`01-arrival` → `Arrival`). The frontmatter `summary` fills the
-  Section's `short_summary`, and every other key is carried whole in its `description` as YAML,
-  with entity references resolved to record names like any other profile answer. Everything after
-  the closing `---` is documentation and is skipped, so a `##` subsection is neither imported nor
-  reported. Every imported chapter Section is labelled with the
-  Story's **Chapter** Section Tag, which the run creates once per Story. Chapters are written in
-  sorted directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
+  not a scene, but its YAML frontmatter supplies the Section record. Each chapter becomes one
+  Section whose slug is the directory name (`01-arrival`) and whose name is the frontmatter
+  `full_title` (`Chapter 1 - The Watch`); without `full_title` the name falls back to `title` with
+  the leading `Chapter NN —` removed (`Chapter 01 — The Arrival Gate` → `The Arrival Gate`), then to
+  the README's first `#` heading, then to the slug part titleized (`01-arrival` → `Arrival`). A
+  chapter's frontmatter `act` (`Act I - The Anomaly`) becomes a parent Section of that name, created
+  once per Story and act in first-chapter order, so the chapter Section is its child; a chapter with
+  no `act` stays top-level. The frontmatter `summary` fills the chapter Section's `short_summary`,
+  and every other key is carried whole in its `description` as YAML, with entity references
+  resolved to record names like any other profile answer. `full_title`, `title`, `summary`, and
+  `act` are consumed and not repeated there. Everything after the closing `---` is documentation
+  and is skipped, so a `##` subsection is neither imported nor reported. Every imported chapter
+  Section is labelled with the Story's **Chapter** Section Tag, which the run creates once per
+  Story; an act Section is an unlabeled parent. Chapters are written in sorted directory order.
+  Chapter and scene numbers are two-digit positions; they are filenames, not
   database ids. A scene's frontmatter `id` is the backlog item it was written from, never a unique
   scene key; the filename is the scene's identity inside its chapter. Its story-wide address is that
   filename without the two-digit sequence (`01-the-gate` → `the-gate`); it must be unique within the
@@ -148,12 +152,12 @@ one.
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
 | Plot | `name`, `slug` | `type`, `status`, `owner_pov`, `opened_in`, `backlog` |
 | Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment`, `plot` |
-| Chapter README | `title` | `summary`, `act`, `band`, `pov`, `locations`, `plots`, `status`, `missing`, `words`, `provisional` |
+| Chapter README | `title` | `full_title`, `summary`, `act`, `band`, `pov`, `locations`, `plots`, `status`, `missing`, `words`, `provisional` |
 
-A chapter README's keys are read rather than validated against the entity rules: `title` names the
-Section, `summary` fills `short_summary`, `title` and `summary` are omitted from the description, and
-every other key is carried there as YAML. The body after the closing `---` is documentation and is
-never read as content.
+A chapter README's keys are read rather than validated against the entity rules: `full_title` names
+the Section, `act` names the parent Section that groups it, `summary` fills `short_summary`, and
+those keys plus `title` are omitted from the description; every other key is carried there as YAML.
+The body after the closing `---` is documentation and is never read as content.
 
 Rules for those values:
 
@@ -568,9 +572,10 @@ question as a rule of type `open`. **Factions** runs before **Characters**, **Lo
 **Items**, which write one record per file from the mapping above; a Character's
 `[[faction:slug]]` affiliation needs its Faction to exist first. **Stories** writes one Story per
 story directory, because a Plot needs the Story it belongs to, and **Sections** then writes one
-Section per chapter directory, named from its README heading as described under
-[Story records](#story-records), and labels each one with the Story's single **Chapter** Section
-Tag.
+parent Section per act and one child Section per chapter directory, named from its README frontmatter
+as described under [Story records](#story-records), and labels each chapter with the Story's single
+**Chapter** Section Tag. The slice's count and record list are its chapters, because an act Section
+is a container written alongside the chapter that first names it.
 **Scenes** follows, writing each Scene with its Elements and dialogue turns, because it needs the
 Story, the Section, and the Character and Location links those earlier slices created. **Events**
 runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
@@ -610,7 +615,8 @@ It writes only the records a registered slice owns, and it does not write the so
 it into the repository, or restore a replaced Universe. Faction-to-Faction relationships, Location
 and Item hierarchy, and Scene Tags do not arrive from this slice; the source text that would carry
 them is reported. The one Section Tag it creates is the **Chapter** label every chapter Section
-carries, because a chapter is the only section kind the source names. A Scene's concrete `moment` and
+carries, because a chapter is the only section kind the source names per record; an act Section is
+an unlabeled parent. A Scene's concrete `moment` and
 the Events one per Scene are written, but an Event's own description, tags, and parent stay empty
 because the source states none there.
 

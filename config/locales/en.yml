@@ -3365,6 +3365,7 @@ en:
     scroll_label: "Scrollable appearance grid for %{story}."
     character_column: "Character"
     scene_link: "Scene %{position}: %{name}"
+    scene_popover_scene: "Scene: (%{position}) %{name}"
     legend:
       title: "Legend"
       present: "Recorded appearance: a stored character link or a line of dialogue."

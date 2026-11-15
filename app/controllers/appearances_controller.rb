@@ -12,5 +12,9 @@ class AppearancesController < ApplicationController
 
   def show
     @grid = AppearanceGrid.new(@story)
+    # The column headers name a Scene's Section path in their popover. One
+    # ordered Section list assembles every path in memory, the same index the
+    # Scenes workspace builds, so a wide Story never pays a query per column.
+    @section_paths = SectionPaths.build(@story.sections.reorder(:position, :id).to_a)
   end
 end

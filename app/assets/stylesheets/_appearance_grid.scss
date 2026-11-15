@@ -53,8 +53,8 @@
   color: var(--bs-secondary-color);
   font-size: .75rem;
   font-weight: 600;
-  max-width: 10rem;
-  min-width: 6.5rem;
+  min-width: 3rem;
+  padding-inline: .35rem;
   vertical-align: bottom;
   white-space: normal;
 }
@@ -86,6 +86,10 @@
 
 .appearance-grid-cell {
   min-width: 2.75rem;
+  // A cell can hold both marks: recorded presence and a prose mention. They are
+  // two answers side by side, never one stacked on the other, so the pair never
+  // wraps in a narrow column.
+  white-space: nowrap;
 }
 
 .appearance-grid-position {
@@ -104,13 +108,47 @@
   text-decoration: none;
 }
 
-.appearance-grid-scene-link:hover,
-.appearance-grid-scene-link:focus-visible,
+.appearance-grid-scene-link {
+  display: inline-block;
+}
+
 .appearance-grid-character-link:hover,
 .appearance-grid-character-link:focus-visible {
   color: var(--bs-link-color);
   text-decoration: underline;
   text-underline-offset: .15em;
+}
+
+// The Scene header's only visible content is its position pill, so the pill
+// itself carries the hover and focus state instead of an underline appearing
+// under a number.
+.appearance-grid-scene-link:hover .appearance-grid-position,
+.appearance-grid-scene-link:focus-visible .appearance-grid-position {
+  background: var(--bs-primary-bg-subtle);
+  border-color: var(--bs-primary);
+  color: var(--bs-primary);
+}
+
+.appearance-grid-scene-link:focus-visible {
+  outline: none;
+}
+
+.appearance-grid-scene-link:focus-visible .appearance-grid-position {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+// A popover has no print equivalent, so the printed header keeps the Scene name
+// beside its position. It is hidden on screen because the popover carries it.
+.appearance-grid-scene-print {
+  display: none;
+}
+
+// A Scene column's popover is body only: its Section path from the root and the
+// Scene, one fact per line. `pre-line` turns the server's newlines into breaks
+// without building markup in the browser.
+.appearance-grid-popover .popover-body {
+  white-space: pre-line;
 }
 
 .appearance-mark {
@@ -142,6 +180,18 @@
 
   .appearance-grid {
     font-size: .625rem;
+  }
+
+  .appearance-grid thead th {
+    min-width: 4.5rem;
+  }
+
+  // The screen header is a position pill with its facts in a popover. Paper has
+  // no popover, so the name returns beside the number.
+  .appearance-grid-scene-print {
+    display: block;
+    font-weight: 600;
+    margin-top: .15rem;
   }
 
   .appearance-grid th,

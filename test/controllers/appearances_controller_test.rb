@@ -9,6 +9,9 @@ class AppearancesControllerTest < ActionDispatch::IntegrationTest
     @pia = @universe.characters.create!(name: "Pia")
     @first = @story.scenes.create!(name: "First scene", position: 0)
     @second = @story.scenes.create!(name: "Second scene", position: 1)
+    @act = @story.sections.create!(name: "Act One")
+    @sequence = @story.sections.create!(name: "The Long Night", parent: @act)
+    @first.update!(section: @sequence)
     @first.scene_characters.create!(character: @mira)
     @first.scene_characters.create!(character: @pia)
     @first.scene_elements.create!(name: "Mira block", kind: "narration", body: "Mira waits.")
@@ -35,8 +38,7 @@ class AppearancesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", universe_story_path(universe_slug: @universe.slug, id: @story), text: "Story overview"
 
     assert_select ".appearance-grid thead th", text: "Character"
-    assert_select ".appearance-grid thead a.appearance-grid-scene-link", text: "First scene"
-    assert_select ".appearance-grid thead a.appearance-grid-scene-link", text: "Second scene"
+    assert_select ".appearance-grid thead a.appearance-grid-scene-link", count: 2
     assert_select ".appearance-grid tbody th a.appearance-grid-character-link", text: "Mira"
     assert_select ".appearance-grid tbody th a.appearance-grid-character-link", text: "Nico"
 
@@ -49,6 +51,33 @@ class AppearancesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select ".appearance-grid-legend", text: /A mention is not an appearance/
     assert_select ".appearance-grid-legend", text: /Recorded appearance/
+  end
+
+  test "a scene column is its position, with the section and scene in its popover" do
+    get appearances_path
+
+    assert_response :success
+    links = css_select(".appearance-grid thead a.appearance-grid-scene-link")
+    assert_equal [ "1", "2" ],
+      links.map { |link| link.at_css(".appearance-grid-position").text.strip }
+    assert_equal [ "Scene 1: First scene", "Scene 2: Second scene" ],
+      links.map { |link| link["aria-label"] }
+
+    first, second = links
+    assert_equal "popover", first["data-controller"]
+    # The popover is body only: the Section path one level per line, then the
+    # Scene. There is no title, so the section is not repeated.
+    assert_nil first["data-popover-title-value"]
+    assert_equal "Act One\nThe Long Night\nScene: (1) First scene",
+      first["data-popover-content-value"]
+    assert_equal "bottom", first["data-popover-placement-value"]
+    assert_equal "hover focus", first["data-bs-trigger"]
+    assert_includes first["data-bs-custom-class"], "appearance-grid-popover"
+    # A Scene in no Section says so instead of an empty first line.
+    assert_equal "Ungrouped\nScene: (2) Second scene", second["data-popover-content-value"]
+
+    # The name is still rendered for paper, hidden on screen.
+    assert_select ".appearance-grid thead .appearance-grid-scene-print", text: "First scene", count: 1
   end
 
   test "the grid is read-only" do

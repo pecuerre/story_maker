@@ -40,11 +40,22 @@
             <th scope="col"><%= t("appearances.character_column") %></th>
             <% @grid.scenes.each do |scene| %>
               <th scope="col">
+              <%= link_to universe_story_scene_path(story_id: @story, id: scene),
+                class: "appearance-grid-scene-link",
+                aria: { label: t("appearances.scene_link", position: scene.position + 1, name: scene.name) },
+                data: {
+                  controller: "popover",
+                  popover_content_value: appearance_scene_popover_body(scene, @section_paths),
+                  popover_placement_value: "bottom",
+                  bs_trigger: "hover focus",
+                  bs_custom_class: "custom-popover appearance-grid-popover"
+                } do %>
                 <span class="appearance-grid-position"><%= scene.position + 1 %></span>
-                <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene),
-                  class: "appearance-grid-scene-link",
-                  aria: { label: t("appearances.scene_link", position: scene.position + 1, name: scene.name) } %>
-              </th>
+                <%# The name is kept for paper: a popover has no print equivalent,
+                    and a printed grid with bare numbers could not be read. %>
+                <span class="appearance-grid-scene-print" aria-hidden="true"><%= scene.name %></span>
+              <% end %>
+            </th>
             <% end %>
           </tr>
         </thead>

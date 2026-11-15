@@ -46,6 +46,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Appearance grid headers.** A scene column now shows only its narrative position pill; hovering or focusing it opens a body-only popover listing the section path level by level and the scene, and a cell's two marks stay side by side.
 - **Story interchange chapters follow acts.** An imported chapter now names its Section from the README `full_title` and sits under a parent Section named by its `act` frontmatter, so the acts arrive as the chapter hierarchy instead of only as description text.
 
 ## 2026-11-14

@@ -3572,6 +3572,7 @@ es:
     scroll_label: "Cuadrícula de apariciones desplazable de %{story}."
     character_column: "Personaje"
     scene_link: "Escena %{position}: %{name}"
+    scene_popover_scene: "Escena: (%{position}) %{name}"
     legend:
       title: "Leyenda"
       present: "Aparición registrada: un enlace de personaje guardado o una línea de diálogo."

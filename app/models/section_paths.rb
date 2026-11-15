@@ -23,7 +23,7 @@ class SectionPaths
 
   def initialize(sections)
     @by_parent = Array(sections).group_by(&:parent_id)
-    @labels = {}
+    @paths = {}
     @grouping_options = [ [ ungrouped_label, "" ] ]
 
     collect(nil, [], [], 0)
@@ -32,7 +32,7 @@ class SectionPaths
   # Every Section id this index knows, in tree order. The Scenes list uses it to
   # validate a filter value against the Story's own tree without a second query.
   def ids
-    @labels.keys
+    @paths.keys
   end
 
   # The label of the group that is not a Section. The Scenes list badge, the
@@ -49,10 +49,18 @@ class SectionPaths
   # Accepts a Section or a section id. Returns nil when the Scene is ungrouped
   # or when the id is not part of this Story's tree.
   def label_for(section_or_id)
+    path_for(section_or_id)&.join(SEPARATOR)
+  end
+
+  # The root-first Section names, or nil under the same rules as `label_for`.
+  # `label_for` is this array joined; the appearance grid's column popover prints
+  # one level per line, so the parts are readable without splitting a label on a
+  # separator a Section name could contain.
+  def path_for(section_or_id)
     id = section_or_id.respond_to?(:id) ? section_or_id.id : section_or_id
     return if id.blank?
 
-    @labels[id]
+    @paths[id]
   end
 
   # [ label, value ] pairs in Rails' select order: **Ungrouped** first, then
@@ -68,7 +76,7 @@ class SectionPaths
       (@by_parent[parent_id] || []).each do |section|
         next if visited.any? { |seen| seen.equal?(section) }
 
-        @labels[section.id] = ([ *path, section.name ]).join(SEPARATOR)
+        @paths[section.id] = [ *path, section.name ]
         @grouping_options << [ ("— " * depth) + section.name, section.id ]
         collect(section.id, visited + [ section ], path + [ section.name ], depth + 1)
       end

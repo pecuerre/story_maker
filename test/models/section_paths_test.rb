@@ -18,8 +18,10 @@ class SectionPathsTest < ActiveSupport::TestCase
     paths = SectionPaths.build(@story.sections.reorder(:position, :id).to_a)
 
     assert_equal "Section one / Section two", paths.label_for(sections(:section_two).id)
+    assert_equal [ "Section one", "Section two" ], paths.path_for(sections(:section_two).id)
     assert_nil paths.label_for(nil)
     assert_nil paths.label_for("")
+    assert_nil paths.path_for(nil)
   end
 
   test "an ungrouped scene has no label" do

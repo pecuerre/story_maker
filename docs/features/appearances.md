@@ -16,8 +16,12 @@ chart; it is described [below](#the-scenes-per-character-chart).
 
 ## The grid
 
-- **Columns** are the Story's Scenes in `(position, id)` order. The column header shows the 1-based
-  narrative position and links to Scene Details.
+- **Columns** are the Story's Scenes in `(position, id)` order. The header is the 1-based narrative
+  position in its pill, and that pill links to Scene Details. Pointing at or focusing it opens a
+  popover with no title: the Scene's Section path one level per line, then the Scene itself — for
+  example `Act IX`, `The Something`, `Scene: (45) The Other Thingy`. A Scene in no Section says
+  **Ungrouped** on that first line. The Scene name is kept beside the number in print, because paper
+  has no popover.
 - **Rows** are the Characters this Story records as present somewhere or names in prose somewhere,
   ordered by name. A Character with neither is left out: a Universe holds records the Story never
   uses, and a grid of blank rows would bury the cast that matters.
@@ -82,7 +86,9 @@ because the chart is another read on the same Story.
 The grid is a `show` on the Story, so it follows the Story page's rule: a guest may read a public
 universe, a private universe needs its owner or a member, and another universe's Story is a `404`.
 There is no sign-in requirement of its own, because a grid is a read. There is no mutation route, no
-form, no CSRF surface, and no JavaScript.
+form, no CSRF surface, and no stored result. The page's only script is the shared `popover` controller
+on a Scene header: it reads the Section path and Scene sentence the server rendered into that
+header's data attributes and writes nothing.
 
 Two empty states are separate: a Story with no Scenes says **No scenes yet**, and a Story whose
 Scenes neither record nor name any Character says **No characters appear or are mentioned in
@@ -93,7 +99,9 @@ the grid is only one Story's view of it.
 
 The table is the accessible equivalent, not an image or a CSS-only grid. It has a caption, `<th
 scope="col">` Scene headers, `<th scope="row">` Character headers, and one visually hidden state
-label per cell. The scroll container is a focusable `role="region"` with an accessible name, so a
+label per cell. A Scene header's visible text is its position alone, so its link carries the whole
+`Scene N: name` as its accessible name; the popover is supplementary and is never the only way to
+identify a column. The scroll container is a focusable `role="region"` with an accessible name, so a
 keyboard user can scroll a wide Story without the page moving.
 
 The marks do not rely on hue: recorded presence is a filled square, and a mention is a dashed outline.
@@ -105,9 +113,10 @@ headers stick to the left edge during horizontal scrolling. The painted rules ar
 ## Code, styles, and tests
 
 - `app/models/appearance_grid.rb`, `app/models/character_scene_counts.rb`,
-  `app/helpers/story_workspace_helper.rb`
+  `app/helpers/appearances_helper.rb`, `app/helpers/story_workspace_helper.rb`
 - `app/controllers/appearances_controller.rb`, `app/views/appearances/show.html.erb`
 - `app/controllers/stories_controller.rb`, `app/views/stories/_character_scene_chart.html.erb`
 - `app/assets/stylesheets/_appearance_grid.scss`, `app/assets/stylesheets/_character_scene_chart.scss`
 - `test/models/appearance_grid_test.rb`, `test/models/character_scene_counts_test.rb`,
-  `test/controllers/appearances_controller_test.rb`, `test/controllers/stories_controller_test.rb`
+  `test/controllers/appearances_controller_test.rb`, `test/controllers/stories_controller_test.rb`,
+  `test/system/appearance_grid_test.rb`

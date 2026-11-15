@@ -695,17 +695,23 @@ The grid's rows, layers, and read-only contract are in
 
 - A real `<table>` inside a `.appearance-grid-scroll` region with `tabindex="0"` and an accessible
   name, exactly as the Map's scroll region is reachable. The Character column is sticky at the left;
-  Scene headers keep their `(position, id)` order and wrap rather than forcing the page wider.
+  Scene headers keep their `(position, id)` order and are the position pill alone, so a column is as
+  narrow as its cell. Pointing at or focusing a pill opens the shared `custom-popover` with no title:
+  each Section level from the root on its own line, then `Scene: (N) name`, and
+  `.appearance-grid-popover .popover-body` uses `white-space: pre-line` so the server's newlines are
+  the line breaks. The pill is the link to Scene Details, and its accessible name is the whole Scene
+  sentence.
 - A recorded appearance is `.appearance-mark--present`, a filled square. A prose mention is
-  `.appearance-mark--mention`, a dashed outline. A cell can hold both marks, and the legend names the
-  two layers rather than merging them. Neither mark depends on hue, so light, dark, and print keep the
-  distinction.
+  `.appearance-mark--mention`, a dashed outline. A cell can hold both marks, and they always sit side
+  by side rather than stacking in a narrow column; the legend names the two layers rather than
+  merging them. Neither mark depends on hue, so light, dark, and print keep the distinction.
 - The legend sits above the table, outside the scroll region, and carries the sentence that a mention
   is not an appearance. Empty cells have a visually hidden **Not present** label; the table has a
   caption, column headers, and row headers for keyboard and screen-reader navigation.
 - Print removes the sticky offsets, keeps the marks as black fill and black dashes, and avoids
-  breaking a row across pages. The grid is a read-only page, so it adds no buttons, forms, or hover
-  actions.
+  breaking a row across pages. A popover has no print equivalent, so the printed header restores the
+  Scene name under its position. The grid adds no buttons or forms; its one hover affordance is the
+  header popover, which only repeats the Scene's own facts.
 
 ### Scenes-per-character chart
 

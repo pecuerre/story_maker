@@ -122,6 +122,74 @@ class StoryInterchangeExportTest < ActiveSupport::TestCase
     assert_equal [ 0, 1, 2 ], story.scenes.order(:position, :id).pluck(:position)
   end
 
+  test "a slug shared across two kinds is made unique and every reference follows it" do
+    character = characters(:character_one)
+    location = locations(:location_one)
+    location.update!(slug: character.slug)
+    character.update!(
+      description: "Lives at [[location:#{location.slug}]].",
+      summary: "The keeper of [[location:#{location.slug}]]."
+    )
+    canon_rules(:canon_rule_one).update!(statement: "Magic works at [[location:#{location.slug}]].")
+
+    files = StoryInterchange::Export.new(@universe).files
+
+    assert files.key?("one/universe/characters/character-one.md")
+    assert files.key?("one/universe/locations/character-one-location.md")
+    assert_includes files.fetch("one/universe/characters/character-one.md"), "Lives at [[location:character-one-location]]."
+    assert_includes files.fetch("one/universe/characters/character-one.md"), "The keeper of [[location:character-one-location]]."
+    assert_includes file(files, "/canon/magic.md"), "Magic works at [[location:character-one-location]]."
+
+    report = StoryInterchange.validate(write(StoryInterchange::Export.new(@universe)))
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+  end
+
+  test "a plot whose slug belongs to a record is renamed and the scene names the new slug" do
+    locations(:location_one).update!(slug: "plot-one")
+
+    files = StoryInterchange::Export.new(@universe).files
+
+    assert files.key?("one/universe/locations/plot-one.md")
+    assert files.key?("one/stories/story-one/plots/plot-one-plot.md")
+    assert_includes file(files, "/01-scene-one.md"), "plot: plot-one-plot"
+
+    report = StoryInterchange.validate(write(StoryInterchange::Export.new(@universe)))
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+  end
+
+  test "two records of the same kind may share a slug in the app without losing one file" do
+    character = characters(:character_one)
+    characters(:character_two).update!(slug: character.slug)
+
+    files = StoryInterchange::Export.new(@universe).files
+    exported = files.keys.grep(%r{\Aone/universe/characters/.+\.md\z})
+
+    assert_equal 3, exported.size
+    assert_includes exported, "one/universe/characters/character-one.md"
+    assert_includes exported, "one/universe/characters/character-one-character.md"
+
+    report = StoryInterchange.validate(write(StoryInterchange::Export.new(@universe)))
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+  end
+
+  test "two scenes in one story may share a slug in the app without a duplicate address" do
+    scenes(:scene_two).update!(slug: scenes(:scene_one).slug)
+
+    files = StoryInterchange::Export.new(@universe).files
+
+    assert file(files, "/01-scene-one.md")
+    assert file(files, "/01-scene-one-scene.md")
+
+    report = StoryInterchange.validate(write(StoryInterchange::Export.new(@universe)))
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+
+    universe = StoryInterchange::Import.new(write(StoryInterchange::Export.new(@universe)),
+      owner: users(:user_one)).call.universe
+    story = universe.stories.find_by!(slug: "story-one")
+
+    assert_equal %w[scene-one scene-one-scene scene-three], story.scenes.order(:position, :id).pluck(:slug)
+  end
+
   test "the archive is one gzip holding the directory" do
     export = StoryInterchange::Export.new(@universe)
     gzip = export.to_s.b

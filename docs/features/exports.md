@@ -202,6 +202,13 @@ Writing a source is not copying the database, so a few values have a canonical e
 - A Character's `affiliation` is its Faction links joined by `·`; a Character in no Faction writes the
   source's `— TBD`. A canon Rule whose slug is not a ledger id is numbered under the prefix its canon
   type implies, so the ledger keeps globally unique ids.
+- A record whose slug another record already holds is written with its kind appended, then a number,
+  because a source requires entity and Plot slugs to be globally distinct. The first record in the
+  export's order keeps the slug — which is also the record a bare `[[slug]]` resolves to — and every
+  typed reference to a renamed record is rewritten, as are a Character's `affiliation`, a Scene's
+  `pov`, `location`, and `plot` keys, and a Dialogue speaker. A Scene whose story-wide address another
+  Scene in the same Story also holds is suffixed the same way; stored `[[scene:slug]]` references need
+  no rewrite, because they already resolve to the first Scene, the one that kept it.
 - A Location and an Item have no summary column in the import. Their summary is written as a
   `Short summary` section, so the sentence survives in the description instead of being dropped.
 - A Story with no source-ready prose still writes each Scene with a Narration block, and a Scene with

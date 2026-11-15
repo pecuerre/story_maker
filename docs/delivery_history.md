@@ -7121,6 +7121,49 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: interchange export could produce duplicate record slugs the importer refused (fixed)
+
+**Then:** the open list recorded a **Medium** finding that the application scopes a slug to its own
+table, so a Character and a Location in one Universe may share one, while a story-interchange source
+requires entity and Plot slugs to be globally distinct: a bare `[[slug]]` has to resolve without a
+type. `StoryInterchange::Export` wrote each model's slug as-is, so a legal Universe exported
+successfully and then failed validation with `duplicate record slug`. A 2026-11-12 fixture probe
+reproduced it. The same defect sat one step further in: two Characters sharing a slug produced one
+file for two records, because the file map silently kept the last write.
+
+**Why renaming only the file was not enough.** A stored description keeps its `[[kind:slug]]`
+references in source form so the details page can link them, and an affiliation, a Scene's `pov`,
+`location`, and `plot` keys, and a Dialogue speaker all name a record by slug. Renaming a file while
+leaving those alone would have produced a source whose identity and prose disagreed: the file would
+validate, and every sentence pointing at it would name a record that no longer exists. Refusing the
+export instead was the other honest option, but it would reject a legal Universe for a property the
+layout can carry.
+
+**How it reads now.** The export allocates one slug per exported Character, Faction, Location, Item,
+and Plot before it writes anything, in the order it writes those files — the same order
+`MarkdownDescription` uses to resolve a bare `[[slug]]`. The first record with a slug keeps it and
+each later one takes `-<kind>`, then `-<kind>-<n>`. Every rewritten reference follows the allocation:
+typed links in descriptions, summaries, and canon statements (fenced examples are left alone, as the
+validator's scanner leaves them), a Character's `affiliation`, the three Scene keys, and Dialogue
+speakers. A bare `[[slug]]` needs no rewrite, because the record that keeps the slug is the one the
+application already resolves it to. While closing this, the same collision was found among Scenes: a
+Scene's filename is its Story-wide address, and two Scenes in one Story may share a slug in the
+application. A duplicate address now takes the same suffix, and no `[[scene:slug]]` changes meaning,
+because such a reference already resolves to the first Scene.
+
+**Now:** a Universe whose records share a slug exports to a directory the validator accepts, and each
+record and its references agree about the name it travels under. On import the renamed record keeps
+its suffixed slug, which is the interchange's own identity and not a restored database id.
+
+**Verification.** `test/lib/story_interchange/export_test.rb` adds four cases: a Character and a
+Location sharing a slug (task 4's reported shape) asserts the renamed file, the rewritten description,
+summary, and canon statement, and a validating source; a Location taking a Plot's slug asserts the
+renamed Plot file and the Scene's rewritten `plot` key; two Characters sharing a slug asserts both
+files exist and the source validates; two Scenes sharing a story-wide address asserts both files,
+a validating source, and the round-tripped Scene slugs. `bin/rubocop` on the changed Ruby files
+reports no offenses; `bin/rails test test/lib/story_interchange/export_test.rb
+test/lib/story_interchange_test.rb` reports 92 runs, 520 assertions, 0 failures.
+
 ### Quirk: interchange export could reorder a Story's narrative sequence (fixed)
 
 **Then:** the open list recorded a **Medium** finding that `StoryInterchange::Export#chapter_files`

@@ -32,6 +32,12 @@ module StoryInterchange
   # therefore carries its story-wide `position`, numbered from the Story's own
   # order, so the import can restore the sequence the chapter directories would
   # otherwise reorder.
+  #
+  # The application scopes a slug to its own table, but a source needs one
+  # namespace: a bare `[[slug]]` has to resolve without a type. The export
+  # therefore allocates a unique slug to every record it writes and rewrites the
+  # references that named a renamed one, rather than handing the importer a tree
+  # it must refuse.
   class Export
     TBD = "— TBD"
     NARRATION = "Narration"
@@ -42,6 +48,27 @@ module StoryInterchange
     # validator requires to be a lowercase hyphenated slug.
     NON_CHARACTER_TURN = /\A([A-Za-z][A-Za-z0-9 _-]*):\s*(.*)\z/m
     SLUG = /\A[a-z0-9][a-z0-9-]*\z/
+    # The application scopes a slug to its own table, so two records of different
+    # kinds — or two in one table — may share one. A source may not: a bare
+    # `[[slug]]` must resolve without a type, so this export gives every record a
+    # unique slug and rewrites the references that named the renamed ones. The
+    # order is the order the export writes the files, and the order a bare
+    # reference is looked up, so the record a bare reference already names is the
+    # one that keeps its slug.
+    REFERENCE_KINDS = {
+      "character" => :character,
+      "faction" => :faction,
+      "location" => :location,
+      "item" => :item,
+      "tech" => :item,
+      "plot" => :plot
+    }.freeze
+    # A typed reference is the only one the export has to rewrite: a bare
+    # `[[slug]]` resolves to the first record with that slug, which is the one
+    # the allocation above leaves holding it.
+    TYPED_REFERENCE = /\A(?<prefix>[a-z]+):(?<slug>[^|\[\]\n]+)(?<type>\|type:[^\[\]\n]*)?\z/
+    FENCED_CODE = /(```.*?```)/m
+    REFERENCE = /\[\[([^\[\]\n]+)\]\]/
 
     attr_reader :universe, :generated_at
 
@@ -86,6 +113,113 @@ module StoryInterchange
     private
       def base
         @base ||= universe.slug
+      end
+
+      def characters
+        @characters ||= universe.characters.includes(:factions).order(:position, :id).to_a
+      end
+
+      def factions
+        @factions ||= universe.factions.order(:name).to_a
+      end
+
+      def locations
+        @locations ||= universe.locations.order(:position, :id).to_a
+      end
+
+      def items
+        @items ||= universe.items.order(:position, :id).to_a
+      end
+
+      def stories
+        @stories ||= universe.stories.order(:name, :id).to_a
+      end
+
+      def plots(story)
+        @plots ||= {}
+        @plots[story.id] ||= story.plots.order(:name, :id).to_a
+      end
+
+      def all_plots
+        stories.flat_map { |story| plots(story) }
+      end
+
+      # The slug each record is written under, keyed by `[kind, id]`.
+      def slug_map
+        allocate_slugs unless @slug_map
+        @slug_map
+      end
+
+      # The slug a reference to `kind`/`slug` in the database must be written as.
+      # It is the first record of that kind with the slug, which is the one that
+      # kept it; a second record with the same slug is ambiguous in a bare
+      # reference and unresolvable in the source either way.
+      def reference_slugs
+        allocate_slugs unless @reference_slugs
+        @reference_slugs
+      end
+
+      def allocate_slugs
+        @slug_map = {}
+        @reference_slugs = {}
+        used = Set.new
+
+        exported_slugs.each do |kind, record, slug|
+          written = claim_slug(slug, kind, used)
+          @slug_map[[ kind, record.id ]] = written
+          @reference_slugs[[ kind, slug ]] ||= written
+        end
+      end
+
+      def exported_slugs
+        records = []
+        characters.each { |record| records << [ :character, record, record.slug ] }
+        factions.each { |record| records << [ :faction, record, record.slug ] }
+        locations.each { |record| records << [ :location, record, record.slug ] }
+        items.each { |record| records << [ :item, record, record.slug ] }
+        all_plots.each { |record| records << [ :plot, record, record.slug ] }
+        records
+      end
+
+      # The first record keeps the slug. A later one is suffixed with its kind,
+      # then with a counter, until nothing else in the source holds it.
+      def claim_slug(slug, kind, used)
+        return slug if used.add?(slug)
+
+        counter = 1
+        loop do
+          candidate = counter == 1 ? "#{slug}-#{kind}" : "#{slug}-#{kind}-#{counter}"
+          return candidate if used.add?(candidate)
+
+          counter += 1
+        end
+      end
+
+      def slug_for(kind, record)
+        slug_map.fetch([ kind, record.id ])
+      end
+
+      # A stored answer keeps its `[[kind:slug]]` references, so a renamed record
+      # has to be renamed inside them too or the imported sentence would name a
+      # record the source no longer has. A fenced block is an example, exactly as
+      # it is for the validator's reference scanner.
+      def rewrite_references(text)
+        return text if text.blank?
+
+        text.split(FENCED_CODE).map.with_index do |part, index|
+          next part if index.odd?
+
+          part.gsub(REFERENCE) { "[[#{rewrite_reference(Regexp.last_match(1))}]]" }
+        end.join
+      end
+
+      def rewrite_reference(target)
+        match = TYPED_REFERENCE.match(target)
+        return target unless match
+
+        kind = REFERENCE_KINDS[match[:prefix]]
+        mapped = kind && reference_slugs[[ kind, match[:slug] ]]
+        mapped ? "#{match[:prefix]}:#{mapped}#{match[:type]}" : target
       end
 
       def universe_files
@@ -202,21 +336,23 @@ module StoryInterchange
       end
 
       def canon_item(rule, id)
-        statement = indent(rule.statement.to_s.strip.presence || TBD)
+        statement = indent(rewrite_references(rule.statement.to_s.strip).presence || TBD)
         "- #{id}. #{rule.name.to_s.squish}\n\n  #{statement}"
       end
 
       def character_files
-        universe.characters.includes(:factions).order(:position, :id).to_h do |character|
+        characters.to_h do |character|
+          slug = slug_for(:character, character)
           frontmatter = {
             "name" => character.name,
-            "slug" => character.slug,
+            "slug" => slug,
             "affiliation" => affiliation(character)
           }
           frontmatter["pronouns"] = character.pronouns if character.pronouns.present?
 
-          [ "#{base}/universe/characters/#{character.slug}.md",
-            profile(frontmatter, character.name, character.description, character.summary) ]
+          [ "#{base}/universe/characters/#{slug}.md",
+            profile(frontmatter, character.name,
+              rewrite_references(character.description), rewrite_references(character.summary)) ]
         end
       end
 
@@ -224,31 +360,37 @@ module StoryInterchange
       # a Faction membership. A Character in no Faction still needs a non-blank
       # value, so it takes the same undecided marker the source uses.
       def affiliation(character)
-        links = character.factions.order(:name).map { |faction| "[[faction:#{faction.slug}]]" }
+        links = character.factions.sort_by(&:name).map { |faction| "[[faction:#{slug_for(:faction, faction)}]]" }
         links.any? ? links.join(" · ") : TBD
       end
 
       def faction_files
-        universe.factions.order(:name).to_h do |faction|
-          frontmatter = { "name" => faction.name, "slug" => faction.slug }
-          [ "#{base}/universe/factions/#{faction.slug}.md",
-            profile(frontmatter, faction.name, faction.description, faction.summary) ]
+        factions.to_h do |faction|
+          slug = slug_for(:faction, faction)
+          frontmatter = { "name" => faction.name, "slug" => slug }
+          [ "#{base}/universe/factions/#{slug}.md",
+            profile(frontmatter, faction.name,
+              rewrite_references(faction.description), rewrite_references(faction.summary)) ]
         end
       end
 
       def location_files
-        universe.locations.order(:position, :id).to_h do |location|
-          frontmatter = { "name" => location.name, "slug" => location.slug }
-          [ "#{base}/universe/locations/#{location.slug}.md",
-            profile(frontmatter, location.name, location.description, location.summary) ]
+        locations.to_h do |location|
+          slug = slug_for(:location, location)
+          frontmatter = { "name" => location.name, "slug" => slug }
+          [ "#{base}/universe/locations/#{slug}.md",
+            profile(frontmatter, location.name,
+              rewrite_references(location.description), rewrite_references(location.summary)) ]
         end
       end
 
       def item_files
-        universe.items.order(:position, :id).to_h do |item|
-          frontmatter = { "name" => item.name, "slug" => item.slug }
-          [ "#{base}/universe/tech/#{item.slug}.md",
-            profile(frontmatter, item.name, item.description, item.summary) ]
+        items.to_h do |item|
+          slug = slug_for(:item, item)
+          frontmatter = { "name" => item.name, "slug" => slug }
+          [ "#{base}/universe/tech/#{slug}.md",
+            profile(frontmatter, item.name,
+              rewrite_references(item.description), rewrite_references(item.summary)) ]
         end
       end
 
@@ -269,7 +411,7 @@ module StoryInterchange
       def story_files
         files = { "#{base}/stories/README.md" => stories_readme }
 
-        universe.stories.order(:name, :id).each do |story|
+        stories.each do |story|
           directory = "#{base}/stories/#{story.slug}"
           files["#{directory}/README.md"] = story_readme(story)
           files.merge!(chapter_files(story, directory))
@@ -280,7 +422,7 @@ module StoryInterchange
       end
 
       def stories_readme
-        rows = universe.stories.order(:name, :id).map { |story| "| #{story.name} | `#{story.slug}/README.md` |" }
+        rows = stories.map { |story| "| #{story.name} | `#{story.slug}/README.md` |" }
         <<~MARKDOWN
           # Stories
 
@@ -313,28 +455,44 @@ module StoryInterchange
         # position. It is written explicitly because the chapter directories group
         # by Section and would otherwise be the import's only order.
         positions = scenes.each_with_index.to_h { |scene, index| [ scene.id, index ] }
+        # A Scene's filename is its story-wide address. The application does not
+        # keep that address unique within a Story, so a duplicate would make the
+        # validator refuse the source; the first Scene keeps it and the later one
+        # is suffixed, the same way a record slug collision is.
+        addresses = unique_scene_addresses(scenes)
 
         groups.each_with_index do |(section, group_scenes), index|
           directory = format("%02d-%s", index + 1, section.slug)
           files.merge!(chapter(story_directory, directory, section.name, section.short_summary,
-            group_scenes, positions))
+            group_scenes, positions, addresses))
         end
 
         if ungrouped.any?
           directory = "#{format("%02d", sections.size + 1)}-ungrouped"
-          files.merge!(chapter(story_directory, directory, UNGROUPED_TITLE, nil, ungrouped, positions))
+          files.merge!(chapter(story_directory, directory, UNGROUPED_TITLE, nil, ungrouped, positions,
+            addresses))
         end
 
         files["#{story_directory}/chapters/.gitkeep"] = "" if files.empty?
         files
       end
 
-      def chapter(story_directory, directory, title, summary, scenes, positions)
+      # The Scene a bare `[[scene:slug]]` already names is the first one with that
+      # slug, because that is the record the application resolves the reference
+      # to; the later Scene takes the suffix and no stored reference changes
+      # meaning.
+      def unique_scene_addresses(scenes)
+        used = Set.new
+
+        scenes.to_h { |scene| [ scene.id, claim_slug(scene.slug, :scene, used) ] }
+      end
+
+      def chapter(story_directory, directory, title, summary, scenes, positions, addresses)
         base_directory = "#{story_directory}/chapters/#{directory}"
         files = { "#{base_directory}/README.md" => chapter_readme(title, summary) }
 
         scenes.each_with_index do |scene, index|
-          path = "#{base_directory}/#{format("%02d", index + 1)}-#{scene.slug}.md"
+          path = "#{base_directory}/#{format("%02d", index + 1)}-#{addresses.fetch(scene.id)}.md"
           files[path] = scene_document(scene, positions.fetch(scene.id))
         end
 
@@ -350,17 +508,20 @@ module StoryInterchange
 
       def scene_document(scene, position)
         moment = scene.datetime&.utc&.strftime("%Y-%m-%d %H:%M")
+        character = scene.pov_character
+        location = scene_location(scene)
+        plot = scene.plots.min_by(&:id)
         frontmatter = {
           "id" => format("B-%03d", scene.id % 1000),
           "position" => position,
           "title" => scene.name,
-          "pov" => scene.pov_character&.slug.presence || TBD,
-          "location" => scene_location(scene)&.slug.presence || TBD,
+          "pov" => character ? slug_for(:character, character) : TBD,
+          "location" => location ? slug_for(:location, location) : TBD,
           "timeline" => moment || TBD,
           "branch" => "main"
         }
         frontmatter["moment"] = moment if moment
-        frontmatter["plot"] = scene.plots.order(:id).first&.slug if scene.plots.any?
+        frontmatter["plot"] = slug_for(:plot, plot) if plot
 
         parts = [ frontmatter(frontmatter), "# #{scene.name}", "" ]
         scene_blocks(scene).each do |heading, body|
@@ -403,17 +564,17 @@ module StoryInterchange
         if element.kind == SceneElement::DIALOGUE && element.scene_dialogue_turns.any?
           [ DIALOGUE, dialogue_lines(element).join("\n") ]
         else
-          [ NARRATION, element.body.to_s.strip ]
+          [ NARRATION, rewrite_references(element.body.to_s.strip) ]
         end
       end
 
       def dialogue_lines(element)
         element.scene_dialogue_turns.sort_by { |turn| [ turn.position, turn.id ] }.map do |turn|
           if turn.speaker
-            "@[[character:#{turn.speaker.slug}]] #{quote(turn.body)}"
+            "@[[character:#{slug_for(:character, turn.speaker)}]] #{quote(rewrite_references(turn.body))}"
           else
             tag, body = non_character_turn(turn.body)
-            "@#{tag} #{quote(body)}"
+            "@#{tag} #{quote(rewrite_references(body))}"
           end
         end
       end
@@ -435,10 +596,12 @@ module StoryInterchange
       end
 
       def plot_files(story, story_directory)
-        story.plots.order(:name, :id).to_h do |plot|
-          frontmatter = { "name" => plot.name, "slug" => plot.slug }
-          [ "#{story_directory}/plots/#{plot.slug}.md",
-            profile(frontmatter, plot.name, plot.description, plot.short_summary) ]
+        plots(story).to_h do |plot|
+          slug = slug_for(:plot, plot)
+          frontmatter = { "name" => plot.name, "slug" => slug }
+          [ "#{story_directory}/plots/#{slug}.md",
+            profile(frontmatter, plot.name,
+              rewrite_references(plot.description), rewrite_references(plot.short_summary)) ]
         end
       end
 

@@ -174,12 +174,13 @@ different format. The Story only resolves the request's Universe and carries the
 every live Story, Character, Faction, Location, Item, canon Rule, Section, Scene, and Plot of that
 Universe is in the archive.
 
-The export aims to produce a directory `StoryInterchange.validate` accepts, but valid application data
-can make it fail or change on a round trip; see [known quirks](../known_quirks.md). What the interchange
-layout cannot describe stays in the database rather than being invented: tags, Routes, tropes,
-relations, ownerships, Events, photos,
-Character aliases, Section descriptions, Scene parentheticals, and a canon Rule's optional Story owner
-do not travel. The page names that boundary beside the button rather than implying a full backup.
+The export aims to produce a directory `StoryInterchange.validate` accepts, and it refuses the whole
+archive when ordinary Scene prose cannot be written back as prose. Other valid application data can
+still make it fail or change on a round trip; see [known quirks](../known_quirks.md). What the
+interchange layout cannot describe stays in the database rather than being invented: tags, Routes,
+tropes, relations, ownerships, Events, photos, Character aliases, Section descriptions, Scene
+parentheticals, and a canon Rule's optional Story owner do not travel. The page names that boundary
+beside the button rather than implying a full backup.
 
 Writing a source is not copying the database, so a few values have a canonical export form:
 
@@ -193,7 +194,13 @@ Writing a source is not copying the database, so a few values have a canonical e
 - A Scene's prose becomes alternating `## Narration` and `## Dialog` blocks. Adjacent Elements of the
   same kind merge into one block, and a Scene that opens with Dialogue gets an empty Narration before
   it, because that is the block grammar the validator accepts. The Element boundary and the Element
-  titles do not survive; see [known quirks](../known_quirks.md) for the open prose issue.
+  titles do not survive.
+- A Scene line that begins `## `, or any Scene prose containing an HTML comment opener `<!--`,
+  refuses the archive rather than being written. The reader takes the first as the next block
+  heading, so the line would split the Element, and masks the second out as a drafting note, so the
+  sentence would lose text on a round trip. The download names the Scene and line, and the export
+  page shows that message. A `###` subheading and a bare `##` are not block headings and travel as
+  prose.
 - A Scene in more than one Plot carries the first Plot in its `plot` key, because the format names one
   thread per Scene. The other assignments stay behind.
 - A Scene with no Section, or one whose Section is not in the Story's tree, is written in a chapter

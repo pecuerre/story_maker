@@ -71,33 +71,26 @@ review sampled important paths and did not prove the absence of other issues.
 
 ## Open findings
 
-4. **Medium — a Scene's ordinary narration can make its exported source invalid.** Scene Element body
-   text is not constrained to the interchange grammar. The exporter inserts it directly beneath
-   `## Narration`, while `StoryInterchange::Document` treats any following `##` line as a new block.
-   A saved narration containing `## A heading` produced the validator error `scene section ... is not
-   a ... block` in a 2026-11-12 probe. Similar source grammar and reference delimiters need an explicit
-   encoding or a refusal that tells the author before presenting the file as importable.
-
-5. **Medium — interchange export silently drops a Scene's drafting contract.** The importer already
+4. **Medium — interchange export silently drops a Scene's drafting contract.** The importer already
     reads the `DRAFTING CONTRACT` comment into `Scene#drafting_contract`, but
     `StoryInterchange::Export#scene_document` writes no such comment. A 2026-11-12 probe saved a
     contract and found the exported, parsed Scene's contract was `nil`. This is not a limitation of
     the interchange format, and the export's loss notes do not name it.
 
-6. **Medium — forward chains of imported relative moments can lose computable dates.**
+5. **Medium — forward chains of imported relative moments can lose computable dates.**
     `StoryInterchange::Importers::Events` creates every Event, then applies each relation once in
     source order. If A is one day after B, B is one day after C, and C has a concrete date, A is
     visited before B has acquired its date and is never revisited. A validated 2026-11-12 import
     produced `nil`, January 2, and January 1 for A, B, and C respectively. The temporal links remain,
     but A's computed start is missing; cycles and other relation shapes need a deliberate policy too.
 
-7. **Medium — the backup truncates timestamp fractions.** `UniverseBackup::DataDump#attributes_for`
+6. **Medium — the backup truncates timestamp fractions.** `UniverseBackup::DataDump#attributes_for`
     calls `iso8601` without a precision, so `2026-11-12T12:30:00.123456Z` was written as
     `2026-11-12T12:30:00Z` in a 2026-11-12 probe. The table dump is therefore not a byte- or
     value-exact copy of timestamp columns, including version-relevant `updated_at` values. Restore
     does not yet exist; preserve and test the original precision before relying on a round trip.
 
-8. **Medium — a missing stored photo file aborts the backup instead of being reported.**
+7. **Medium — a missing stored photo file aborts the backup instead of being reported.**
     `DataDump#photo_files` reports a Photo with no attachment, but if the attachment and blob rows
     exist and the storage object is missing, `blob.download` raises `ActiveStorage::FileNotFoundError`.
     A 2026-11-12 probe simulated the storage failure and reproduced the exception, so no archive or
@@ -105,21 +98,21 @@ review sampled important paths and did not prove the absence of other issues.
     Decide whether to fail clearly or produce a partial archive with an explicit missing-file entry;
     do not call a partial result complete.
 
-9. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
+8. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
     `PARALLEL_WORKERS=1 bin/rails test:system` also failed the dark-theme Map and Settings cases and
     two Scene Element dropdown cases. All four passed when rerun together serially. The full run's
     theme assertions saw light colors and the dropdown assertions did not find an open menu; the
     cause and whether a user-visible race exists remain unverified. Separate simultaneous reruns
     also hit SQLite locks, so concurrent system-test processes are not a valid isolation check.
 
-10. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
+9. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
     `COVERAGE_GATE` solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
     `CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
     2 for low coverage. Recent SimpleCov results may also be merged locally, so the resulting partial
     coverage is not necessarily that run's own. The GitHub full-suite job is a separate clean runner;
     this finding does not claim that its gate was bypassed.
 
-11. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
+10. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
     `StoryInterchangeExportsController#show` permits guests in a public Universe and invokes
     `StoryInterchange::Export#to_s`, which builds the complete file map and compressed archive in
     memory on each request. The mutation throttle excludes GETs and the read throttle applies only to

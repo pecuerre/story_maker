@@ -11,7 +11,10 @@
 # does, and the archive reads that Universe.
 #
 # The download is a GET that writes nothing. It assembles a `.tar.gz` in memory
-# from `StoryInterchange::Export`; nothing is copied into the repository.
+# from `StoryInterchange::Export`; nothing is copied into the repository. When
+# the export refuses because ordinary Scene prose cannot be written as a valid
+# block, the request is sent back to the export page with the Scene and line
+# named instead of returning an archive the import would reject.
 class StoryInterchangeExportsController < ApplicationController
   allow_unauthenticated_access only: %i[ show ]
 
@@ -26,5 +29,21 @@ class StoryInterchangeExportsController < ApplicationController
       filename: export.filename,
       type: "application/gzip",
       disposition: "attachment"
+  rescue StoryInterchange::Export::Unrepresentable => refusal
+    # A source that would not import is not a download, so the author is sent
+    # back to the page that offers it with the Scene and line to change.
+    redirect_to universe_story_export_path(story_id: @story),
+      alert: refusal_message(refusal)
   end
+
+  private
+    def refusal_message(refusal)
+      first = refusal.problems.first
+
+      t("story_exports.interchange.unrepresentable.#{first.reason}",
+        count: refusal.problems.size,
+        scene: first.scene,
+        line: first.line,
+        text: first.text.to_s.truncate(60))
+    end
 end

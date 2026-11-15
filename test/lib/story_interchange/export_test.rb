@@ -190,6 +190,69 @@ class StoryInterchangeExportTest < ActiveSupport::TestCase
     assert_equal %w[scene-one scene-one-scene scene-three], story.scenes.order(:position, :id).pluck(:slug)
   end
 
+  test "narration the block grammar would split refuses the archive and names the scene" do
+    scene_elements(:narration_one).update!(body: "An opening line.\n## A heading\nA closing line.")
+
+    error = assert_raises(StoryInterchange::Export::Unrepresentable) do
+      StoryInterchange::Export.new(@universe).files
+    end
+
+    problem = error.problems.first
+    assert_equal :heading, problem.reason
+    assert_equal "Scene one", problem.scene
+    assert_equal "## A heading", problem.text
+    assert_equal 2, problem.line
+  end
+
+  test "prose the reader would treat as a drafting note refuses the archive" do
+    scene_elements(:narration_one).update!(body: "An opening line.\nA note <!-- hidden --> here.")
+
+    error = assert_raises(StoryInterchange::Export::Unrepresentable) do
+      StoryInterchange::Export.new(@universe).files
+    end
+
+    assert_equal :comment, error.problems.first.reason
+    assert_includes error.problems.first.text, "<!-- hidden -->"
+  end
+
+  test "a dialogue turn containing a comment opener refuses the archive too" do
+    scene_dialogue_turns(:turn_one).update!(body: "Count with me. <!-- aside -->")
+
+    error = assert_raises(StoryInterchange::Export::Unrepresentable) do
+      StoryInterchange::Export.new(@universe).files
+    end
+
+    assert_equal :comment, error.problems.first.reason
+    assert_equal "Scene one", error.problems.first.scene
+  end
+
+  test "every scene whose narration would be split is named in one refusal" do
+    scene_elements(:narration_one).update!(body: "Opening.\n## One heading")
+    SceneElement.create!(scene: scenes(:scene_two), kind: SceneElement::NARRATION,
+      name: "The second warning", body: "Opening.\n## Another heading")
+
+    error = assert_raises(StoryInterchange::Export::Unrepresentable) do
+      StoryInterchange::Export.new(@universe).files
+    end
+
+    assert_equal [ "Scene one", "Scene two" ].sort, error.problems.map(&:scene).sort
+  end
+
+  test "a narration subheading that is not a block heading survives the round trip" do
+    scene_elements(:narration_one).update!(body: "Opening.\n### A smaller heading\n\nClosing.")
+
+    root = write(StoryInterchange::Export.new(@universe))
+    report = StoryInterchange.validate(root)
+
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+
+    universe = StoryInterchange::Import.new(root, owner: users(:user_one)).call.universe
+    narration = universe.scenes.find_by!(slug: "scene-one").scene_elements
+      .where(kind: SceneElement::NARRATION).order(:position).first
+
+    assert_includes narration.body, "### A smaller heading"
+  end
+
   test "the archive is one gzip holding the directory" do
     export = StoryInterchange::Export.new(@universe)
     gzip = export.to_s.b

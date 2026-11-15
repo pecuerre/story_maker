@@ -7121,6 +7121,44 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: a Scene's ordinary prose could split or lose text in the exported source (fixed)
+
+**Then:** the open list recorded a **Medium** finding that a Scene Element's body is free prose while
+the interchange reads it as a block. `StoryInterchange::Export` inserted the body directly beneath
+`## Narration`, and `StoryInterchange::Document` starts a new `##` section at any line that begins
+with two hashes and whitespace. Ordinary narration containing `## A heading` therefore split the
+Element on the way out; a 2026-11-12 probe produced the validator error `scene section ... is not a
+... block`, so a valid Universe downloaded an archive the import would refuse. The same reader masks
+an HTML comment out as a drafting note, so an Element body carrying `<!-- … -->` lost the sentence
+around it on a round trip instead of failing loudly.
+
+**Why the export refuses rather than encodes.** The block grammar is the interchange contract
+[ADR 0041](adr/0041-the-story-interchange-is-a-directory-contract.md) shares with the author's own
+source repository, so a `\##` escape would be a new rule every reader of that format has to implement,
+not a local fix. The other honest option was validating the whole assembled tree before serving it;
+that catches every invalid-source shape but needs a temporary tree, makes a guest-readable GET do
+substantially more work, and turns one bad row into a refusal of an otherwise useful archive. The
+finding asked for an explicit encoding *or* a refusal that tells the author, and refusal is the one
+that changes no shared format.
+
+**How it reads now.** `Export#scene_document` checks the prose blocks it is about to write, after
+adjacent Elements have been joined, and records the first line of each Scene that begins `## ` or
+contains an HTML comment opener. `Export#files` raises `StoryInterchange::Export::Unrepresentable`
+with all of them before it returns the tree, and `StoryInterchangeExportsController#show` rescues it
+and redirects to the export page with a translated sentence naming the first Scene, line, text, and
+reason, and counting the rest. Only the shapes the reader rewrites are refused; a `###` subheading
+and a bare `##` travel as prose. A bracket reference that does not resolve was not changed here: the
+validator already refuses it by name, so it does not split an Element or disappear silently.
+
+**Verification.** `test/lib/story_interchange/export_test.rb` adds five cases: a narration line
+beginning `## ` (the probe's shape) refuses with the Scene, text, line number, and heading reason;
+two Scenes in one archive are both named in a single refusal; a narration comment opener and a
+dialogue turn's comment opener each refuse with the comment reason; and a `###` subheading is
+written, validates, and round-trips into the imported Element.
+`test/controllers/story_interchange_exports_controller_test.rb` asserts the download redirects back
+with the message and no archive. `bin/rails test` on the export, controller, and translation files
+reports 36 runs and 286 assertions; `bin/rubocop` on the four changed Ruby files reports no offenses.
+
 ### Quirk: interchange export could produce duplicate record slugs the importer refused (fixed)
 
 **Then:** the open list recorded a **Medium** finding that the application scopes a slug to its own

@@ -51,6 +51,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Interchange export prose.** A narration line beginning `## ` or Scene prose containing an HTML comment opener now refuses the archive and names the Scene and line, instead of downloading a source that would split the Element or drop the sentence; the finding leaves `known_quirks.md`.
 - **Interchange export slugs.** A record whose slug another record already holds is exported with its kind appended and its stored references rewritten, and a Scene sharing its Story-wide address gets the same suffix, so a valid Universe no longer downloads an unimportable source.
 - **Interchange Scene order.** Every exported Scene now carries its Story-wide narrative `position`, and the import numbers Scenes from it, so a Story that interleaves Sections or ungrouped Scenes round-trips in the same order.
 

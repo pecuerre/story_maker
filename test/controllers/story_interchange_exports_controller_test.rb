@@ -49,6 +49,15 @@ class StoryInterchangeExportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "refuses the archive when narration would be read as a block heading" do
+    scene_elements(:narration_one).update!(body: "An opening line.\n## A heading")
+
+    get download_url
+
+    assert_redirected_to universe_story_export_path(universe_slug: @universe.slug, story_id: @story)
+    assert_includes flash[:alert], "prose in Scene one has the line `## A heading` on line 2"
+  end
+
   test "another universe's story is a 404" do
     get download_url(story: stories(:story_two))
 

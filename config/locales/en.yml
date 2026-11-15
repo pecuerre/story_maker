@@ -1547,6 +1547,13 @@ en:
       detail: "This is the same layout the import reads, so the archive can be imported into another Universe Maker site and rebuilt there as the same universe."
       download: "Download Markdown directory"
       note: "Tags, routes, tropes, relations, ownerships, events, photos, aliases, section descriptions, and scene parentheticals have no place in this format, so they stay behind. Adjacent scene blocks of the same kind become one block, and a scene in several plots carries one of them."
+      unrepresentable:
+        heading:
+          one: "The Markdown directory was not built: prose in %{scene} has the line `%{text}` on line %{line}, and the format reads it as a new block heading. Change that line, then download again."
+          other: "The Markdown directory was not built: prose in %{count} scenes has a line the format reads as a new block heading. The first is in %{scene}, line %{line}: `%{text}`. Change that line, then download again."
+        comment:
+          one: "The Markdown directory was not built: prose in %{scene} has the line `%{text}` on line %{line}, and the format reads it as a drafting note and would remove it. Change that line, then download again."
+          other: "The Markdown directory was not built: prose in %{count} scenes has a line the format reads as a drafting note and would remove. The first is in %{scene}, line %{line}: `%{text}`. Change that line, then download again."
     manuscript:
       document_title: "%{story} — manuscript"
       print_hint: "Use the browser's print command to print this page or save it as a PDF."

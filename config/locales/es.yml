@@ -1472,6 +1472,13 @@ es:
       detail: "Es el mismo formato que lee la importación, así que el archivo se puede importar en otro sitio de Universe Maker y reconstruir allí el mismo universo."
       download: "Descargar directorio Markdown"
       note: "Las etiquetas, rutas, tropos, relaciones, propiedad, sucesos, fotos, alias, descripciones de sección y acotaciones de escena no tienen cabida en este formato, así que se quedan atrás. Los bloques contiguos del mismo tipo en una escena se unen en uno, y una escena que pertenece a varias tramas conserva una."
+      unrepresentable:
+        heading:
+          one: "No se creó el directorio Markdown: la prosa de %{scene} contiene «%{text}» (línea %{line}), y el formato lee esa línea como el encabezado de un bloque nuevo. Cambia esa línea y vuelve a descargar."
+          other: "No se creó el directorio Markdown: la prosa de %{count} escenas contiene una línea que el formato lee como el encabezado de un bloque nuevo. La primera está en %{scene}, línea %{line}: «%{text}». Cambia esa línea y vuelve a descargar."
+        comment:
+          one: "No se creó el directorio Markdown: la prosa de %{scene} contiene «%{text}» (línea %{line}), y el formato lee esa línea como una nota de redacción y la eliminaría. Cambia esa línea y vuelve a descargar."
+          other: "No se creó el directorio Markdown: la prosa de %{count} escenas contiene una línea que el formato lee como una nota de redacción y eliminaría. La primera está en %{scene}, línea %{line}: «%{text}». Cambia esa línea y vuelve a descargar."
     manuscript:
       document_title: "%{story} — manuscrito"
       print_hint: "Usa el comando de impresión del navegador para imprimir esta página o guardarla como PDF."

@@ -43,6 +43,34 @@ module StoryInterchange
     NARRATION = "Narration"
     DIALOGUE = "Dialog"
     UNGROUPED_TITLE = "Ungrouped"
+    # A line the reader would take for the next `## Narration` or `## Dialog`
+    # heading. `Document::SECTION` matches two hashes followed by whitespace, so
+    # only that shape is a hazard; `###` and a bare `##` stay in the block.
+    BLOCK_HEADING = /\A##[ \t]/
+    # The opener of an HTML comment, which the reader masks out as a drafting
+    # note before storing prose or scanning references.
+    COMMENT_OPENER = "<!--"
+
+    # Raised instead of handing the author a source the validator would reject.
+    # An Element's body is free prose, and two shapes in it cannot be written
+    # back unchanged: a line beginning `## ` is read as the next block heading,
+    # and an HTML comment is misread as a drafting note and removed. The export
+    # names the Scene and the line so the author can change the prose before
+    # downloading again.
+    class Unrepresentable < StandardError
+      # Why the line cannot travel, the Scene as the author knows it, the line
+      # at fault, and its 1-based line number inside the prose. More than one
+      # Scene may be named, because the whole archive is refused at once.
+      Problem = Data.define(:reason, :scene, :text, :line)
+
+      attr_reader :problems
+
+      def initialize(problems)
+        @problems = problems
+        super(problems.map { |problem| "#{problem.scene}, line #{problem.line}: #{problem.text}" }.join("; "))
+      end
+    end
+
     # A non-character turn stores its speaker tag in the line itself
     # (`registry-clerk: …`). The source speaks it as a bare `@slug`, which the
     # validator requires to be a lowercase hyphenated slug.
@@ -79,6 +107,7 @@ module StoryInterchange
 
     def files
       @files ||= begin
+        @problems = []
         projected = { "#{base}/README.md" => root_readme }
         projected.merge!(universe_files)
         projected.merge!(canon_files)
@@ -88,6 +117,7 @@ module StoryInterchange
         projected.merge!(item_files)
         projected.merge!(story_files)
         projected.merge!(empty_directories)
+        refuse_unrepresentable_prose
         projected
       end
     end
@@ -507,6 +537,9 @@ module StoryInterchange
       end
 
       def scene_document(scene, position)
+        blocks = scene_blocks(scene)
+        check_scene_prose(scene, blocks)
+
         moment = scene.datetime&.utc&.strftime("%Y-%m-%d %H:%M")
         character = scene.pov_character
         location = scene_location(scene)
@@ -524,11 +557,39 @@ module StoryInterchange
         frontmatter["plot"] = slug_for(:plot, plot) if plot
 
         parts = [ frontmatter(frontmatter), "# #{scene.name}", "" ]
-        scene_blocks(scene).each do |heading, body|
+        blocks.each do |heading, body|
           parts << "## #{heading}" << "" << body.to_s.strip << ""
         end
 
         parts.join("\n").rstrip + "\n"
+      end
+
+      # Both block kinds are prose the source writes back as written, and two
+      # shapes cannot survive that: a Narration line beginning `## ` is read as
+      # the next block heading, and an HTML comment is read as a drafting note
+      # and masked out. Adjacent Narration Elements are joined before this runs,
+      # so the check sees exactly the text that is written.
+      def check_scene_prose(scene, blocks)
+        blocks.each do |_heading, body|
+          body.to_s.each_line.with_index(1) do |line, number|
+            reason = prose_hazard(line)
+            next unless reason
+
+            @problems << Unrepresentable::Problem.new(reason: reason, scene: scene.name,
+              text: line.strip, line: number)
+            return
+          end
+        end
+      end
+
+      def prose_hazard(line)
+        return :heading if BLOCK_HEADING.match?(line)
+
+        :comment if line.include?(COMMENT_OPENER)
+      end
+
+      def refuse_unrepresentable_prose
+        raise Unrepresentable, @problems if @problems.any?
       end
 
       def scene_location(scene)

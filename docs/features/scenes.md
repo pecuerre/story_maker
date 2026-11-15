@@ -253,6 +253,23 @@ time sit in a separate **No recorded time** group instead of an arbitrary number
 column is the whole narrative sequence with each Scene's own time and step. Pending draft changes
 are not projected: the page reads saved records, like the Timeline.
 
+The page has two views of that one comparison, each with its own URL: the side-by-side **List**
+(the default) and the **Chart** (`?view=chart`). The chart draws the same Scenes instead of listing
+them. Both columns hold every Scene, so both counts are the Story's Scene count: the left column is
+`position` order, and the right column is the same Scenes sorted by their placement Event's Timeline
+row and then by `position`. A Scene the Timeline cannot place keeps narrative order in a band below a
+dashed rule; it is drawn rather than dropped, because a chart that left it out would claim a shorter
+Story. One line joins a Scene's two bars, so a line that crosses the field is a reversal — a
+flashback, a cold open, or a parallel thread — and never a call about intent. At rest the lines are a
+light rule; pointing at or focusing a bar lifts that Scene's two bars and its line and shows its facts
+in the panel below the chart. `NarrativeChartLayout` owns the column order, the coordinates, and the
+connector paths, so the view sorts nothing, and each bar is a link whose accessible name gives its
+own column's position, the Scene, and the step. The chart is read-only like the list and is the same
+Story and the same Scenes: its right column is the chronological order of **this Story's** Scenes,
+not the Timeline's Event list, so an Event no Scene depicts has no bar here. The List view stays the
+complete Timeline reading and the text alternative. The chart's design reasoning is in
+[ADR 0048](../adr/0048-give-the-narrative-order-comparison-a-chart-view.md).
+
 ## The Story-wide Scene matrix
 
 `GET /u/:universe_slug/s/:story_id/scene_matrix` (`SceneMatricesController#show`) is the whole Story as

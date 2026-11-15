@@ -7,8 +7,8 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
-  def narrative_order_url(story: @story, universe: @universe)
-    universe_story_narrative_order_url(universe_slug: universe.slug, story_id: story)
+  def narrative_order_url(story: @story, universe: @universe, **options)
+    universe_story_narrative_order_url(universe_slug: universe.slug, story_id: story, **options)
   end
 
   def narrative_order_path(story: @story, universe: @universe)
@@ -20,9 +20,13 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Narrative order"
-    # Narrative order is its own Story analytics destination, not a tab of the
-    # Scene workspace.
-    assert_select "nav.content-tabs", 0
+    # Narrative order is its own Story analytics destination. The strip above it
+    # holds its two views, never the Story workspace tabs.
+    assert_select "nav.narrative-order-views a.nav-link", count: 2
+    assert_select "nav.narrative-order-views a.nav-link", text: "List"
+    assert_select "nav.narrative-order-views a.nav-link", text: "Chart"
+    assert_select "nav.narrative-order-views a[href=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), count: 0
     assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active[aria-current=page][href=?]",
       narrative_order_path do
       assert_select ".sidebar-link-label", text: "Narrative order"
@@ -49,6 +53,52 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "a[href=?]", universe_event_path(universe_slug: @universe.slug, id: unreferenced), text: "Never depicted"
     assert_select ".timeline-layer", text: /No scene depicts this event/
+  end
+
+  test "the chart view draws every scene in both columns and joins each pair" do
+    get narrative_order_url(view: "chart")
+
+    assert_response :success
+    assert_select "h1", text: "Narrative order"
+    assert_select "nav.narrative-order-views a.nav-link.active", text: "Chart"
+    assert_select "#narrative-order-chart-title", text: "The two orders at once"
+    assert_select "h3", text: /The narrative order/
+    assert_select "h3", text: /The chronological order/
+
+    # Two bars and one connector per Scene: the chart never drops a Scene, and a
+    # Scene is never drawn once without being joined.
+    assert_equal 2 * @story.scenes.count,
+      css_select("svg.narrative-chart-svg rect.narrative-chart-bar").size
+    assert_equal @story.scenes.count,
+      css_select("svg.narrative-chart-svg path.narrative-chart-edge").size
+
+    # Every Scene's facts are rendered, and only the first is shown before the
+    # pointer or the keyboard moves.
+    assert_select ".narrative-chart-detail", count: @story.scenes.count
+    assert_select ".narrative-chart-detail:not([hidden])", count: 1
+    assert_select ".narrative-chart-detail:not([hidden]) .entity-title", text: "Scene one"
+
+    # The two bars of a Scene are told apart by their accessible names: the left
+    # names the telling position, the right names the chronological one.
+    assert_select "a[aria-label*='Narrative position 1 of 3']", count: 1
+    assert_select "a[aria-label*='Chronological position 1 of 3']", count: 1
+  end
+
+  test "the chart view keeps the scenes this story cannot place below the dashed rule" do
+    get narrative_order_url(view: "chart")
+
+    assert_response :success
+    assert_select "svg.narrative-chart-svg line.narrative-chart-separator", count: 1
+    assert_select "li", text: /One scene has no place on the timeline/
+  end
+
+  test "an unknown view falls back to the side-by-side list" do
+    get narrative_order_url(view: "nonsense")
+
+    assert_response :success
+    assert_select "nav.narrative-order-views a.nav-link.active", text: "List"
+    assert_select "#narrative-order-chart-title", count: 0
+    assert_select "ol.list-group", count: 1
   end
 
   test "an event with no recorded time is separated from the numbered timeline rows" do
@@ -153,5 +203,13 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Cómo leer la comparación"
     assert_select "dt", text: /Primera de este tramo/
     assert_select "ol.list-group", text: /Sin suceso vinculado/
+
+    get narrative_order_url(view: "chart")
+
+    assert_response :success
+    assert_select "a.nav-link.active", text: "Diagrama"
+    assert_select "#narrative-order-chart-title", text: "Los dos órdenes a la vez"
+    assert_select "h3", text: /El orden cronológico/
+    assert_select "li", text: /Una escena no tiene lugar en la cronología/
   end
 end

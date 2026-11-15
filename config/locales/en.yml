@@ -3230,6 +3230,25 @@ en:
   narrative_orders:
     title: "Narrative order"
     description: "Compare the order %{story} tells its scenes with when the universe says they happen."
+    views_aria_label: "Narrative order views"
+    views:
+      list: "List"
+      chart: "Chart"
+    chart:
+      title: "The two orders at once"
+      description: "Every scene is a bar. The left column is the order the story tells them; the right column is the same scenes sorted by when their event happens. A line joins a scene to itself, so a line that crosses the field is a flashback, a cold open, or a parallel thread."
+      left_heading: "The narrative order"
+      right_heading: "The chronological order"
+      svg_label: "Scenes as bars in two columns, joined by one line each. %{scenes} scenes."
+      scroll_label: "Narrative order chart"
+      node_label: "%{position} · %{name} · %{step}"
+      node_label_unplaced: "%{position} · %{name} · no place on the timeline"
+      chronological_position_aria: "Chronological position %{position} of %{total}"
+      legend_bar: "One bar is one scene; its place in the column is its place in that order."
+      legend_edge: "A line joins a scene's telling position to its place in world time."
+      legend_unplaced:
+        one: "One scene has no place on the timeline; it is drawn last, below the dashed rule."
+        other: "%{count} scenes have no place on the timeline; they are drawn last, below the dashed rule, in narrative order."
     intro: "The left column is the order the story is told. The right column is the Universe Timeline. A scene's own time is shown but never moves its event."
     left_heading: "How the story is told"
     left_description: "Every scene in narrative order. A scene with no event, or whose event has no recorded time, ends the current run."

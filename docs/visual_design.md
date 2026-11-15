@@ -625,6 +625,30 @@ The painted shape:
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
 
+### Narrative order chart
+
+The two views, the column order, and the read-only contract are in
+[features/scenes.md](features/scenes.md#narrative-order-beside-the-timeline); the painted shape:
+
+- The page's own **List** / **Chart** strip is a URL-backed `content_tabs` strip with `active` set
+  explicitly, so each view is a canonical request rather than an in-document pane. The Story
+  workspace's tabs never appear here.
+- Two column headings name the orders and carry the same Scene count, because both columns hold the
+  same Scenes. The chart itself is a server-rendered SVG inside a `.narrative-chart-scroll` region
+  with `tabindex="0"` and an accessible name; it has a floor width and scrolls rather than shrinking
+  a column into a thumbnail.
+- A bar is one Scene and carries no label: at a Story's density a label would not fit, so the bar's
+  link has an accessible name (its narrative or chronological position, the Scene, and its step) and
+  the facts live in the detail panel below the chart. The panel sits below so a taller card never
+  moves the bars out from under the pointer.
+- At rest every connector is a light border-color line and every bar is secondary ink at half
+  opacity. The Scene under the pointer or the keyboard takes the primary color on both bars and its
+  line, and the other lines recede. Focus is shown on the bar itself, not only in the panel.
+- The band of Scenes with no place on the timeline is separated by a dashed rule and drawn lighter.
+  The legend below the chart names the bar, the line, and the dashed rule, so the meaning is not
+  carried by color alone, and every painted value comes from Bootstrap theme tokens so Light and Dark
+  both stay legible.
+
 ### Scene board
 
 The board's columns, ordering, and read-only contract are in

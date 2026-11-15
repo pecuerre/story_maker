@@ -3152,6 +3152,25 @@ es:
   narrative_orders:
     title: "Orden narrativo"
     description: "Compara el orden en que %{story} cuenta sus escenas con el momento en que el universo dice que ocurren."
+    views_aria_label: "Vistas del orden narrativo"
+    views:
+      list: "Lista"
+      chart: "Diagrama"
+    chart:
+      title: "Los dos órdenes a la vez"
+      description: "Cada escena es una barra. La columna izquierda es el orden en que la historia las cuenta; la derecha son las mismas escenas ordenadas por cuándo ocurre su suceso. Una línea une cada escena consigo misma, así que una línea que cruza el campo es un flashback, un comienzo in medias res o un hilo paralelo."
+      left_heading: "El orden narrativo"
+      right_heading: "El orden cronológico"
+      svg_label: "Escenas como barras en dos columnas, unidas por una línea cada una. %{scenes} escenas."
+      scroll_label: "Diagrama del orden narrativo"
+      node_label: "%{position} · %{name} · %{step}"
+      node_label_unplaced: "%{position} · %{name} · sin lugar en la cronología"
+      chronological_position_aria: "Posición cronológica %{position} de %{total}"
+      legend_bar: "Cada barra es una escena; su lugar en la columna es su lugar en ese orden."
+      legend_edge: "Una línea une la posición narrativa de una escena con su lugar en el tiempo del mundo."
+      legend_unplaced:
+        one: "Una escena no tiene lugar en la cronología; se dibuja al final, bajo la línea discontinua."
+        other: "%{count} escenas no tienen lugar en la cronología; se dibujan al final, bajo la línea discontinua, en orden narrativo."
     intro: "La columna izquierda es el orden en que se cuenta la historia. La columna derecha es la cronología del universo. La hora propia de una escena se muestra, pero nunca mueve su suceso."
     left_heading: "Cómo se cuenta la historia"
     left_description: "Todas las escenas en orden narrativo. Una escena sin suceso, o cuyo suceso no tiene tiempo registrado, termina el tramo actual."

@@ -1,0 +1,169 @@
+// The Narrative order chart. Two columns of bars, one per Scene, joined by a
+// line that follows the Scene from its telling position to its place in world
+// time. At rest every connector is a light rule and every bar is quiet ink; the
+// pointer or the keyboard lifts one Scene out of the field. No state here is
+// carried by colour alone: the detail panel below always names the Scene and its
+// step, and the bar is also a link with an accessible name.
+.narrative-chart-headings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+  justify-content: space-between;
+  margin-bottom: .5rem;
+}
+
+.narrative-chart-heading-end {
+  margin-inline-start: auto;
+  text-align: end;
+}
+
+// Below the column's usable width the two headings stack and read from the
+// same edge, because the chart scrolls sideways and a right-aligned heading
+// would point at a column that is off screen.
+@media (max-width: 767.98px) {
+  .narrative-chart-headings {
+    flex-direction: column;
+  }
+
+  .narrative-chart-heading-end {
+    margin-inline-start: 0;
+    text-align: start;
+  }
+}
+
+.narrative-chart-figure {
+  margin: 0;
+}
+
+// A Story long enough to compress below a readable bar still scrolls here rather
+// than pushing its own detail panel off the page. A narrow screen keeps a
+// readable column instead of squashing the two columns into a thumbnail, so the
+// SVG has a floor and the region scrolls in both directions below it.
+.narrative-chart-scroll {
+  max-height: 72vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.narrative-chart-scroll:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.narrative-chart-svg {
+  display: block;
+  height: auto;
+  min-width: 40rem;
+  width: 100%;
+}
+
+.narrative-chart-edge {
+  fill: none;
+  stroke: var(--bs-border-color);
+  stroke-width: 1;
+  opacity: .5;
+  transition: opacity .12s ease, stroke .12s ease, stroke-width .12s ease;
+}
+
+.narrative-chart-edge.is-muted {
+  opacity: .08;
+}
+
+.narrative-chart-edge.is-active {
+  stroke: var(--bs-primary);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.narrative-chart-separator {
+  stroke: var(--bs-secondary-color);
+  stroke-dasharray: 4 4;
+  stroke-opacity: .45;
+}
+
+.narrative-chart-bar {
+  fill: var(--bs-secondary-color);
+  fill-opacity: .5;
+  transition: fill .12s ease, fill-opacity .12s ease;
+}
+
+.narrative-chart-node {
+  cursor: pointer;
+}
+
+.narrative-chart-node--unplaced .narrative-chart-bar {
+  fill-opacity: .28;
+}
+
+.narrative-chart-node.is-active .narrative-chart-bar,
+.narrative-chart-node:hover .narrative-chart-bar {
+  fill: var(--bs-primary);
+  fill-opacity: 1;
+}
+
+.narrative-chart-node:focus-visible {
+  outline: none;
+}
+
+.narrative-chart-node:focus-visible .narrative-chart-bar {
+  fill: var(--bs-primary);
+  fill-opacity: 1;
+  stroke: var(--bs-body-color);
+  stroke-width: 1.5;
+}
+
+.narrative-chart-caption {
+  margin-top: .75rem;
+}
+
+.narrative-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 1.25rem;
+  margin-bottom: 0;
+  color: var(--bs-secondary-color);
+  font-size: .8125rem;
+}
+
+.narrative-chart-legend > li {
+  align-items: center;
+  display: flex;
+  gap: .4rem;
+}
+
+.narrative-chart-legend-bar,
+.narrative-chart-legend-line,
+.narrative-chart-legend-dash {
+  display: inline-block;
+  flex: none;
+  width: 1.25rem;
+}
+
+.narrative-chart-legend-bar {
+  background: var(--bs-secondary-color);
+  border-radius: 1px;
+  height: .4rem;
+  opacity: .5;
+}
+
+.narrative-chart-legend-line {
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.narrative-chart-legend-dash {
+  border-top: 1px dashed var(--bs-border-color);
+}
+
+.narrative-chart-details {
+  border-top: 1px solid var(--bs-border-color);
+  margin-top: .75rem;
+  min-height: 4.5rem;
+  padding-top: .75rem;
+}
+
+@media print {
+  .narrative-chart-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}

@@ -69,7 +69,11 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
 
     get universe_story_narrative_order_path(universe_slug: @universe.slug, story_id: @story)
     assert_response :success
-    assert_select "main nav.content-tabs", 0
+    # Its own List/Chart strip is the only strip on the page: the two live
+    # destinations are the two views, and no Story workspace tab is offered.
+    assert_select "main nav.content-tabs a.nav-link", count: 2
+    assert_select "main nav.content-tabs a[href=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), count: 0
     assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active .sidebar-link-label",
       text: "Narrative order"
 

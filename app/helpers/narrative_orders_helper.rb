@@ -20,6 +20,33 @@ module NarrativeOrdersHelper
     event.title.presence || event.display_label
   end
 
+  # A chart bar carries no visible text, so its accessible name is the label a
+  # reader would otherwise have to hover for. A left bar names the Scene's
+  # narrative position; a right bar names its chronological position where it has
+  # one, because the two columns are two readings of the same Scene. A Scene the
+  # Timeline cannot place keeps its narrative position in both columns and says it
+  # has no place instead.
+  def narrative_chart_node_label(entry, column:, total:)
+    position =
+      if column == :chronological && entry.placed?
+        t("narrative_orders.chart.chronological_position_aria",
+          position: entry.chronological_position, total: total)
+      else
+        t("shared.scene_position_aria", position: entry.position, total: total)
+      end
+
+    if entry.placed?
+      t("narrative_orders.chart.node_label",
+        position: position,
+        name: entry.scene.name,
+        step: t("narrative_orders.steps.#{entry.row.step}.label"))
+    else
+      t("narrative_orders.chart.node_label_unplaced",
+        position: position,
+        name: entry.scene.name)
+    end
+  end
+
   # The one sentence a conflicting row prints. A Scene that links one claiming
   # Event keeps the precise range; one that links several says which Events it is
   # outside of, because a single range could not describe a point that lies between

@@ -71,6 +71,7 @@ reasoning as of its date.
 | [0045](0045-a-canon-rule-has-a-name-and-a-stable-slug.md) | Accepted | Give a canon rule a name and a stable slug, plus its ledger category and canon type, and supersede ADR 0039's addressed-by-id choice |
 | [0046](0046-an-open-canon-question-is-a-rule-of-type-open.md) | Accepted | Import an open canon question as a canon rule of type `open` instead of reporting it |
 | [0047](0047-adopt-index-as-the-visual-direction.md) | Accepted | Adopt Index — warm paper, system serif titles and prose, 46px rows, two narrower rails — as the reference-atlas visual direction |
+| [0048](0048-give-the-narrative-order-comparison-a-chart-view.md) | Accepted | Add a URL-backed chart view to the Narrative order comparison, with one connector per Scene |
 
 ## Format
 

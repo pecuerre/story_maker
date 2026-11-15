@@ -40,6 +40,10 @@ Labels used below, in the order their groups appear:
 
 ## 2026-11-15
 
+### added
+
+- **Narrative order chart view.** The comparison gains a URL-backed **Chart** view: every scene is a bar in both columns, one line joins it to itself, and pointing at or focusing a bar lifts that scene out of the dimmed field.
+
 ### changed
 
 - **Story interchange chapters follow acts.** An imported chapter now names its Section from the README `full_title` and sits under a parent Section named by its `act` frontmatter, so the acts arrive as the chapter hierarchy instead of only as description text.

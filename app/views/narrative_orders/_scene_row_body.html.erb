@@ -1,0 +1,64 @@
+<%# One Scene's facts, shared by the side-by-side list row and the chart's detail
+    panel, so the two views cannot describe a Scene differently. `summary` supplies
+    the total the position pill announces. %>
+<div class="d-flex align-items-start gap-3">
+  <span class="badge rounded-pill text-bg-light border"
+    aria-label="<%= t("shared.scene_position_aria", position: row.position, total: summary.scenes) %>">
+    <%= row.position %>
+  </span>
+
+  <div class="flex-grow-1">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <%= record_title_link universe_story_scene_path(story_id: @story, id: row.scene), record: row.scene %>
+      <% if row.placed? %>
+        <span class="badge rounded-pill text-bg-light border">
+          <%= t("narrative_orders.timeline_row", number: row.timeline_row) %>
+        </span>
+      <% end %>
+      <% if row.scene.section.present? %>
+        <span class="badge rounded-pill text-bg-light border">
+          <i class="bi bi-folder2" aria-hidden="true"></i>
+          <%= row.scene.section.name %>
+        </span>
+      <% end %>
+    </div>
+
+    <div class="small text-body-secondary mt-1">
+      <% if row.events.any? %>
+        <%= safe_join(row.events.map { |event|
+          link_to narrative_event_label(event), universe_event_path(id: event)
+        }, " · ") %>
+        <%= " · " if row.scene.datetime.present? %>
+      <% else %>
+        <%= t("narrative_orders.no_event") %>
+        <%= " · " if row.scene.datetime.present? %>
+      <% end %>
+      <% if row.scene.datetime.present? %>
+        <%= t("narrative_orders.own_time", time: scene_in_world_time(row.scene)) %>
+      <% end %>
+    </div>
+
+    <% if row.step.present? %>
+      <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+        <span class="badge rounded-pill text-bg-light border <%= narrative_step_border_class(row.step) %>">
+          <%= t("narrative_orders.steps.#{row.step}.label") %>
+        </span>
+        <% if row.compared_scene.present? %>
+          <span class="small text-body-secondary">
+            <%= t("narrative_orders.compared_with", position: row.compared_scene.position + 1) %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if row.unsequenced? %>
+      <div class="small text-body-secondary mt-2"><%= t("narrative_orders.event_without_time") %></div>
+    <% end %>
+
+    <% if row.conflict? %>
+      <p class="small text-danger mt-2 mb-0">
+        <%= narrative_conflict_message(row) %>
+      </p>
+    <% end %>
+  </div>
+</div>

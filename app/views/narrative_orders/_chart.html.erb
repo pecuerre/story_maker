@@ -1,0 +1,102 @@
+<% chart = local_assigns.fetch(:chart) %>
+<% comparison = local_assigns.fetch(:comparison) %>
+<% summary = comparison.summary %>
+
+<section class="surface-card p-3 p-md-4" aria-labelledby="narrative-order-chart-title">
+  <h2 class="h5" id="narrative-order-chart-title"><%= t("narrative_orders.chart.title") %></h2>
+  <p class="text-body-secondary"><%= t("narrative_orders.chart.description") %></p>
+
+  <div class="narrative-chart" data-controller="narrative-chart">
+    <div class="narrative-chart-headings">
+      <h3 class="h6 mb-0">
+        <%= t("narrative_orders.chart.left_heading") %>
+        <span class="badge rounded-pill text-bg-light border"><%= summary.scenes %></span>
+      </h3>
+      <h3 class="h6 mb-0 narrative-chart-heading-end">
+        <%= t("narrative_orders.chart.right_heading") %>
+        <span class="badge rounded-pill text-bg-light border"><%= summary.scenes %></span>
+      </h3>
+    </div>
+
+    <figure class="narrative-chart-figure">
+      <div class="narrative-chart-scroll" role="region" tabindex="0"
+        aria-label="<%= t("narrative_orders.chart.scroll_label") %>">
+        <svg class="narrative-chart-svg" viewBox="0 0 <%= chart.width %> <%= chart.height %>"
+          role="group"
+          aria-label="<%= t("narrative_orders.chart.svg_label", scenes: summary.scenes) %>">
+          <g class="narrative-chart-edges" aria-hidden="true">
+            <% chart.entries.each do |entry| %>
+              <path class="narrative-chart-edge"
+                data-narrative-chart-edge="<%= entry.scene.id %>"
+                d="<%= entry.connector %>"></path>
+            <% end %>
+            <% if chart.separator_y %>
+              <line class="narrative-chart-separator"
+                x1="<%= chart.right_bar_x %>" y1="<%= chart.separator_y %>"
+                x2="<%= chart.right_bar_x + chart.bar_width %>" y2="<%= chart.separator_y %>"></line>
+            <% end %>
+          </g>
+
+          <% chart.entries.each do |entry| %>
+            <% left_label = narrative_chart_node_label(entry, column: :narrative, total: summary.scenes) %>
+            <% right_label = narrative_chart_node_label(entry, column: :chronological, total: summary.scenes) %>
+            <% node_class = "narrative-chart-node#{' narrative-chart-node--unplaced' unless entry.placed?}" %>
+            <% bar_y = (entry.left_y - (entry.bar_height / 2.0)).round(2) %>
+            <%= link_to universe_story_scene_path(story_id: @story, id: entry.scene),
+              class: node_class,
+              aria: { label: left_label },
+              data: { narrative_chart_scene: entry.scene.id,
+                action: "pointerenter->narrative-chart#highlight pointerleave->narrative-chart#clear focusin->narrative-chart#highlight focusout->narrative-chart#clear" } do %>
+              <title><%= left_label %></title>
+              <rect class="narrative-chart-bar" x="<%= chart.left_bar_x %>" y="<%= bar_y %>"
+                width="<%= chart.bar_width %>" height="<%= entry.bar_height %>"></rect>
+            <% end %>
+            <% right_bar_y = (entry.right_y - (entry.bar_height / 2.0)).round(2) %>
+            <%= link_to universe_story_scene_path(story_id: @story, id: entry.scene),
+              class: node_class,
+              tabindex: "-1",
+              aria: { label: right_label },
+              data: { narrative_chart_scene: entry.scene.id,
+                action: "pointerenter->narrative-chart#highlight pointerleave->narrative-chart#clear" } do %>
+              <title><%= right_label %></title>
+              <rect class="narrative-chart-bar" x="<%= chart.right_bar_x %>" y="<%= right_bar_y %>"
+                width="<%= chart.bar_width %>" height="<%= entry.bar_height %>"></rect>
+            <% end %>
+          <% end %>
+        </svg>
+      </div>
+
+      <figcaption class="narrative-chart-caption">
+        <ul class="narrative-chart-legend list-unstyled mb-0">
+          <li>
+            <span class="narrative-chart-legend-bar" aria-hidden="true"></span>
+            <%= t("narrative_orders.chart.legend_bar") %>
+          </li>
+          <li>
+            <span class="narrative-chart-legend-line" aria-hidden="true"></span>
+            <%= t("narrative_orders.chart.legend_edge") %>
+          </li>
+          <% if chart.unplaced_count.positive? %>
+            <li>
+              <span class="narrative-chart-legend-dash" aria-hidden="true"></span>
+              <%= t("narrative_orders.chart.legend_unplaced", count: chart.unplaced_count) %>
+            </li>
+          <% end %>
+        </ul>
+      </figcaption>
+    </figure>
+
+    <%# Every Scene's facts are rendered once and hidden; the controller only
+        reveals the one under the pointer or the keyboard. Nothing here is
+        rewritten on the client, and the panel sits below the chart so a taller
+        card never moves the bars out from under the pointer. %>
+    <div class="narrative-chart-details">
+      <% comparison.rows.each_with_index do |row, index| %>
+        <div class="narrative-chart-detail"
+          data-narrative-chart-detail="<%= row.scene.id %>"<%= " hidden" unless index.zero? %>>
+          <%= render "scene_row_body", row: row, summary: summary %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</section>

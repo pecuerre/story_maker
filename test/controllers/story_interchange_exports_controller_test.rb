@@ -58,6 +58,16 @@ class StoryInterchangeExportsControllerTest < ActionDispatch::IntegrationTest
     assert_includes flash[:alert], "prose in Scene one has the line `## A heading` on line 2"
   end
 
+  test "refuses the archive when a drafting contract would end its own comment" do
+    scenes(:scene_one).update!(drafting_contract: "- one place.\n- one beat. --> the rest")
+
+    get download_url
+
+    assert_redirected_to universe_story_export_path(universe_slug: @universe.slug, story_id: @story)
+    assert_includes flash[:alert],
+      "the drafting contract of Scene one has the line `- one beat. --> the rest` on line 2"
+  end
+
   test "another universe's story is a 404" do
     get download_url(story: stories(:story_two))
 

@@ -1479,6 +1479,9 @@ es:
         comment:
           one: "No se creó el directorio Markdown: la prosa de %{scene} contiene «%{text}» (línea %{line}), y el formato lee esa línea como una nota de redacción y la eliminaría. Cambia esa línea y vuelve a descargar."
           other: "No se creó el directorio Markdown: la prosa de %{count} escenas contiene una línea que el formato lee como una nota de redacción y eliminaría. La primera está en %{scene}, línea %{line}: «%{text}». Cambia esa línea y vuelve a descargar."
+        contract:
+          one: "No se creó el directorio Markdown: el contrato de escritura de %{scene} contiene «%{text}» (línea %{line}), y el formato terminaría ahí la nota y leería el resto como prosa. Cambia esa línea y vuelve a descargar."
+          other: "No se creó el directorio Markdown: el contrato de escritura de %{count} escenas contiene una línea donde el formato terminaría la nota. La primera está en %{scene}, línea %{line}: «%{text}». Cambia esa línea y vuelve a descargar."
     manuscript:
       document_title: "%{story} — manuscrito"
       print_hint: "Usa el comando de impresión del navegador para imprimir esta página o guardarla como PDF."

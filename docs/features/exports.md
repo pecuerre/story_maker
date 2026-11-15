@@ -182,6 +182,12 @@ tropes, relations, ownerships, Events, photos, Character aliases, Section descri
 parentheticals, and a canon Rule's optional Story owner do not travel. The page names that boundary
 beside the button rather than implying a full backup.
 
+Assembling the archive is the expensive part, so `show` carries a per-client limit: five downloads in
+five minutes, counted per signed-in account and per client address otherwise. A guest of a public
+Universe is refused past it with the export page's `errors.rate_limited` alert rather than a bare
+`429`, because the page is where the archive is offered. The counter lives in `Rails.cache` under the
+framework's `rate_limit` key, the same store and mechanism sign-in and password reset use.
+
 Writing a source is not copying the database, so a few values have a canonical export form:
 
 - A Scene needs the format's `B-###` id and its `main` branch. The Universe stores neither, so the id
@@ -195,6 +201,10 @@ Writing a source is not copying the database, so a few values have a canonical e
   same kind merge into one block, and a Scene that opens with Dialogue gets an empty Narration before
   it, because that is the block grammar the validator accepts. The Element boundary and the Element
   titles do not survive.
+- A Scene's `drafting_contract` is written as the closing `DRAFTING CONTRACT` HTML comment the
+  reader keeps as that note, so the authoring note travels instead of staying behind. Its references
+  are rewritten like prose's, and a contract containing the comment closer `-->` refuses the archive
+  and names the Scene and line: the note would end there, and the rest would be read as prose.
 - A Scene line that begins `## `, or any Scene prose containing an HTML comment opener `<!--`,
   refuses the archive rather than being written. The reader takes the first as the next block
   heading, so the line would split the Element, and masks the second out as a drafting note, so the

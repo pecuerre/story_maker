@@ -15,10 +15,28 @@
 # the export refuses because ordinary Scene prose cannot be written as a valid
 # block, the request is sent back to the export page with the Scene and line
 # named instead of returning an archive the import would reject.
+#
+# **Assembling the whole archive is the expensive part**, and a public Universe
+# lets a guest ask for it, so the `show` action carries a per-client limit. The
+# counter is per signed-in account and per address otherwise, so one client
+# cannot assemble a growing Universe repeatedly while an address a team shares
+# is not one budget for every signed-in member behind it.
 class StoryInterchangeExportsController < ApplicationController
+  # Five downloads in five minutes: an author downloads the source to import
+  # it elsewhere, so a handful in one sitting is ordinary and a loop is not.
+  DOWNLOAD_LIMIT = 5
+  DOWNLOAD_WINDOW = 5.minutes
+
   allow_unauthenticated_access only: %i[ show ]
 
   before_action :set_story
+
+  # Declared after `set_story` so the refusal can send the reader back to the
+  # page the archive is offered on, and after the application's own callbacks
+  # so a request that is not permitted never spends a counter.
+  rate_limit to: DOWNLOAD_LIMIT, within: DOWNLOAD_WINDOW, only: :show,
+    by: -> { Current.user ? "user:#{Current.user.id}" : "ip:#{request.remote_ip}" },
+    with: -> { redirect_to universe_story_export_path(story_id: @story), alert: t("errors.rate_limited") }
 
   # GET /u/:universe_slug/s/:story_id/export/interchange
   def show

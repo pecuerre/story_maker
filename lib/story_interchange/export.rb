@@ -27,6 +27,11 @@ module StoryInterchange
   # block, because the layout alternates Narration and Dialog and has no
   # per-Element record; the prose survives, the Element boundary does not.
   #
+  # A Scene's stored `drafting_contract` travels as the closing `DRAFTING
+  # CONTRACT` comment the reader keeps as that note rather than as prose, so the
+  # authoring note is not left behind with the records the layout cannot
+  # describe.
+  #
   # The layout groups Scenes by Section, which cannot express a Story whose
   # narrative order interleaves Sections or ungrouped Scenes. Each Scene
   # therefore carries its story-wide `position`, numbered from the Story's own
@@ -50,11 +55,20 @@ module StoryInterchange
     # The opener of an HTML comment, which the reader masks out as a drafting
     # note before storing prose or scanning references.
     COMMENT_OPENER = "<!--"
+    # The closer of that same comment, and the one shape a drafting contract
+    # cannot carry: it would end the note early, so the rest would be read as
+    # prose and the note would lose its tail.
+    COMMENT_CLOSER = "-->"
+    # The first line of the closing authoring note. The reader looks for this
+    # word to tell a Scene's drafting contract from any other comment.
+    DRAFTING_CONTRACT = "DRAFTING CONTRACT"
 
     # Raised instead of handing the author a source the validator would reject.
     # An Element's body is free prose, and two shapes in it cannot be written
     # back unchanged: a line beginning `## ` is read as the next block heading,
-    # and an HTML comment is misread as a drafting note and removed. The export
+    # and an HTML comment is misread as a drafting note and removed. A Scene's
+    # drafting contract is written inside a comment, so its own comment closer
+    # would end that note early and leak the rest into the last block. The export
     # names the Scene and the line so the author can change the prose before
     # downloading again.
     class Unrepresentable < StandardError
@@ -117,7 +131,7 @@ module StoryInterchange
         projected.merge!(item_files)
         projected.merge!(story_files)
         projected.merge!(empty_directories)
-        refuse_unrepresentable_prose
+        refuse_unrepresentable_source
         projected
       end
     end
@@ -539,6 +553,7 @@ module StoryInterchange
       def scene_document(scene, position)
         blocks = scene_blocks(scene)
         check_scene_prose(scene, blocks)
+        contract = drafting_contract_note(scene)
 
         moment = scene.datetime&.utc&.strftime("%Y-%m-%d %H:%M")
         character = scene.pov_character
@@ -560,6 +575,7 @@ module StoryInterchange
         blocks.each do |heading, body|
           parts << "## #{heading}" << "" << body.to_s.strip << ""
         end
+        parts << contract << "" if contract
 
         parts.join("\n").rstrip + "\n"
       end
@@ -588,7 +604,29 @@ module StoryInterchange
         :comment if line.include?(COMMENT_OPENER)
       end
 
-      def refuse_unrepresentable_prose
+      # The stored drafting contract written back as the closing comment the
+      # reader keeps as that note. Its references are rewritten exactly as
+      # prose's are, and a note the comment cannot hold refuses the archive
+      # rather than travelling in part.
+      def drafting_contract_note(scene)
+        text = rewrite_references(scene.drafting_contract).to_s.strip
+        return if text.blank?
+
+        check_drafting_contract(scene, text)
+
+        "<!--\n#{DRAFTING_CONTRACT}\n#{text}\n-->"
+      end
+
+      def check_drafting_contract(scene, text)
+        found = text.each_line.with_index(1).find { |line, _number| line.include?(COMMENT_CLOSER) }
+        return unless found
+
+        line, number = found
+        @problems << Unrepresentable::Problem.new(reason: :contract, scene: scene.name,
+          text: line.strip, line: number)
+      end
+
+      def refuse_unrepresentable_source
         raise Unrepresentable, @problems if @problems.any?
       end
 

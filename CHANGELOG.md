@@ -51,12 +51,14 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Interchange export drafting contract.** A Scene's stored `drafting_contract` is now written as the closing `DRAFTING CONTRACT` comment the import reads, so the note no longer disappears from an exported source; the finding leaves `known_quirks.md`.
 - **Interchange export prose.** A narration line beginning `## ` or Scene prose containing an HTML comment opener now refuses the archive and names the Scene and line, instead of downloading a source that would split the Element or drop the sentence; the finding leaves `known_quirks.md`.
 - **Interchange export slugs.** A record whose slug another record already holds is exported with its kind appended and its stored references rewritten, and a Scene sharing its Story-wide address gets the same suffix, so a valid Universe no longer downloads an unimportable source.
 - **Interchange Scene order.** Every exported Scene now carries its Story-wide narrative `position`, and the import numbers Scenes from it, so a Story that interleaves Sections or ungrouped Scenes round-trips in the same order.
 
 ### security
 
+- **Interchange download limit.** The whole-Universe archive download is now five requests per five minutes per signed-in account or client address, so one client can no longer assemble an expanding public Universe on demand; the finding leaves `known_quirks.md`.
 - **Interchange import symlinks.** The validator and the document reader now refuse any file or directory that resolves outside the source directory, so a nested symlink can no longer read server files or name the Universe, and the finding leaves `known_quirks.md`.
 - **Private photo access.** A stored photo is now served by `PhotosController` under the Universe's read policy instead of an Active Storage bearer URL, and the framework's blob routes are unmounted; `Cache-Control: private, no-store` makes a revoked member's next fetch ask again.
 

@@ -7121,6 +7121,79 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: a public interchange download assembled a whole Universe on an unthrottled GET (fixed)
+
+**Then:** the open list recorded a **Footgun** that `StoryInterchangeExportsController#show` permits a
+guest in a public Universe and runs `StoryInterchange::Export#to_s`, which builds the complete file map
+and compresses it in memory on every request. Neither existing counter covered it: `MutationThrottle`
+counts only `POST`/`PATCH`/`PUT`/`DELETE`, and `ReadThrottle` counts only a bearer token's `GET`s, so
+the browser surface and its guests were never counted. The finding did not claim a capacity figure —
+no load test was run — only that nothing bounded the anonymous cost of a request that grows with the
+Universe.
+
+**Why a per-client limit rather than a narrower access rule.** A guest reading a public Universe is
+[ADR 0005](adr/0005-universe-access-levels.md)'s grant, and the archive is a read of that Universe, so
+requiring sign-in would have narrowed the access decision to fix a cost problem. Caching the archive was
+the other option and was rejected: a cached source is a second answer to "what does this Universe
+contain", so every exported record type would need invalidation, and the first request after each edit
+still pays the cost. A limit bounds the repeated cost without changing who may ask.
+
+**How it reads now.** The controller declares the framework's own `rate_limit` — the mechanism sign-in
+and password reset already use — for `show` only: five downloads in five minutes, with the refusal
+redirecting to the export page carrying `errors.rate_limited`, because that page is where the archive is
+offered. The counter is keyed `user:<id>` for a signed-in reader and `ip:<address>` otherwise, so an
+address a team shares is not one budget for every signed-in member behind it, while an anonymous client
+cannot loop. The macro is declared after `before_action :set_story`, so its refusal can name the page it
+returns to, and it runs after the application's own callbacks, so a request the access rules refuse
+never spends a counter.
+
+**Verification.** `test/controllers/framework_rate_limit_test.rb` gained the download's section and now
+mirrors `EXPORT_ATTEMPTS_ALLOWED = 5` beside the existing `ATTEMPTS_ALLOWED = 10`, so raising the limit
+has to be a deliberate edit; one case proves the sixth request is refused and lands on the export page
+with the rate-limited alert, and another proves a reader who signs in from an exhausted address has
+their own budget. `bin/rails test` on that file and the export controller reports 14 runs and 61
+assertions; `bin/rubocop` reports no offenses. [exports.md](features/exports.md#the-story-interchange-directory)
+states the limit, [architecture.md](architecture.md#caching--performance-notes) now counts three
+`rate_limit` limits rather than two, and the finding left [known_quirks.md](known_quirks.md).
+
+### Quirk: interchange export dropped a Scene's drafting contract (fixed)
+
+**Then:** the open list recorded a **Medium** finding that the interchange reads a Scene's closing
+`DRAFTING CONTRACT` HTML comment into `Scene#drafting_contract` — `Validator::DRAFTING_CONTRACT`
+extracts it, and `Importers::Scenes` writes it — while `StoryInterchange::Export#scene_document`
+wrote no such comment. A 2026-11-12 probe saved a contract, exported the Universe, and read the
+parsed Scene back with a `nil` contract. Nothing rejected the archive: the note was simply absent, and
+the export page's list of what stays behind did not name it, so the author had no way to tell an empty
+note from a dropped one.
+
+**Why it is written rather than declared lost.** The layout already has a home for this note — it is
+the one HTML comment the reader keeps as data instead of masking away — so listing it among the
+records the format cannot carry would have been a wrong second answer beside a place that exists.
+What did not travel was a line of code, not a property of the format.
+
+**How it reads now.** `Export#scene_document` writes the stored note back after the last block as
+`<!--` / `DRAFTING CONTRACT` / the note / `-->`, matching the shape both the fixture source and the
+validator use. Its `[[kind:slug]]` references are rewritten the same way prose's are, so a record whose
+slug was made unique for the source is renamed inside the note too. The note is an HTML comment, so
+the prose hazard check cannot see it: a contract line containing the closer `-->` would end the comment
+early, lose the note's tail, and leak the rest into the last block as prose. That refuses the whole
+archive as a third `Unrepresentable` reason, `:contract`, naming the Scene, the line, and its number
+inside the note, and `story_exports.interchange.unrepresentable.contract` carries the sentence in both
+locales. Refusing rather than escaping follows the decision the prose refusal already took: the block
+and comment grammar is [ADR 0041](adr/0041-the-story-interchange-is-a-directory-contract.md)'s shared
+contract, and the application does not add an escape every other reader of the format would have to
+implement.
+
+**Verification.** `test/lib/story_interchange/export_test.rb` adds four cases: a saved contract is
+written as the closing comment, validates, and round-trips through the import unchanged; a Scene with
+no contract writes no comment; a reference in a contract follows a renamed record; and a contract
+containing `-->` refuses with the `:contract` reason, Scene, text, and line 2.
+`test/controllers/story_interchange_exports_controller_test.rb` asserts the download redirects back
+with the sentence and no archive. `bin/rails test` on the export, controller, and translation files
+reports 19 runs and 187 assertions (and 22 runs for the export file alone); `bin/rubocop` reports no
+offenses. [exports.md](features/exports.md#the-story-interchange-directory) now states that the
+drafting contract travels, and the finding left [known_quirks.md](known_quirks.md).
+
 ### Quirk: a Scene's ordinary prose could split or lose text in the exported source (fixed)
 
 **Then:** the open list recorded a **Medium** finding that a Scene Element's body is free prose while

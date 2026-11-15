@@ -1,26 +1,32 @@
 require "test_helper"
 
-# The two limits that predate `MutationThrottle` and are still declared with the
-# framework's own `rate_limit` macro: sign-in and password reset.
+# The limits declared with the framework's own `rate_limit` macro rather than
+# with `MutationThrottle`: sign-in, password reset, and the story-interchange
+# download.
 #
 # They are here because a limit nobody tests is indistinguishable from a limit
 # that does not exist. `rate_limit` resolves its store when the macro is
-# declared, so these two are wired to whatever `config.cache_store` named at boot
+# declared, so these are wired to whatever `config.cache_store` named at boot
 # and a test cannot install a different one — which is why that setting is a
 # counting `:memory_store` and why this file clears the store instead of
 # replacing it.
 #
-# `ATTEMPTS_ALLOWED` mirrors `rate_limit to: 10` in both controllers. The macro
-# keeps its arguments inside a `before_action` lambda rather than as readable
-# attributes, so the number is repeated here rather than reflected: raising a
-# limit is a security decision, and it should fail this file when it happens
-# rather than be absorbed by a test that reads whatever the controller says.
+# `ATTEMPTS_ALLOWED` and `EXPORT_ATTEMPTS_ALLOWED` mirror `rate_limit to: 10` in
+# the two session controllers and `rate_limit to: 5` in
+# `StoryInterchangeExportsController`. The macro keeps its arguments inside a
+# `before_action` lambda rather than as readable attributes, so the numbers are
+# repeated here rather than reflected: raising a limit is a security decision,
+# and it should fail this file when it happens rather than be absorbed by a test
+# that reads whatever the controller says.
 class FrameworkRateLimitTest < ActionDispatch::IntegrationTest
   ATTEMPTS_ALLOWED = 10
+  EXPORT_ATTEMPTS_ALLOWED = 5
 
   setup do
     clear_all_counters
     @user = users(:user_one)
+    @universe = universes(:universe_one)
+    @story = stories(:story_one)
   end
 
   # --- sign-in ---------------------------------------------------------------
@@ -99,6 +105,33 @@ class FrameworkRateLimitTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("passwords.instructions_sent"), flash[:notice]
   end
 
+  # --- interchange download --------------------------------------------------
+
+  test "the interchange download refuses the request past the limit" do
+    EXPORT_ATTEMPTS_ALLOWED.times do
+      get download_url
+      assert_response :success
+    end
+
+    get download_url
+
+    assert_redirected_to universe_story_export_path(universe_slug: @universe.slug, story_id: @story)
+    assert_equal I18n.t("errors.rate_limited"), flash[:alert]
+  end
+
+  test "a signed-in reader is counted apart from the address they share" do
+    # The guest exhausts the address's budget; a reader who signs in from the
+    # same address has their own, so a shared address is not one budget for
+    # every signed-in member behind it.
+    (EXPORT_ATTEMPTS_ALLOWED + 1).times { get download_url }
+    assert_redirected_to universe_story_export_path(universe_slug: @universe.slug, story_id: @story)
+
+    sign_in_as(@user)
+    get download_url
+
+    assert_response :success
+  end
+
   private
     def attempt_sign_in(email_address: nil, password: "wrong-password")
       post session_path, params: {
@@ -109,5 +142,9 @@ class FrameworkRateLimitTest < ActionDispatch::IntegrationTest
 
     def attempt_password_reset(email_address: nil)
       post passwords_path, params: { email_address: email_address || @user.email_address }
+    end
+
+    def download_url
+      universe_story_export_interchange_path(universe_slug: @universe.slug, story_id: @story)
     end
 end

@@ -1554,6 +1554,9 @@ en:
         comment:
           one: "The Markdown directory was not built: prose in %{scene} has the line `%{text}` on line %{line}, and the format reads it as a drafting note and would remove it. Change that line, then download again."
           other: "The Markdown directory was not built: prose in %{count} scenes has a line the format reads as a drafting note and would remove. The first is in %{scene}, line %{line}: `%{text}`. Change that line, then download again."
+        contract:
+          one: "The Markdown directory was not built: the drafting contract of %{scene} has the line `%{text}` on line %{line}, and the format would end the note there and read the rest as prose. Change that line, then download again."
+          other: "The Markdown directory was not built: the drafting contract of %{count} scenes has a line the format would end the note at. The first is in %{scene}, line %{line}: `%{text}`. Change that line, then download again."
     manuscript:
       document_title: "%{story} — manuscript"
       print_hint: "Use the browser's print command to print this page or save it as a PDF."

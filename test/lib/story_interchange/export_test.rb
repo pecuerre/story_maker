@@ -190,6 +190,57 @@ class StoryInterchangeExportTest < ActiveSupport::TestCase
     assert_equal %w[scene-one scene-one-scene scene-three], story.scenes.order(:position, :id).pluck(:slug)
   end
 
+  test "a scene's drafting contract travels as the closing comment the reader keeps" do
+    scenes(:scene_one).update!(drafting_contract: "- one place, one beat of time: can the lantern cross?\n" \
+      "- exit question: who opened the gate?")
+
+    files = StoryInterchange::Export.new(@universe).files
+    scene = file(files, "/01-scene-one.md")
+
+    assert_match(/<!--\nDRAFTING CONTRACT\n- one place, one beat of time: can the lantern cross\?\n- exit question: who opened the gate\?\n-->\n\z/, scene)
+
+    root = write(StoryInterchange::Export.new(@universe))
+    report = StoryInterchange.validate(root)
+
+    assert report.valid?, report.errors.map { |error| "#{error.path}: #{error.message}" }.join("\n")
+    assert_equal scenes(:scene_one).drafting_contract, report.entity("scene-one").drafting_contract
+
+    universe = StoryInterchange::Import.new(root, owner: users(:user_one)).call.universe
+    assert_equal scenes(:scene_one).drafting_contract,
+      universe.scenes.find_by!(slug: "scene-one").drafting_contract
+  end
+
+  test "a scene with no drafting contract writes no closing comment" do
+    files = StoryInterchange::Export.new(@universe).files
+
+    assert_not_includes file(files, "/01-scene-one.md"), "DRAFTING CONTRACT"
+  end
+
+  test "a drafting contract reference follows a renamed record like prose does" do
+    location = locations(:location_one)
+    location.update!(slug: characters(:character_one).slug)
+    scenes(:scene_one).update!(drafting_contract: "- one place: [[location:#{characters(:character_one).slug}]]")
+
+    files = StoryInterchange::Export.new(@universe).files
+    scene = file(files, "/01-scene-one.md")
+
+    assert_includes scene, "- one place: [[location:character-one-location]]"
+  end
+
+  test "a drafting contract the comment would end early refuses the archive and names the scene" do
+    scenes(:scene_one).update!(drafting_contract: "- one place.\n- one beat. --> the rest")
+
+    error = assert_raises(StoryInterchange::Export::Unrepresentable) do
+      StoryInterchange::Export.new(@universe).files
+    end
+
+    problem = error.problems.first
+    assert_equal :contract, problem.reason
+    assert_equal "Scene one", problem.scene
+    assert_equal "- one beat. --> the rest", problem.text
+    assert_equal 2, problem.line
+  end
+
   test "narration the block grammar would split refuses the archive and names the scene" do
     scene_elements(:narration_one).update!(body: "An opening line.\n## A heading\nA closing line.")
 

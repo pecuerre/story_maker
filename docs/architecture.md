@@ -62,8 +62,9 @@ UI patterns and the Timeline algorithm. Conventions are in
    0029](adr/0029-per-endpoint-throttle-groups.md). Universe creation is the one group with no
    universe — `Current.universe` is nil on `POST /u` — so it spends no universe budget and its number
    comes from `platform_settings.universe_creation_limit`. Every other platform-level write (sign-in,
-   password reset, settings, notifications) is still not counted here, and sign-in and password reset
-   carry their own `rate_limit`. A refusal answers a JSON-only controller with a bare `429` and the
+   password reset, settings, notifications) is still not counted here, and three requests carry their
+   own `rate_limit` instead: sign-in, password reset, and the story-interchange download, which is a
+   read described in [exports.md](features/exports.md#the-story-interchange-directory). A refusal answers a JSON-only controller with a bare `429` and the
    HTML flow with a redirect and an alert, and the counters live in `Rails.cache`. The universe budget
    is a column on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited), which an admin
    raises, lowers, or removes from the universe settings form — a form `edit`/`update` already guard
@@ -539,9 +540,9 @@ and the fact that the Timeline is a tab of the Event workspace rather than a pag
 - The per-universe mutation budget is counted in `Rails.cache` too, under a `mutation-throttle:`
   key prefix that is deliberately distinct from the framework's own `rate-limit:` prefix so two
   counters cannot collide. Solid Cache implements `increment` under a row lock, so a multi-process
-  deployment counts into one place; the other two limits in the application (sign-in and password
-  reset) use `ActionController::RateLimiting`'s own `rate_limit` macro instead, which resolves and
-  captures its store when the controller class body is evaluated. See
+  deployment counts into one place; the application's other three limits (sign-in, password reset,
+  and the story-interchange download) use `ActionController::RateLimiting`'s own `rate_limit` macro
+  instead, which resolves and captures its store when the controller class body is evaluated. See
   [ADR 0028](adr/0028-per-universe-mutation-budget.md).
 - The per-group sub-limits share that prefix under a `group:` segment
   (`mutation-throttle:group:<group>:<universe id or "platform">:<user id>`), so a group counter can

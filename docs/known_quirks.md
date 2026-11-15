@@ -38,7 +38,7 @@ down, so **re-read a finding against the code before acting on it** — see
 [Audit baseline and evidence](#audit-baseline-and-evidence) for what that pass actually ran. The entries added on 2026-11-12 state their own evidence; that
 review sampled important paths and did not prove the absence of other issues.
 
-## Open findings
+## Open findings for later
 
 1. **Medium — CI proves a production image boots, but not a deployment, and the job setup is not
    exercised at all.** Three things a deployment depends on are unproven by any job or test:
@@ -69,47 +69,42 @@ review sampled important paths and did not prove the absence of other issues.
    individual query succeeds; database snapshotting and the independent photo-file lifecycle both
    need consideration.
 
-4. **Medium — interchange export can reorder the Story's narrative sequence.**
-   `StoryInterchange::Export#chapter_files` groups Scenes by Section, then puts ungrouped Scenes last;
-   the importer assigns positions in chapter/file order. In a 2026-11-12 round-trip probe with Scene
-   positions A, B, C and A/C in one Section, the validator read B, A, C. This is separate from the
-   documented flattening of the Section hierarchy: a Story can interleave Sections or ungrouped
-   Scenes, and importing the export changes their stored narrative order without warning.
+## Open findings
 
-5. **Medium — interchange export can produce duplicate slugs the importer refuses.** The application
+4. **Medium — interchange export can produce duplicate slugs the importer refuses.** The application
    permits a Character and a Location in the same Universe to share a slug; the interchange validator
    requires entity and Plot slugs to be globally distinct. `StoryInterchange::Export` writes the
    model slugs as-is, so a valid Universe with that collision downloads successfully but fails
    validation with `duplicate record slug`. A 2026-11-12 fixture probe reproduced it. Resolve identity
    and references together rather than silently renaming only the file.
 
-6. **Medium — a Scene's ordinary narration can make its exported source invalid.** Scene Element body
+5. **Medium — a Scene's ordinary narration can make its exported source invalid.** Scene Element body
    text is not constrained to the interchange grammar. The exporter inserts it directly beneath
    `## Narration`, while `StoryInterchange::Document` treats any following `##` line as a new block.
    A saved narration containing `## A heading` produced the validator error `scene section ... is not
    a ... block` in a 2026-11-12 probe. Similar source grammar and reference delimiters need an explicit
    encoding or a refusal that tells the author before presenting the file as importable.
 
-7. **Medium — interchange export silently drops a Scene's drafting contract.** The importer already
+6. **Medium — interchange export silently drops a Scene's drafting contract.** The importer already
     reads the `DRAFTING CONTRACT` comment into `Scene#drafting_contract`, but
     `StoryInterchange::Export#scene_document` writes no such comment. A 2026-11-12 probe saved a
     contract and found the exported, parsed Scene's contract was `nil`. This is not a limitation of
     the interchange format, and the export's loss notes do not name it.
 
-8. **Medium — forward chains of imported relative moments can lose computable dates.**
+7. **Medium — forward chains of imported relative moments can lose computable dates.**
     `StoryInterchange::Importers::Events` creates every Event, then applies each relation once in
     source order. If A is one day after B, B is one day after C, and C has a concrete date, A is
     visited before B has acquired its date and is never revisited. A validated 2026-11-12 import
     produced `nil`, January 2, and January 1 for A, B, and C respectively. The temporal links remain,
     but A's computed start is missing; cycles and other relation shapes need a deliberate policy too.
 
-9. **Medium — the backup truncates timestamp fractions.** `UniverseBackup::DataDump#attributes_for`
+8. **Medium — the backup truncates timestamp fractions.** `UniverseBackup::DataDump#attributes_for`
     calls `iso8601` without a precision, so `2026-11-12T12:30:00.123456Z` was written as
     `2026-11-12T12:30:00Z` in a 2026-11-12 probe. The table dump is therefore not a byte- or
     value-exact copy of timestamp columns, including version-relevant `updated_at` values. Restore
     does not yet exist; preserve and test the original precision before relying on a round trip.
 
-10. **Medium — a missing stored photo file aborts the backup instead of being reported.**
+9. **Medium — a missing stored photo file aborts the backup instead of being reported.**
     `DataDump#photo_files` reports a Photo with no attachment, but if the attachment and blob rows
     exist and the storage object is missing, `blob.download` raises `ActiveStorage::FileNotFoundError`.
     A 2026-11-12 probe simulated the storage failure and reproduced the exception, so no archive or
@@ -117,21 +112,21 @@ review sampled important paths and did not prove the absence of other issues.
     Decide whether to fail clearly or produce a partial archive with an explicit missing-file entry;
     do not call a partial result complete.
 
-11. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
+10. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
     `PARALLEL_WORKERS=1 bin/rails test:system` also failed the dark-theme Map and Settings cases and
     two Scene Element dropdown cases. All four passed when rerun together serially. The full run's
     theme assertions saw light colors and the dropdown assertions did not find an open menu; the
     cause and whether a user-visible race exists remain unverified. Separate simultaneous reruns
     also hit SQLite locks, so concurrent system-test processes are not a valid isolation check.
 
-12. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
+11. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
     `COVERAGE_GATE` solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
     `CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
     2 for low coverage. Recent SimpleCov results may also be merged locally, so the resulting partial
     coverage is not necessarily that run's own. The GitHub full-suite job is a separate clean runner;
     this finding does not claim that its gate was bypassed.
 
-13. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
+12. **Footgun — public interchange downloads assemble a whole Universe on an unthrottled GET.**
     `StoryInterchangeExportsController#show` permits guests in a public Universe and invokes
     `StoryInterchange::Export#to_s`, which builds the complete file map and compressed archive in
     memory on each request. The mutation throttle excludes GETs and the read throttle applies only to

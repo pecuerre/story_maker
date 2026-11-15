@@ -100,6 +100,28 @@ class StoryInterchangeExportTest < ActiveSupport::TestCase
       .find_by!(kind: SceneElement::DIALOGUE).scene_dialogue_turns.order(:position).first.body
   end
 
+  test "a story whose sections interleave keeps its narrative order on a round trip" do
+    # Its narrative order is scene one, scene three, scene two, while the
+    # chapter directories group them as section one, section two, ungrouped.
+    scenes(:scene_two).update_columns(position: 2)
+    scenes(:scene_three).update_columns(position: 1)
+
+    export = StoryInterchange::Export.new(@universe)
+    root = write(export)
+    report = StoryInterchange.validate(root)
+
+    assert report.valid?, report.errors.map(&:to_s).join("\n")
+    assert_equal 0, report.entity("scene-one").frontmatter["position"]
+    assert_equal 1, report.entity("scene-three").frontmatter["position"]
+    assert_equal 2, report.entity("scene-two").frontmatter["position"]
+
+    universe = StoryInterchange::Import.new(root, owner: users(:user_one)).call.universe
+    story = universe.stories.find_by!(slug: "story-one")
+
+    assert_equal %w[scene-one scene-three scene-two], story.scenes.order(:position, :id).pluck(:slug)
+    assert_equal [ 0, 1, 2 ], story.scenes.order(:position, :id).pluck(:position)
+  end
+
   test "the archive is one gzip holding the directory" do
     export = StoryInterchange::Export.new(@universe)
     gzip = export.to_s.b

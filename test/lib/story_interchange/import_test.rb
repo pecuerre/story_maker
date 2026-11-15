@@ -425,6 +425,18 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not_includes all_bodies, "DRAFTING CONTRACT"
   end
 
+  test "orders the story's scenes by an explicit position rather than the file order" do
+    gate = File.join(@root, "stories/synthetic-story/chapters/01-arrival/01-the-gate.md")
+    hall = File.join(@root, "stories/synthetic-story/chapters/01-arrival/02-the-hall.md")
+    File.write(gate, File.read(gate).sub("id: B-001\n", "id: B-001\nposition: 1\n"))
+    File.write(hall, File.read(hall).sub("id: B-002\n", "id: B-002\nposition: 0\n"))
+
+    story = import.call.universe.stories.find_by!(slug: "synthetic-story")
+
+    assert_equal %w[the-hall the-gate], story.scenes.order(:position, :id).pluck(:slug)
+    assert_equal [ 0, 1 ], story.scenes.order(:position, :id).pluck(:position)
+  end
+
   test "keeps a chapter without an act at the top level and falls back to its title" do
     write("stories/synthetic-story/chapters/03-spring/README.md", <<~MARKDOWN)
       ---

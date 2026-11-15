@@ -7121,6 +7121,45 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: interchange export could reorder a Story's narrative sequence (fixed)
+
+**Then:** the open list recorded a **Medium** finding that `StoryInterchange::Export#chapter_files`
+grouped Scenes by Section and put ungrouped Scenes last, while
+`StoryInterchange::Importers::Scenes` numbered positions in chapter and file order. The interchange
+expresses a Scene's Section as the chapter directory that holds it, so a Story whose narrative order
+interleaved two Sections, or placed an ungrouped Scene between them, changed its stored order when
+its own export was imported. A 2026-11-12 round-trip probe with Scene positions A, B, C and A/C in
+one Section read back as B, A, C.
+
+**Why the order had to be written down.** A Scene's `position` is story-wide and its Section is
+organizational grouping only: `ScenesController` deliberately never moves a Scene when its Section
+changes, so the two axes really are independent. A directory tree whose directories are Sections can
+express membership but not interleaving, and no ordering of chapter directories and filenames can
+reproduce a sequence that crosses between them. Refusing the export was the other honest option, but
+it would reject a legal Story for a property the format can simply carry. Reading the order from the
+Story README is not available either: [ADR 0041](adr/0041-the-story-interchange-is-a-directory-contract.md)
+already rejected the reading-order table as a second source of order that would drift.
+
+**How it reads now.** Every exported Scene carries a `position` frontmatter key, numbered from the
+Story's own sequence; it is renumbered on the way out, so the values are contiguous and unique even
+if a stored Story has drifted. The validator accepts it as an optional Scene key and checks it as a
+Story-wide fact: a whole number of `0` or more, present on every Scene in the Story once one Scene
+defines it, and never duplicated. A source without the key still imports in chapter and file order,
+so the author's older tree is unchanged. The Scenes slice sorts a Story's Scenes by that key before
+it writes them and numbers the stored positions from `0`, which is the same order the export read.
+
+**Now:** a Story that interleaves Sections or an ungrouped Scene round-trips in its own narrative
+order, and a partial or ambiguous numbering is refused by the validator instead of being guessed at.
+The finding has left `known_quirks.md`; the remaining findings were renumbered from 1.
+
+**Verification.** `test/lib/story_interchange/export_test.rb` exports a Story whose order is scene
+one, scene three, scene two while its chapters are Section one, Section two, Ungrouped, then imports
+that archive and asserts the Scene sequence and positions come back unchanged. The validator cases in
+`test/lib/story_interchange_test.rb` cover a valid Story-wide numbering, a partial numbering, a
+duplicate, and a non-integer value; `test/lib/story_interchange/import_test.rb` imports explicit
+positions that reverse the file order. `bin/rubocop` — 6 changed Ruby files, no offenses;
+`bin/rails test` — 3,596 runs, 22,434 assertions, 0 failures, 13 skips.
+
 ### Quirk: a nested import symlink could escape the configured source root (fixed)
 
 **Then:** the open list recorded a **Medium** finding that `StoryInterchange::ImportRoot#path_for`

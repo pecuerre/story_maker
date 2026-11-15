@@ -128,9 +128,12 @@ module StoryInterchange
     # twin of `timeline`; an older source may omit it, so it is optional rather
     # than required, but a value that is present must follow the grammar. `plot`
     # is the bare slug of the thread the scene dramatises, and is omitted when
-    # the scene belongs to none.
+    # the scene belongs to none. `position` is the story-wide narrative order:
+    # the chapter directories group scenes by Section, so a Story that
+    # interleaves Sections needs the order written down. Every scene in such a
+    # Story carries it; an older source carries none and reads in path order.
     SCENE_REQUIRED = %w[id title pov location timeline branch].freeze
-    SCENE_OPTIONAL = %w[moment plot].freeze
+    SCENE_OPTIONAL = %w[moment plot position].freeze
 
     # Everything directly under `universe/` that the interchange reads. A
     # `README.md` is documentation at any depth, and `inspirations.md` is
@@ -163,6 +166,9 @@ module StoryInterchange
       # forward to a scene that does not exist yet.
       @scene_paths = Set.new
       @scene_moments = []
+      # A Scene's narrative position is story-wide, so the all-or-none and
+      # uniqueness checks need every Scene of the Story before they run.
+      @scene_positions = []
     end
 
     def call
@@ -179,6 +185,7 @@ module StoryInterchange
       read_entities
       read_stories
       check_scene_plots
+      check_scene_positions
       check_moment_references
       check_references
       @report
@@ -703,6 +710,7 @@ module StoryInterchange
 
         check_named_slug(document, frontmatter["pov"], @character_slugs, "point of view")
         check_named_slug(document, frontmatter["location"], @location_slugs, "location")
+        check_scene_position(document, frontmatter["position"], story_slug)
         check_scene_title(document, frontmatter["title"])
         check_scene_blocks(document)
         register_scene_slug(document, story_slug)
@@ -737,6 +745,48 @@ module StoryInterchange
 
           unless plot_slug.is_a?(String) && plot_slug.match?(SLUG) && @plot_slugs.include?([ story_slug, plot_slug ])
             error(document, 1, "scene plot `#{plot_slug}` does not name a plot in story #{story_slug}")
+          end
+        end
+      end
+
+      # A Scene's `position` is its story-wide narrative order. The chapter
+      # directories group Scenes by Section, so a Story whose order interleaves
+      # Sections can only be read back if the order is written down. A source
+      # may carry no position anywhere — an older source, read in chapter and
+      # file order — but once one Scene in a Story numbers itself, every Scene
+      # in that Story must, because a partial order would have no defined result.
+      def check_scene_position(document, value, story_slug)
+        value = nil if blank?(value)
+        @scene_positions << [ document, story_slug, value ]
+        return if value.nil?
+
+        unless value.is_a?(Integer) && value >= 0
+          error(document, 1, "scene position `#{value}` must be a whole number (0 or more)")
+        end
+      end
+
+      # Every Scene of a Story is read before this runs, because the check is
+      # about the Story's order as a whole rather than one file. A duplicate is
+      # refused rather than tie-broken: the file order that would break the tie
+      # is not the author's narrative order.
+      def check_scene_positions
+        @scene_positions.group_by { |entry| entry[1] }.each do |story_slug, entries|
+          numbered = entries.reject { |entry| entry[2].nil? }
+          next if numbered.empty?
+
+          entries.each do |document, _story_slug, value|
+            next unless value.nil?
+
+            error(document, 1,
+              "scene position is required in story #{story_slug} because another scene there defines one")
+          end
+
+          numbered.group_by { |entry| entry[2] }.each do |position, duplicates|
+            duplicates.drop(1).each do |document, _story_slug, _value|
+              error(document, 1,
+                "duplicate scene position #{position} in story #{story_slug} " \
+                "(also #{duplicates.first[0].relative_path})")
+            end
           end
         end
       end

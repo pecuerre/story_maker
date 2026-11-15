@@ -128,12 +128,14 @@ turn it into a record by accident.
   Section is labelled with the Story's **Chapter** Section Tag, which the run creates once per
   Story; an act Section is an unlabeled parent. Chapters are written in sorted directory order.
   Chapter and scene numbers are two-digit positions; they are filenames, not
-  database ids. A scene's frontmatter `id` is the backlog item it was written from, never a unique
-  scene key; the filename is the scene's identity inside its chapter. Its story-wide address is that
-  filename without the two-digit sequence (`01-the-gate` → `the-gate`); it must be unique within the
-  Story and is frozen once the file exists. The imported Scene takes that address as its slug, so a
-  `[[scene:slug]]` link resolves from any file in the Story, and from a Universe file when exactly one
-  Story in the source defines that address.
+  database ids. They order a chapter's files for a reader, not the Story's narrative sequence,
+  which is the Scene's optional `position` frontmatter and is described under
+  [Frontmatter](#frontmatter). A scene's frontmatter `id` is the backlog item it was written
+  from, never a unique scene key; the filename is the scene's identity inside its chapter. Its
+  story-wide address is that filename without the two-digit sequence (`01-the-gate` → `the-gate`);
+  it must be unique within the Story and is frozen once the file exists. The imported Scene takes
+  that address as its slug, so a `[[scene:slug]]` link resolves from any file in the Story, and
+  from a Universe file when exactly one Story in the source defines that address.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
   `README.md` is its human index and is not a Plot.
 
@@ -151,7 +153,7 @@ one.
 | Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
 | Plot | `name`, `slug` | `type`, `status`, `owner_pov`, `opened_in`, `backlog` |
-| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment`, `plot` |
+| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment`, `plot`, `position` |
 | Chapter README | `title` | `full_title`, `summary`, `act`, `band`, `pov`, `locations`, `plots`, `status`, `missing`, `words`, `provisional` |
 
 A chapter README's keys are read rather than validated against the entity rules: `full_title` names
@@ -194,6 +196,14 @@ Rules for those values:
 - A Scene's optional `plot` is the bare slug of a Plot in the same Story (`the-meeting`). It is the
   join the import writes: the Scene is assigned to that thread. A value that names no Plot in the
   Story is an error. The key is omitted when the Scene belongs to none.
+- A Scene's optional `position` is its **story-wide narrative order**, an integer from `0` upward.
+  The chapter directories group Scenes by Section, so a Story whose narrative order interleaves
+  Sections or ungrouped Scenes cannot be read back from the path alone; `position` writes that order
+  down. A source may omit the key everywhere, and then the import reads Scenes in chapter and file
+  order as before. Once one Scene in a Story carries it, every Scene in that Story must, and no two
+  may share a value: a partial or ambiguous order is an error rather than an ordering guess. The
+  values need not be contiguous, because the import renumbers them. The export writes the key on
+  every Scene it writes.
 - An unknown frontmatter key is a warning; a missing or blank required key is an error.
 
 ## Profile sections
@@ -331,7 +341,10 @@ application column is written: `title` is the Scene's name, `pov` is its point-o
 `location` is a Location presence link with no role, and a concrete `moment` (a date or a date and
 time) is the Scene's own `datetime`. The chapter and sequence are the path; the Scene's slug is the
 filename without its two-digit sequence, the story-wide address a `[[scene:slug]]` link names. The
-optional `plot` key is the thread the Scene dramatises and becomes its Plot assignment. `id`,
+optional `plot` key is the thread the Scene dramatises and becomes its Plot assignment. An explicit
+`position` is the Story's narrative order: the import writes the Scenes in that order and numbers
+their positions from `0`, so a Story whose Sections interleave is not reordered by the chapter
+directories. A source that carries no `position` keeps chapter and file order. `id`,
 `timeline`, and `branch` have no Scene column and are reported. Every imported Scene is
 written as `draft`, because the source keeps no writing status. A Scene's closing `DRAFTING
 CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than into prose; it
@@ -479,6 +492,8 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
   file's scene reference is defined by more than one Story, or a bracket reference has an unknown
   form;
 - a Scene's id, branch, point of view, location, or `plot` does not match the contract above;
+- a Scene's `position` is not a whole number of `0` or more, is duplicated in its Story, or is
+  missing while another Scene in the same Story defines one;
 - a Scene's `moment` does not parse, names no scene, or names its own scene;
 - a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or
   `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, a Dialog
@@ -579,7 +594,9 @@ as described under [Story records](#story-records), and labels each chapter with
 **Chapter** Section Tag. The slice's count and record list are its chapters, because an act Section
 is a container written alongside the chapter that first names it.
 **Scenes** follows, writing each Scene with its Elements and dialogue turns, because it needs the
-Story, the Section, and the Character and Location links those earlier slices created. **Events**
+Story, the Section, and the Character and Location links those earlier slices created; the Scenes
+are written in the source's `position` order when it states one, and in chapter and file order
+otherwise. **Events**
 runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
 `moment` becomes the Event's `start_datetime`; a `before`, `after`, or `at the same time as` relation
 becomes the matching `before_event`, `after_event`, or `simultaneous_event`; a span also computes

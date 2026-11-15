@@ -26,6 +26,12 @@ module StoryInterchange
   # what the validator requires. Adjacent Elements of the same kind become one
   # block, because the layout alternates Narration and Dialog and has no
   # per-Element record; the prose survives, the Element boundary does not.
+  #
+  # The layout groups Scenes by Section, which cannot express a Story whose
+  # narrative order interleaves Sections or ungrouped Scenes. Each Scene
+  # therefore carries its story-wide `position`, numbered from the Story's own
+  # order, so the import can restore the sequence the chapter directories would
+  # otherwise reorder.
   class Export
     TBD = "— TBD"
     NARRATION = "Narration"
@@ -303,27 +309,33 @@ module StoryInterchange
         section_ids = sections.map(&:id)
         groups = sections.map { |section| [ section, scenes.select { |scene| scene.section_id == section.id } ] }
         ungrouped = scenes.reject { |scene| section_ids.include?(scene.section_id) }
+        # `scenes` is already in narrative order, so the index is the Story's own
+        # position. It is written explicitly because the chapter directories group
+        # by Section and would otherwise be the import's only order.
+        positions = scenes.each_with_index.to_h { |scene, index| [ scene.id, index ] }
 
         groups.each_with_index do |(section, group_scenes), index|
           directory = format("%02d-%s", index + 1, section.slug)
-          files.merge!(chapter(story_directory, directory, section.name, section.short_summary, group_scenes))
+          files.merge!(chapter(story_directory, directory, section.name, section.short_summary,
+            group_scenes, positions))
         end
 
         if ungrouped.any?
           directory = "#{format("%02d", sections.size + 1)}-ungrouped"
-          files.merge!(chapter(story_directory, directory, UNGROUPED_TITLE, nil, ungrouped))
+          files.merge!(chapter(story_directory, directory, UNGROUPED_TITLE, nil, ungrouped, positions))
         end
 
         files["#{story_directory}/chapters/.gitkeep"] = "" if files.empty?
         files
       end
 
-      def chapter(story_directory, directory, title, summary, scenes)
+      def chapter(story_directory, directory, title, summary, scenes, positions)
         base_directory = "#{story_directory}/chapters/#{directory}"
         files = { "#{base_directory}/README.md" => chapter_readme(title, summary) }
 
         scenes.each_with_index do |scene, index|
-          files["#{base_directory}/#{format("%02d", index + 1)}-#{scene.slug}.md"] = scene_document(scene)
+          path = "#{base_directory}/#{format("%02d", index + 1)}-#{scene.slug}.md"
+          files[path] = scene_document(scene, positions.fetch(scene.id))
         end
 
         files
@@ -336,10 +348,11 @@ module StoryInterchange
         "#{frontmatter(frontmatter)}# #{title}\n\nA chapter of this Story. The Scenes below it are its Section.\n"
       end
 
-      def scene_document(scene)
+      def scene_document(scene, position)
         moment = scene.datetime&.utc&.strftime("%Y-%m-%d %H:%M")
         frontmatter = {
           "id" => format("B-%03d", scene.id % 1000),
+          "position" => position,
           "title" => scene.name,
           "pov" => scene.pov_character&.slug.presence || TBD,
           "location" => scene_location(scene)&.slug.presence || TBD,

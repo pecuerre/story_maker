@@ -26,6 +26,12 @@ module StoryInterchange
     # clock time sets the Scene's own `datetime`, while a relation to another
     # scene is left to the Events slice, which writes the Event and its
     # temporal link.
+    #
+    # `position` is the Story's narrative order. A source exported from the app
+    # carries it because the chapter directories group Scenes by Section; an
+    # older source carries none and is read in chapter and file order. The
+    # validator refuses a partial or duplicated numbering, so a Story's Scenes
+    # are sorted by it only when the source numbers them.
     class Scenes < Importer
       slice label_key: "imports.slices.scenes",
         count: :scenes,
@@ -83,23 +89,31 @@ module StoryInterchange
       end
 
       def call
-        positions = Hash.new(0)
+        created = report.entities(:scene).group_by(&:story_slug).flat_map do |story_slug, entities|
+          story = universe.stories.find_by!(slug: story_slug)
 
-        created = report.entities(:scene).map do |entity|
-          story = universe.stories.find_by!(slug: entity.story_slug)
-          position = positions[story.id]
-          positions[story.id] += 1
-
-          scene = Scene.create!(scene_attributes(entity, story, position))
-          link_location(scene, entity)
-          write_elements(scene, entity)
-          scene
+          narrative_order(entities).each_with_index.map do |entity, position|
+            scene = Scene.create!(scene_attributes(entity, story, position))
+            link_location(scene, entity)
+            write_elements(scene, entity)
+            scene
+          end
         end
 
         Outcome.new(label_key: label_key, created: created.size, records: self.class.records(report))
       end
 
       private
+        # The source's scene entities arrive in chapter and file order, which is
+        # the only order an older source states. An explicit `position` is the
+        # Story's narrative order and wins; the read index breaks no tie the
+        # validator has not already refused, but keeps the sort total.
+        def narrative_order(entities)
+          entities.each_with_index
+            .sort_by { |entity, index| [ entity.frontmatter["position"] || index, index ] }
+            .map(&:first)
+        end
+
         # A blank or `— TBD` value means the Scene has not recorded one.
         TBD_PREFIX = "—"
 

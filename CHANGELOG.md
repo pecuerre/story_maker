@@ -49,6 +49,10 @@ Labels used below, in the order their groups appear:
 - **Appearance grid headers.** A scene column now shows only its narrative position pill; hovering or focusing it opens a body-only popover listing the section path level by level and the scene, and a cell's two marks stay side by side.
 - **Story interchange chapters follow acts.** An imported chapter now names its Section from the README `full_title` and sits under a parent Section named by its `act` frontmatter, so the acts arrive as the chapter hierarchy instead of only as description text.
 
+### fixed
+
+- **Interchange Scene order.** Every exported Scene now carries its Story-wide narrative `position`, and the import numbers Scenes from it, so a Story that interleaves Sections or ungrouped Scenes round-trips in the same order.
+
 ### security
 
 - **Interchange import symlinks.** The validator and the document reader now refuse any file or directory that resolves outside the source directory, so a nested symlink can no longer read server files or name the Universe, and the finding leaves `known_quirks.md`.

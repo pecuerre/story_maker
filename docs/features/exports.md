@@ -186,10 +186,14 @@ Writing a source is not copying the database, so a few values have a canonical e
 - A Scene needs the format's `B-###` id and its `main` branch. The Universe stores neither, so the id
   is derived from the Scene's database id and the branch is `main`; the import reads both as source
   facts and writes neither.
+- A Scene carries its story-wide narrative `position`, numbered from the Story's own order. The
+  format groups Scenes into chapter directories by Section, which cannot express interleaving
+  Sections or an ungrouped Scene in the middle, so the order travels beside the path rather than in
+  it.
 - A Scene's prose becomes alternating `## Narration` and `## Dialog` blocks. Adjacent Elements of the
   same kind merge into one block, and a Scene that opens with Dialogue gets an empty Narration before
   it, because that is the block grammar the validator accepts. The Element boundary and the Element
-  titles do not survive; see [known quirks](../known_quirks.md) for the open prose and order issues.
+  titles do not survive; see [known quirks](../known_quirks.md) for the open prose issue.
 - A Scene in more than one Plot carries the first Plot in its `plot` key, because the format names one
   thread per Scene. The other assignments stay behind.
 - A Scene with no Section, or one whose Section is not in the Story's tree, is written in a chapter

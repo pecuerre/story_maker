@@ -948,6 +948,46 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/scene location `nowhere` does not name a record/, errors(report))
   end
 
+  test "accepts a story-wide position on every scene" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "id: B-001\n", "id: B-001\nposition: 7\n")
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md", "id: B-002\n", "id: B-002\nposition: 3\n")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_equal 7, report.entity("the-gate").frontmatter["position"]
+    assert_equal 3, report.entity("the-hall").frontmatter["position"]
+  end
+
+  test "refuses a position on only some scenes of a story" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "id: B-001\n", "id: B-001\nposition: 0\n")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene position is required in story synthetic-story/, errors(report))
+  end
+
+  test "refuses a duplicated scene position in one story" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "id: B-001\n", "id: B-001\nposition: 1\n")
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md", "id: B-002\n", "id: B-002\nposition: 1\n")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/duplicate scene position 1 in story synthetic-story/, errors(report))
+  end
+
+  test "refuses a scene position that is not a whole number" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "id: B-001\n", "id: B-001\nposition: first\n")
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md", "id: B-002\n", "id: B-002\nposition: 1\n")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene position `first` must be a whole number/, errors(report))
+  end
+
   private
     def validate
       StoryInterchange.validate(@root)

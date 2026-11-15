@@ -289,9 +289,12 @@ as "unused" is how a reader ends up deleting something load-bearing:
 - **`rails/conductor/action_mailbox`** — eight endpoints, guarded by
   `Rails::Conductor::BaseController#ensure_development_env`, which answers **403** outside
   development.
-- **Active Storage** — the blob/proxy/disk/direct-upload set. **These are load-bearing, not unused:**
-  `HasPhoto` stores through `ActiveStorage::Blob.service` (`DiskService`), so these routes serve every
-  record photo and the cropper.
+- **Active Storage** — the blob/proxy/disk/direct-upload set is **not mounted**
+  (`config.active_storage.draw_routes` is `false`). Photo bytes still go through
+  `ActiveStorage::Blob.service` (`DiskService`), but they are served by `PhotosController` under the
+  Universe read policy, because the framework's URL is a signed bearer credential rather than an
+  access check. The serving contract is in
+  [features/photos.md](features/photos.md#serving-a-photo).
 
 Action Text mounts no routes in this application. There is no route allowlist and no production
 route-surface check: `test/routing/route_action_contract_test.rb` deliberately **excludes** framework

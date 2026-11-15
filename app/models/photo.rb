@@ -53,9 +53,9 @@ class Photo < ApplicationRecord
 
   validate :file_is_attached
 
-  # A Photo has no URL of its own: an Active Storage attachment's URL is built by
-  # the request that serves it, so a view asks the router through
-  # `ApplicationHelper#record_photo_url`. A model method could only return `nil`.
+  # A Photo has no URL of its own: the URL is built by the request that serves it,
+  # under the Universe's read policy, so a view asks the router through
+  # `ApplicationHelper#stored_photo_url`. A model method could only return `nil`.
 
   # Attach a file from the repository rather than from a request, which is how
   # the development data manifests and the test fixtures supply one. The bytes go

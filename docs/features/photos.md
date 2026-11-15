@@ -28,9 +28,29 @@ force-creates one.
 - `Photo::OWNER_CLASS_NAMES` is the explicit list of models that may point at a `Photo`, kept equal
   to the `HasPhoto` includers by a model test.
 
-`Photo` has **no `url` method**: an Active Storage attachment's URL belongs to the request that
-serves it, so a view asks the router through `ApplicationHelper#record_photo_url(record)`, which
-returns `nil` when there is no photo. A model that exposed `url` could only ever return `nil`.
+`Photo` has **no `url` method**: a URL belongs to the request that serves the file, so a view asks
+the router through `ApplicationHelper#stored_photo_url(photo)` — or
+`record_photo_url(record)` for a record — which return `nil` when there is no photo. A model that
+exposed `url` could only ever return `nil`.
+
+## Serving a photo
+
+The bytes are served by `PhotosController#show` at `/u/:universe_slug/photos/:id`, not by Active
+Storage. The route sits inside the Universe scope, so `UniverseAuthorization` answers `:read` for
+`Current.universe` on every request: a guest may fetch a public Universe's photo, a member may fetch
+a private one, and a signed-in non-member is refused. The photo is looked up through that Universe,
+so an id from another Universe is a 404.
+
+**The response is not stored.** `Cache-Control: private, no-store` keeps a browser or an intermediate
+proxy from holding an image that access has since been revoked for. There is no way to withdraw bytes a
+reader has already downloaded, but the URL is re-authorized on every fetch rather than accepted as a
+credential.
+
+`config.active_storage.draw_routes` is `false`, so Active Storage's own blob and disk endpoints are
+not mounted. That is the other half of the same rule: an unissued signed URL is unguessable, while a
+mounted route is one accidental `url_for(photo.file)` away from issuing a bearer credential again.
+`ActiveStorage::Blob.service` still stores and reads the file; only URL generation and route serving
+left the framework.
 
 ## The stored file is the server's answer, never the upload
 

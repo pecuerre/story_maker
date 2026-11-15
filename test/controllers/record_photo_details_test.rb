@@ -97,6 +97,17 @@ class RecordPhotoDetailsTest < ActionDispatch::IntegrationTest
     assert_select "figure.record-photo img", 1
   end
 
+  test "the image is served by the application rather than a bearer attachment URL" do
+    character = characters(:character_one)
+    character.update!(photo_data: @crop)
+
+    get universe_character_path(universe_slug: @universe.slug, id: character)
+
+    assert_select "figure.record-photo img[src=?]",
+      universe_photo_path(universe_slug: @universe.slug, id: character.photo), 1
+    assert_select "figure.record-photo img[src*='rails/active_storage']", 0
+  end
+
   test "the story-scoped pages show their photo too" do
     story = stories(:story_one)
     story.update!(photo_data: @crop)

@@ -57,8 +57,9 @@ class PhotoFieldTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     url = css_select("#{FIELD}[data-photo-crop-field-value='story[photo_data]']").first["data-photo-crop-current-url-value"]
-    assert url.to_s.start_with?("/rails/active_storage/"),
-      "the story editor should show the photo already stored, got #{url.inspect}"
+    assert_equal universe_photo_path(universe_slug: @universe.slug, id: story.photo),
+      url,
+      "the story editor should show the photo already stored"
   end
 
   test "a shared modal carries no photo until a row is opened" do
@@ -125,7 +126,8 @@ class PhotoFieldTest < ActionDispatch::IntegrationTest
       [ node["data-node-id"], JSON.parse(node["data-taxonomy-values"]) ]
     end
 
-    assert_match %r{\A/rails/active_storage/}, serialized.fetch(tagged.id.to_s).fetch("photo")
+    assert_equal universe_photo_path(universe_slug: @universe.slug, id: tagged.photo),
+      serialized.fetch(tagged.id.to_s).fetch("photo")
     assert_nil serialized.fetch(plain.id.to_s)["photo"], "a node without a photo serializes nothing"
   end
 

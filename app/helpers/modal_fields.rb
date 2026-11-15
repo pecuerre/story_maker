@@ -288,8 +288,8 @@ module ModalFields
 
   # The values one taxonomy node is prefilled from: one per descriptor, with a
   # descriptor marked `url` naming the record's stored image rather than a column.
-  # The node cannot produce that URL itself because an Active Storage URL belongs
-  # to the request.
+  # The node cannot produce that URL itself because a URL belongs to the request
+  # that serves it.
   #
   # The tree's node partial and the details page's editor trigger both read it, so
   # the browser receives the same payload whether the editor was opened from the

@@ -33,7 +33,7 @@
   <%# One value per descriptor, so the editor can pre-fill a row. A descriptor
       marked `url` names a stored image rather than a column: the photo editor is
       given the URL of the photo this node already has, which the node cannot
-      produce itself because an Active Storage URL belongs to the request. %>
+      produce itself because a URL belongs to the request that serves it. %>
   data-taxonomy-values="<%= taxonomy_node_values_json(node, modal_fields) %>"
   <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
 

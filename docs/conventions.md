@@ -1547,10 +1547,11 @@ value objects, and the deletion contract are one feature with one home, in
   `record_count_text(count, label)` / `record_count_badge(count, label)`
   for the number that record's page will list and what it counts ("(4 characters)"),
   `detail_fact(label, value, blank:)` for one identity value, and `in_world_range(from, to)`
-  for the optional interval Event/Relation/Ownership share. `record_photo_url(record)` is the single
-  way a view gets a record's photo URL: it returns `nil` when there is no photo, and it asks the
-  router for the attachment's URL rather than calling a method on `Photo`, because an Active Storage
-  URL belongs to the request that serves it.
+  for the optional interval Event/Relation/Ownership share. `stored_photo_url(photo)` builds one
+  photo's URL, and `record_photo_url(record)` is the same answer for a record that may have none:
+  both return `nil` when there is nothing to show, and both point at the application's authorized
+  photo route rather than an Active Storage attachment URL. A URL belongs to the request that serves
+  it, which is why a view asks a helper and `Photo` has no `url` method.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
   request and canonical URL. It accepts an optional `class_name` and explicit `active` tab state

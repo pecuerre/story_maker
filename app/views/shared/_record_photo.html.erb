@@ -6,9 +6,11 @@
 
     A stored photo is always a 300x300 square, so it is rendered at that
     aspect ratio and never stretched. The alternative text names the record
-    rather than describing the picture, because the picture is the record. %>
+    rather than describing the picture, because the picture is the record.
+    The source is `stored_photo_url`, so the request is authorized by this
+    application rather than by an Active Storage bearer URL. %>
 <figure class="record-photo mb-0">
-  <%= image_tag url_for(photo.file),
+  <%= image_tag stored_photo_url(photo),
     alt: t("shared.record_photo.alt", name: name),
     class: "record-photo-image",
     width: Photo::SIZE,

@@ -249,14 +249,27 @@ module ApplicationHelper
   end
 
   # A record's stored photo, as a URL an editor can show before a replacement is
-  # chosen, or nothing. An Active Storage attachment's URL is built by the
-  # request serving it, so this is a view helper rather than a model method; a
-  # record that has no photo — the normal case — is simply `nil`.
+  # chosen, or nothing. A record that has no photo — the normal case — is simply
+  # `nil`.
   def record_photo_url(record)
-    photo = record&.photo
+    stored_photo_url(record&.photo)
+  end
+
+  # One stored photo's URL, or nothing. The bytes are served by this application
+  # under the Universe that owns the photo, never by Active Storage's own signed
+  # blob URL: that URL names the file rather than the reader and keeps working
+  # after access to a private Universe ends. A model cannot produce this URL
+  # itself because URL generation belongs to the request.
+  def stored_photo_url(photo)
     return if photo.blank?
 
-    url_for(photo.file)
+    # A page request has already resolved the photo's Universe, and a taxonomy
+    # workspace renders one of these per node. Comparing ids uses the loaded row
+    # rather than asking every photo for its Universe again.
+    universe = Current.universe if photo.universe_id == Current.universe&.id
+    universe ||= photo.universe
+
+    universe_photo_path(universe_slug: universe.slug, id: photo)
   end
 
   # One labelled value in a details page's identity block. A missing value

@@ -7121,6 +7121,51 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: a private Universe's photo URL was a reusable bearer URL (fixed)
+
+**Then:** the open list recorded a **Medium** finding that a private Universe's photo was protected by
+a URL rather than by an access check. `ApplicationHelper#record_photo_url` built
+`url_for(photo.file)`, and the mounted Active Storage blob and disk controllers do not run
+`UniverseAuthorization`. A 2026-11-12 test had an owner open a private Character page, then fetched the
+photo's signed blob URL without a session: the redirect was followed and the image came back `200`.
+The URL therefore outlived the reader's access, and could be shared with anyone.
+
+**Why the URL cannot be made safe in place.** Active Storage signs the **blob**, not the reader, so
+its URL is a bearer credential by construction. Keeping the framework route and adding a session check
+in front of it would have meant replacing the framework controller; adding an expiry would only shorten
+the leak. The useful property is that every fetch is re-decided against the Universe's current access
+level, which is exactly what the application's own authorization already does.
+
+**Now:** `PhotosController#show` serves the bytes at `/u/:universe_slug/photos/:id`. The route is inside
+the Universe scope, so the shared callbacks answer `:read` for `Current.universe` before the action
+runs: a guest may read a public Universe's photo, a member may read a private one, and a signed-in
+non-member is refused. The photo is found through that Universe, so an id from another Universe is a
+404. The response carries `Cache-Control: private, no-store`, and a revoked member is refused on the
+next fetch rather than shown a stored copy.
+
+`config.active_storage.draw_routes` is now `false`. That is the second half of the fix rather than a
+convenience: an unissued signed URL is unguessable, and leaving the framework routes mounted would keep
+one accidental `url_for(photo.file)` — or one URL captured before this change — working as a bearer
+credential. `ActiveStorage::Blob.service` still stores and reads every file; only URL generation and
+route serving left the framework. `ApplicationHelper#stored_photo_url(photo)` builds the application
+URL and `record_photo_url(record)` delegates to it.
+
+**What deliberately did not change.** A reader who can see an image can still save it and share the
+bytes; no serving path prevents that. The photo is still one finished 300×300 JPEG with no variants,
+so there is no second URL shape to protect. Existing database rows and blob keys were untouched.
+
+**Verification.** `test/controllers/photos_controller_test.rb` covers an owner reading the stored
+bytes, a guest reading a public Universe, a guest and a signed-in non-member refused a private one with
+404 (the shared refusal hides the universe), a member losing access when the membership is removed, a
+cross-Universe photo id answering 404, the `private, no-store` headers, and that no
+`/rails/active_storage` route is mounted. `test/controllers/record_photo_details_test.rb` now asserts
+the details-page image points at the application's route, and `test/controllers/photo_field_test.rb`
+asserts both editor surfaces do the same. `test/routing/route_action_contract_test.rb` lists
+`photos#show` among the deliberate template-less GETs, and `test/system/photo_crop_test.rb` checks the
+browser decodes an image from the application's route. Also run: `bin/rails test` (3,578 runs, 0
+failures), `bin/rails test:system` serially (247 runs, 0 failures), `bun run check:js` (286 pass),
+`bin/rubocop`, and `bin/brakeman --no-pager`.
+
 ### Quirk: a Spanish draft page appeared to print the English fallback "a record" (fixed)
 
 **Then:** the open list recorded a **Medium** finding that a draft page rendered under `es` in

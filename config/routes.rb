@@ -51,6 +51,12 @@ Rails.application.routes.draw do
   scope "u/:universe_slug", as: :universe do
     get "search", to: "searches#show", as: :search
 
+    # A stored photo is fetched through this application rather than from an
+    # Active Storage blob URL, because that URL is a signed bearer credential
+    # instead of an access check. The route sits inside the Universe scope so the
+    # shared authorization answers for the read like it does for every page.
+    get "photos/:id", to: "photos#show", as: :photo
+
     # Deleting a universe for good is its own page rather than a row action: the
     # reader has to be told exactly what is lost and type the name back. `show`
     # is that page; `destroy` is the one irreversible write. Owner-only — see

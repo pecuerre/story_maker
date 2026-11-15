@@ -30,6 +30,15 @@ module UniverseMaker
     config.i18n.available_locales = %i[en es]
     config.i18n.default_locale = :en
 
+    # Active Storage's own blob and disk routes are not mounted. They serve a
+    # stored file from a signed URL that names the blob rather than the reader,
+    # so the URL is a bearer credential: it keeps working after the account that
+    # obtained it loses access to a private Universe. Photo bytes are instead
+    # served by `PhotosController` under the Universe's read policy; the service
+    # behind `ActiveStorage::Blob.service` is unchanged. See
+    # `docs/features/photos.md#serving-a-photo`.
+    config.active_storage.draw_routes = false
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

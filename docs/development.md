@@ -908,13 +908,18 @@ Coverage is split by what each layer can prove:
 - `test/services/photo_processing_test.rb` — the 300×300 square, metadata stripping, the
   content-signature allowlist, and the size bound.
 - `test/controllers/photo_mutation_test.rb` — JSON, taxonomy, and full-page forms carry representative cropped-photo mutations; `PhotoParams` is included by twenty-two controllers.
-- `test/controllers/record_photo_details_test.rb` — the details-page layout with and without a photo.
+- `test/controllers/photos_controller_test.rb` — the serving path: the stored bytes, the Universe
+  read policy for a guest, a member, a non-member, and a revoked membership, the cross-Universe 404,
+  the uncacheable response, and that Active Storage's bearer routes are not mounted.
+- `test/controllers/record_photo_details_test.rb` — the details-page layout with and without a photo,
+  and that the image points at the application's authorized route.
 - `test/controllers/photo_field_test.rb` — that the field is rendered where a mutation control
   belongs, and offered to no one else.
 - `test/javascript/photo_crop_controller_test.js` — the cropper's own logic, without a browser.
 - `test/system/photo_crop_test.rb` — what only a browser can show: choosing a file opens a square,
-  the square moves with the keyboard alone, the finished crop is what the record ends up showing, and
-  a read-only member is offered no cropper at all.
+  the square moves with the keyboard alone, the finished crop is what the record ends up showing and
+  the browser decodes it from the application's photo route, and a read-only member is offered no
+  cropper at all.
 
 `Photo` cannot use a fixture attachment, so tests build one through `create_photo` in
 `test/support/photo_test_helper.rb` rather than through `test/fixtures/photos.yml`.
@@ -933,7 +938,8 @@ choose a file, move the square with the arrow keys or the move buttons, and pres
 photo** — the saved record's stored file is 300×300 whatever the source aspect ratio was. Press
 **Cancel** in the cropper instead and the record is unchanged. Check **Remove the current photo** and
 save to go back to no photo. A guest reading a public universe, and a read-only member, see the photo
-and no editor.
+and no editor. The image's address is `/u/<slug>/photos/<id>`, not `/rails/active_storage/...`; in a
+private Universe, opening that address without a membership answers 404.
 
 ## Database migrations
 

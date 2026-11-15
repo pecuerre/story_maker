@@ -31,7 +31,9 @@ class PhotoCropTest < ApplicationSystemTestCase
     assert_selector ".entity-row .entity-title", text: @character.name, wait: REFRESH_WAIT
 
     visit universe_character_path(universe_slug: @universe.slug, id: @character)
-    assert_selector "figure.record-photo img"
+    image = find("figure.record-photo img")
+    assert_operator image.evaluate_script("this.naturalWidth"), :>, 0,
+      "the browser should decode the image served by the application's photo route"
     assert_equal [ 300, 300 ], stored_photo_dimensions
   end
 

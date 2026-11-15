@@ -7121,7 +7121,56 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: a nested import symlink could escape the configured source root (fixed)
+
+**Then:** the open list recorded a **Medium** finding that `StoryInterchange::ImportRoot#path_for`
+checked the folder the import page selected, while `StoryInterchange::Validator` and
+`StoryInterchange::Document` followed symlinks *inside* that folder without the same check. A source
+inside the root with `universe/README.md` linked to an outside Markdown file made the preview's
+Universe name come from that file in a 2026-11-12 test, and the same link could have imported any
+file the server could read as a record. The finding also noted that the selected-folder check did not
+pin the tree against changes between checking and reading it.
+
+**Why the check belonged inside the validator.** The `ImportRoot` boundary answers "may the browser
+name this folder?". It cannot answer "may this file be read?", because a source tree of Markdown and
+YAML may legitimately link a file or a directory it shares with another tree, and the links live
+below the folder the page names. The rule the two need is the same — after every symlink is resolved,
+the path must be the source directory or a child of it — so it moved into one place,
+`StoryInterchange::SourceTree`, and every read or directory walk asks it. A link that stays inside
+the source keeps working unchanged, which is the case the old top-level check already allowed and
+which the source layout may rely on.
+
+**How it reads now.** The validator enumerates markdown files, story directories, chapter
+directories, and entity directories through `usable_file?` and `usable_directory?`; a path that
+resolves outside the source is named as an error, `resolves outside the source directory and is not
+read`, and skipped rather than opened. The required layout files — `universe/README.md`, the canon
+ledger, each story's README, a chapter README — use the same gate, and an escaping path is no longer
+reported as "missing", because it is present and refused. `Document#read` performs the containment
+check itself before reading, so a caller that hands it a path directly cannot bypass the rule and the
+validator does not trust an earlier enumeration pass for the file it is about to open.
+
+**Not closed, and recorded where it belongs.** The rule is checked against a path immediately before
+it is opened, and the tree is not pinned between those two syscalls. A source tree changed in that
+window is not refused; closing it completely would take a descriptor walk (`openat`) that Ruby's
+standard library does not expose, and the same limit already applied to the selected-folder check.
+That sentence now sits in [features/story_interchange.md](features/story_interchange.md) rather than
+in the open list, because it is a property of any path-based read rather than a defect this change
+left behind.
+
+**Now:** a nested link that leaves the source is refused and named in the preview's error list, the
+outside file's heading no longer supplies the Universe name, and the finding has left
+`known_quirks.md`; the remaining findings were renumbered from 1.
+
+**Verification.** `bin/rails test test/lib/story_interchange_test.rb`,
+`test/lib/story_interchange/document_test.rb`, and `test/lib/story_interchange/source_tree_test.rb`
+cover the outside `universe/README.md` link (the 2026-11-12 reproduction), an outside record file, an
+outside entity directory, an outside chapter directory, an inside link that must keep working, a
+source selected through a symlink, and the prefix boundary `inside?` draws. `bin/rubocop` — 815
+files, no offenses; `bin/brakeman --no-pager` — no warnings; `bin/rails test` — 3,590 runs, 22,400
+assertions, 0 failures, 13 skips.
+
 ### Quirk: a private Universe's photo URL was a reusable bearer URL (fixed)
+
 
 **Then:** the open list recorded a **Medium** finding that a private Universe's photo was protected by
 a URL rather than by an access check. `ApplicationHelper#record_photo_url` built

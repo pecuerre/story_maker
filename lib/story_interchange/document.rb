@@ -41,9 +41,9 @@ module StoryInterchange
     def initialize(path, root:)
       @path = path
       @root = root
-      @raw = File.read(path, encoding: "UTF-8")
+      @raw = read(path)
       parse
-    rescue SystemCallError, ArgumentError => error
+    rescue SystemCallError, ArgumentError, SourceTree::Outside => error
       @raw = ""
       @body = ""
       @frontmatter = nil
@@ -103,6 +103,14 @@ module StoryInterchange
     end
 
     private
+      # Read the resolved file only when it stays inside the source directory.
+      # `ImportRoot` checked the folder the page selected; this is the same rule
+      # for a link inside it, so a file linked to somewhere else can neither
+      # become a record nor lend its heading to the Universe's name.
+      def read(path)
+        File.read(SourceTree.resolve(@root, path), encoding: "UTF-8")
+      end
+
       def parse
         if (match = FRONTMATTER.match(@raw))
           @frontmatter = YAML.safe_load(match[1], permitted_classes: [ Date, Time ], aliases: true)

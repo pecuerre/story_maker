@@ -51,6 +51,7 @@ Labels used below, in the order their groups appear:
 
 ### security
 
+- **Interchange import symlinks.** The validator and the document reader now refuse any file or directory that resolves outside the source directory, so a nested symlink can no longer read server files or name the Universe, and the finding leaves `known_quirks.md`.
 - **Private photo access.** A stored photo is now served by `PhotosController` under the Universe's read policy instead of an Active Storage bearer URL, and the framework's blob routes are unmounted; `Cache-Control: private, no-store` makes a revoked member's next fetch ask again.
 
 ### chore

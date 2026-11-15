@@ -467,6 +467,8 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
 
 - the source, `universe/`, `stories/`, `universe/canon/`, `universe/canon/README.md`, or an entity
   directory is missing;
+- a file or directory in the source resolves outside the source directory once its symlinks are
+  followed;
 - `stories/` has no Story, or a Story has no `README.md` or no `#` heading;
 - an entity, plot, or scene file has no frontmatter, unreadable YAML, or a missing or blank required
   key;
@@ -603,11 +605,15 @@ README's identity block as the Section description.
 
 The page never accepts a path. It lists only the folders directly under
 `STORY_INTERCHANGE_IMPORT_ROOT`, and a name with a separator, `..`, a dot-file, or a selected-folder
-symlink that resolves outside the root is refused. Nested symlinks are an
-[open issue](../known_quirks.md). Nothing is copied into the repository. The preview, the write,
-and a run's page all ask for `:manage` on `StoryInterchange::Import`, the platform-level question the
-creation limit also asks, so
-a guest signs in and a signed-in non-operator receives `403`.
+symlink that resolves outside the root is refused. Inside a source, every file and directory the
+validator reads or walks must resolve inside the source directory; a link to a file or directory
+outside it is refused and named in the report, not followed, while a link to another place in the
+same source is followed normally. The check runs per path, immediately before the read; a source
+tree changed while it is being read is not pinned by it. The command-line task names its own path and
+the same rule applies to the tree it names. Nothing is copied into the repository. The preview, the
+write, and a run's page all ask for `:manage` on `StoryInterchange::Import`, the platform-level
+question the creation limit also asks, so a guest signs in and a signed-in non-operator receives
+`403`.
 
 ## What the import does not do
 

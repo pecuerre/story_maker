@@ -5,6 +5,10 @@ require "yaml"
 module StoryInterchange
   # Checks one source directory against the interchange layout and returns a
   # `Report`. It reads files only; no record is created, changed, or deleted.
+  # Every path it reads or walks stays inside the source directory once the
+  # symlinks in it are followed, so a link out of the tree is refused rather than
+  # followed. The command-line task takes its own path, and the same rule applies
+  # to that path: a source is the tree it names, not the files it can reach.
   #
   # The checks are the contract in [the feature
   # document](../../docs/features/story_interchange.md): the identity a source
@@ -199,7 +203,7 @@ module StoryInterchange
       # display name when it exists, and the titleized slug is the fallback.
       def universe_name
         readme = File.join(@root, "universe", "README.md")
-        return nil unless File.file?(readme)
+        return nil unless usable_file?(readme)
 
         Document.load(readme, root: @root).title.to_s.strip.presence
       end
@@ -207,35 +211,19 @@ module StoryInterchange
       def check_layout
         @universe = File.join(@root, "universe")
         @stories_directory = File.join(@root, "stories")
-        valid = true
+        universe_inside = require_source_directory(@universe)
+        stories_inside = require_source_directory(@stories_directory)
+        valid = universe_inside && stories_inside
 
-        [ @universe, @stories_directory ].each do |directory|
-          next if File.directory?(directory)
-
-          @report.error(path: relative(directory), message: "missing #{relative(directory)}/ directory")
-          valid = false
-        end
-
-        if File.directory?(@universe)
+        if universe_inside
           canon = File.join(@universe, "canon")
-          unless File.directory?(canon)
-            @report.error(path: relative(canon), message: "missing universe/canon/ directory")
-            valid = false
-          end
+          valid = false unless require_source_directory(canon)
 
           ENTITY_KINDS.each_value do |config|
-            directory = File.join(@universe, config[:directory])
-            next if File.directory?(directory)
-
-            @report.error(path: relative(directory), message: "missing universe/#{config[:directory]}/ directory")
-            valid = false
+            valid = false unless require_source_directory(File.join(@universe, config[:directory]))
           end
 
-          readme = File.join(canon, "README.md")
-          unless File.file?(readme)
-            @report.error(path: relative(readme), message: "universe/canon/README.md is required")
-            valid = false
-          end
+          valid = false unless require_source_file(File.join(canon, "README.md"))
         end
 
         valid
@@ -544,9 +532,9 @@ module StoryInterchange
       def read_story_readme(directory, slug)
         path = File.join(directory, "README.md")
 
-        unless File.file?(path)
+        unless usable_file?(path)
           @report.add_story(slug: slug, name: slug.titleize)
-          @report.error(path: relative(directory), message: "story #{slug} is missing README.md")
+          @report.error(path: relative(directory), message: "story #{slug} is missing README.md") unless File.exist?(path)
           return
         end
 
@@ -569,6 +557,8 @@ module StoryInterchange
           case child
           when "chapters", "plots"
             if File.directory?(path)
+              next unless usable_directory?(path)
+
               child == "chapters" ? read_chapters(path, slug) : read_plots(path, slug)
             else
               @report.warning(path: relative(path), message: "#{child} in story #{slug} must be a directory")
@@ -626,7 +616,7 @@ module StoryInterchange
       # documentation, so it is never read as content.
       def chapter_readme(directory)
         readme = File.join(directory, "README.md")
-        File.file?(readme) ? document_for(readme) : nil
+        usable_file?(readme) ? document_for(readme) : nil
       end
 
       def chapter_frontmatter(document)
@@ -1019,7 +1009,8 @@ module StoryInterchange
 
       # Only `.md` files are read. `README.md` is documentation at every depth —
       # the directory's own guide, never a record — so it is skipped unless the
-      # caller is the canon ledger, which asks for it by name.
+      # caller is the canon ledger, which asks for it by name. A file that links
+      # outside the source directory is refused and named, not read.
       def markdown_files(directory, include_readme: false)
         return [] unless File.directory?(directory)
 
@@ -1029,7 +1020,7 @@ module StoryInterchange
           next unless child.end_with?(".md")
 
           path = File.join(directory, child)
-          path if File.file?(path)
+          path if usable_file?(path)
         end
       end
 
@@ -1040,8 +1031,59 @@ module StoryInterchange
           next if child.start_with?(".")
 
           path = File.join(directory, child)
-          path if File.directory?(path)
+          path if usable_directory?(path)
         end
+      end
+
+      # A path is read or walked only when, with every symlink followed, it is the
+      # source directory or a child of it. The folder the page selected has already
+      # been checked by `ImportRoot`; this is the same rule for the links inside
+      # it. A link that leaves the tree is refused and named rather than followed.
+      def usable_file?(path)
+        return false unless File.file?(path)
+        return true if contained?(path)
+
+        refuse_outside(path)
+      end
+
+      def usable_directory?(path)
+        return false unless File.directory?(path)
+        return true if contained?(path)
+
+        refuse_outside(path)
+      end
+
+      def contained?(path)
+        !SourceTree.real_path(@root, path).nil?
+      rescue SystemCallError, ArgumentError
+        false
+      end
+
+      def refuse_outside(path)
+        @report.error(path: relative(path), message: SourceTree::OUTSIDE_MESSAGE)
+        false
+      end
+
+      # A layout path is either usable, genuinely absent, or refused because it
+      # resolves outside the source directory. Only the absent case adds the
+      # message naming what the layout requires: the other two have already said
+      # what is wrong, and "missing" would be untrue of a link that was refused.
+      def require_source_directory(path)
+        return true if usable_directory?(path)
+
+        unless File.exist?(path)
+          @report.error(path: relative(path), message: "missing #{relative(path)}/ directory")
+        end
+        false
+      end
+
+      def require_source_file(path)
+        return true if usable_file?(path)
+
+        unless File.exist?(path)
+          @report.error(path: relative(path), message: "#{relative(path)} is required")
+        end
+        false
       end
 
       def relative(path)

@@ -571,6 +571,87 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/source directory does not exist/, errors(report))
   end
 
+  test "refuses a nested file symlink that resolves outside the source directory" do
+    outside = File.join(@temporary_directory, "outside.md")
+    File.write(outside, "# The Fifth Cabinet\n")
+    File.symlink(outside, File.join(@root, "universe", "README.md"))
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(%r{universe/README\.md:1: resolves outside the source directory}, errors(report))
+    # The outside heading is not read, so the name falls back to the slug.
+    assert_equal "Synthetic Universe", report.universe_name
+  end
+
+  test "refuses a record file symlinked outside the source directory" do
+    outside = File.join(@temporary_directory, "outsider.md")
+    File.write(outside, "---\nname: Outsider\nslug: keep\n---\n\n# Outsider\n")
+    keep = File.join(@root, "universe", "locations", "keep.md")
+    FileUtils.rm(keep)
+    File.symlink(outside, keep)
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(%r{universe/locations/keep\.md:1: resolves outside the source directory}, errors(report))
+    assert_equal 0, report.counts[:locations]
+    assert_nil report.entity("keep")
+  end
+
+  test "refuses an entity directory symlinked outside the source directory" do
+    outside = File.join(@temporary_directory, "outside-characters")
+    FileUtils.mkdir_p(outside)
+    characters = File.join(@root, "universe", "characters")
+    FileUtils.rm_r(characters)
+    File.symlink(outside, characters)
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(%r{universe/characters:1: resolves outside the source directory}, errors(report))
+    assert_no_match(%r{missing universe/characters/ directory}, errors(report))
+    assert_equal 0, report.counts[:characters]
+  end
+
+  test "refuses a chapter directory symlinked outside the source directory" do
+    outside = File.join(@temporary_directory, "outside-chapter")
+    FileUtils.mkdir_p(outside)
+    arrival = File.join(@root, "stories", "synthetic-story", "chapters", "01-arrival")
+    FileUtils.mv(arrival, outside)
+    File.symlink(outside, arrival)
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(%r{stories/synthetic-story/chapters/01-arrival:1: resolves outside}, errors(report))
+    assert_equal [ "02-winter" ], report.chapters.map(&:slug)
+  end
+
+  test "follows a nested symlink that stays inside the source directory" do
+    shared = File.join(@root, "shared")
+    FileUtils.mkdir_p(shared)
+    FileUtils.mv(File.join(@root, "universe", "locations", "keep.md"), shared)
+    File.symlink(File.join("..", "..", "shared", "keep.md"),
+      File.join(@root, "universe", "locations", "keep.md"))
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_equal 1, report.counts[:locations]
+    assert_equal "The Keep", report.entity("keep").name
+  end
+
+  test "reads a source selected through a symlink under its selected name" do
+    alias_path = File.join(@temporary_directory, "alias-universe")
+    File.symlink(@root, alias_path)
+
+    report = StoryInterchange.validate(alias_path)
+
+    assert report.valid?, errors(report)
+    assert_equal "alias-universe", report.universe_slug
+  end
+
   test "requires YAML frontmatter on an entity file" do
     overwrite("universe/characters/ada.md", "# Ada\n\nNo frontmatter here.\n")
 

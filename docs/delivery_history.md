@@ -7121,6 +7121,43 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: a Spanish draft page appeared to print the English fallback "a record" (fixed)
+
+**Then:** the open list recorded a **Medium** finding that a draft page rendered under `es` in
+`SpanishChromeTest` contained the exact English string "a record", that the only locale value with
+that text was `notifications.a_record`, and that either the request's locale was not reaching the
+notification sentence or the text was arriving through a path the notification list did not own. The
+negative assertion was removed from the status case so the suite did not claim a fix it had not made.
+
+**The page was not printing the English value, and no notification was involved.** Restoring the
+assertion against the tree where the finding was filed (commit `5dec04ac`) reproduced the failure, and
+dumping the surrounding text named the match: the draft notice's Spanish sentence "Tu cambio se ha
+recordado. No será visible hasta que lo apliques." The substring `a record` begins at the **a** of
+`ha` and runs through `record` — six letters of a Spanish word that happen to spell an English one.
+The status test creates no Notification, `NotificationsHelper#notification_sentence` was unchanged
+between that commit and this one, and replacing only that Spanish sentence with one that does not say
+"recordado" made the assertion pass on the old tree. The finding was a false positive in the test's
+matcher, not a locale leak.
+
+**Why it stopped appearing.** The draft notice was later reworded to "Cambio de %{kind} en tu
+borrador…", which removed the coincidence rather than any defect, so the assertion passed on the
+current tree and proved nothing about the notification path. A test that is quiet because the copy
+changed is exactly the "missing fact sends you to the code" case, and the reading above is what the
+finding asked for: the page, the helper, and the draft layout were read against each other.
+
+**Now:** the English-chrome check requires a phrase to stand on its own. The characters on either
+side of a candidate value must not be letters, so a real English sentence still matches between
+spaces, punctuation, or the ends of the body, while `ha recordado` no longer does. The status case
+carries its negative assertion again, and the finding has left `known_quirks.md`; the remaining
+findings were renumbered from 1.
+
+**Verification.** `bin/rails test test/controllers/spanish_chrome_test.rb` — 7 runs, 54 assertions,
+0 failures. The same file with the assertion restored was run against an extracted `5dec04ac` tree to
+establish the original failure and the "reword only the Spanish sentence" pass; that probe was a
+detached copy under `/tmp`, not a change to this repository's history. The matcher was checked
+directly against `Delete a record now.` (matches), `Tu cambio se ha recordado.` (does not), and a
+Spanish sentence ending in the English words (matches).
+
 ### Quirk: tag colors were format-validated but not contrast-validated (fixed)
 
 **Then:** the open list recorded that `HasColor` accepts any `#rrggbb` pair for a taxonomy tag's

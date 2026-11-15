@@ -49,6 +49,10 @@ Labels used below, in the order their groups appear:
 - **Appearance grid headers.** A scene column now shows only its narrative position pill; hovering or focusing it opens a body-only popover listing the section path level by level and the scene, and a cell's two marks stay side by side.
 - **Story interchange chapters follow acts.** An imported chapter now names its Section from the README `full_title` and sits under a parent Section named by its `act` frontmatter, so the acts arrive as the chapter hierarchy instead of only as description text.
 
+### chore
+
+- **Spanish-chrome matcher phrase boundary.** The English-chrome check now matches whole phrases, so the Spanish “se ha recordado” no longer reads as the English “a record”; the status case asserts Spanish again and the false finding leaves `known_quirks.md`.
+
 ## 2026-11-14
 
 ### changed

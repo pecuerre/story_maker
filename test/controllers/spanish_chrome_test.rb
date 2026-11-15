@@ -88,6 +88,7 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, I18n.t("scenes.statuses.draft", locale: :es)
+    assert_no_english_chrome("a remembered scene status")
   end
 
   # The pages above all render, so they never reach a validation message. That
@@ -219,10 +220,25 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
       # the fixtures so a renamed fixture stays honest.
       offenders = english_chrome.reject do |value|
         fixture_strings.any? { |author_string| author_string.include?(value) }
-      end.select { |value| body.include?(value) }
+      end.select { |value| contains_chrome?(body, value) }
 
       assert_empty offenders,
         "#{name} printed untranslated English chrome: #{offenders.first(5).inspect}"
+    end
+
+    # Whether one English chrome value is in the body as a phrase of its own
+    # rather than inside a longer word.
+    #
+    # **A substring match is not enough, because the two languages share an
+    # alphabet and a word boundary.** The draft notice's Spanish "se ha
+    # recordado" contains the English value "a record" character for character,
+    # and known quirks carried that coincidence as an untranslated fallback
+    # until it was read against the page. Requiring the characters on either
+    # side not to be letters keeps a real English sentence — which arrives
+    # between spaces or punctuation, or at either end of the text — while a
+    # Spanish word that happens to carry the same letters no longer matches.
+    def contains_chrome?(body, value)
+      body.match?(/(?<![[:alpha:]])#{Regexp.escape(value)}(?![[:alpha:]])/)
     end
 
     # A value that could only be chrome: it reads as a sentence, in words, with

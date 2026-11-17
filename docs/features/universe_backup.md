@@ -20,9 +20,14 @@ The archive has three parts, and **only the first is authoritative**:
 | `content/` | a Markdown projection in the story-interchange shape | for a human reader |
 
 `backup.yml` names the format version, generation time, Universe identity, record counts, the list of
-deferred tables, and photo rows without attachments. Missing storage objects and other backup integrity
-limitations are [open findings](../known_quirks.md). `README.md` explains the same contents and
-the restore boundary inside the archive, so the archive is understandable without this repository.
+deferred tables, whether the photos are complete, photo rows without attachments, and any stored
+photo object that could not be read. A Photo whose attachment and blob rows exist but whose stored
+object is gone does not abort the archive: its bytes are left out, its `data/photos.yml` row keeps
+the file metadata with a null `archive_path`, and both the manifest (`photos.complete: false` and
+`photos.missing_storage`) and the archive `README.md` name it, so a partial archive is never
+presented as complete. Other backup integrity limitations are [open findings](../known_quirks.md).
+`README.md` explains the same contents and the restore boundary inside the archive, so the archive
+is understandable without this repository.
 
 The data dump keeps the application's own columns, foreign-key ids, and soft-deleted core rows. It
 does not translate references to slugs: a restore has to remap ids, and a second reference language

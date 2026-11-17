@@ -101,7 +101,11 @@ module UniverseBackup
     # `updated_at` a remembered change compares against.
     TIMESTAMP_PRECISION = 6
 
-    PhotoFile = Data.define(:path, :bytes, :missing)
+    # One photo's bytes and the archive path that names them. `missing` is nil
+    # for a written file, `:no_attachment` for a Photo row with no attachment,
+    # and `:missing_storage` when the attachment and blob rows exist but the
+    # stored object cannot be read.
+    PhotoFile = Data.define(:photo_id, :slug, :path, :bytes, :missing)
 
     attr_reader :universe
 
@@ -127,16 +131,30 @@ module UniverseBackup
     end
 
     def photo_files
-      @photo_files ||= photos.filter_map do |photo|
-        next add_missing_photo(photo) unless photo.file.attached?
+      @photo_files ||= photos.map do |photo|
+        next unreadable_photo_file(photo, :no_attachment) unless photo.file.attached?
 
         blob = photo.file.blob
-        PhotoFile.new(path: archive_path(photo, blob), bytes: blob.download, missing: nil)
+        path = archive_path(photo, blob)
+        begin
+          PhotoFile.new(photo_id: photo.id, slug: photo.slug, path: path, bytes: blob.download, missing: nil)
+        rescue ActiveStorage::FileNotFoundError
+          # The attachment and blob rows outlive the object they point at. The
+          # rest of the backup is still worth delivering, so the absent bytes are
+          # reported rather than allowed to abort the whole archive.
+          unreadable_photo_file(photo, :missing_storage, path: path)
+        end
       end
     end
 
     def missing_photo_files
-      photo_files.select(&:missing).map { |file| file.missing }
+      photo_files.select { |file| file.missing == :no_attachment }.map(&:slug)
+    end
+
+    # Stored objects that could not be read, with the archive path they would
+    # have been written under. Reported in `backup.yml` and the archive README.
+    def missing_storage_photo_files
+      photo_files.select { |file| file.missing == :missing_storage }
     end
 
     def deferred_tables
@@ -176,9 +194,11 @@ module UniverseBackup
       end
 
       def photo_rows
+        files = photo_files.index_by(&:photo_id)
         photos.map do |photo|
+          file = files.fetch(photo.id)
           attributes_for(photo).merge(
-            "archive_path" => photo.file.attached? ? archive_path(photo, photo.file.blob) : nil,
+            "archive_path" => file.bytes ? file.path : nil,
             "file_name" => photo.file.attached? ? photo.file.filename.to_s : nil,
             "content_type" => photo.file.attached? ? photo.file.blob.content_type : nil,
             "byte_size" => photo.file.attached? ? photo.file.blob.byte_size : nil,
@@ -250,8 +270,8 @@ module UniverseBackup
         }.fetch(blob.content_type, ".bin")
       end
 
-      def add_missing_photo(photo)
-        PhotoFile.new(path: nil, bytes: nil, missing: photo.slug)
+      def unreadable_photo_file(photo, reason, path: nil)
+        PhotoFile.new(photo_id: photo.id, slug: photo.slug, path: path, bytes: nil, missing: reason)
       end
   end
 end

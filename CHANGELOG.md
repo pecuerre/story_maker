@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Backup missing photo files.** A stored photo file that cannot be read no longer aborts the archive: the bytes are omitted, `backup.yml` and the archive README name them, and `photos.complete` is false; the finding leaves `known_quirks.md`.
 - **Backup timestamp fractions.** The table dump now writes datetimes with all six sub-second digits, so a restored row reproduces its stored instant and `updated_at` version instead of losing the fraction; the finding leaves `known_quirks.md`.
 - **Interchange moment chains.** An imported forward chain of relative `moment`s now resolves from its anchored end, a `before` span subtracts instead of adding, and a cycle without an anchor stays relation-only; the finding leaves `known_quirks.md`.
 

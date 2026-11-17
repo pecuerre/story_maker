@@ -15,6 +15,10 @@ require "zlib"
 #
 # The README inside the archive says which part is which and what is deliberately
 # absent. Restore is a separate, destructive command and is not implemented here.
+#
+# A photo whose stored object is missing does not abort the archive: its bytes are
+# left out, and the manifest and README both name it so a partial archive is never
+# presented as complete.
 module UniverseBackup
   class Archive
     FORMAT_VERSION = 1
@@ -32,7 +36,7 @@ module UniverseBackup
       tar = Gem::Package::TarWriter.new(gzip)
 
       files.each { |path, content| add_file(tar, path, content) }
-      dump.photo_files.each { |photo| add_file(tar, photo.path, photo.bytes) if photo.path }
+      dump.photo_files.each { |photo| add_file(tar, photo.path, photo.bytes) if photo.bytes }
 
       tar.close
       gzip.close unless gzip.closed?
@@ -67,8 +71,12 @@ module UniverseBackup
           },
           "counts" => dump.counts,
           "photos" => {
-            "count" => dump.photo_files.count { |photo| photo.path },
-            "missing" => dump.missing_photo_files
+            "count" => dump.photo_files.count(&:bytes),
+            "complete" => dump.missing_photo_files.empty? && dump.missing_storage_photo_files.empty?,
+            "missing" => dump.missing_photo_files,
+            "missing_storage" => dump.missing_storage_photo_files.map do |file|
+              { "slug" => file.slug, "archive_path" => file.path }
+            end
           },
           "deferred_tables" => dump.deferred_tables,
           "notes" => [
@@ -89,7 +97,7 @@ module UniverseBackup
 
           | Path | Contents |
           |---|---|
-          | `backup.yml` | format version, counts, and the list of deferred tables |
+          | `backup.yml` | format version, counts, photo completeness, and the list of deferred tables |
           | `data/` | the lossless table dump — the authoritative backup |
           | `photos/` | the stored 300×300 files named by `data/photos.yml` |
           | `content/` | a human-readable projection in the story-interchange shape |
@@ -101,7 +109,7 @@ module UniverseBackup
           interchange layout asks for, so the projection writes `— TBD` for
           those fields and omits records the layout has no place for.
 
-          ## What is deliberately absent
+          #{missing_photos_note}## What is deliberately absent
 
           This is the core-data slice. Users, Universe memberships, drafts and
           their change history, review requests, notifications, and API tokens
@@ -114,6 +122,22 @@ module UniverseBackup
           Restore is not implemented. When it arrives it will be a separate,
           destructive command that asks for explicit confirmation and never reuses
           the development-data reset path.
+        MARKDOWN
+      end
+
+      def missing_photos_note
+        missing = dump.missing_storage_photo_files
+        return "" if missing.empty?
+
+        <<~MARKDOWN + "\n"
+          ## Missing photo files
+
+          This archive is **incomplete**: #{missing.count} stored photo #{missing.one? ? "file is" : "files are"}
+          missing from storage, so #{missing.one? ? "it is" : "they are"} not under `photos/`. The photo rows
+          stay in `data/photos.yml` with their file metadata and a null `archive_path`, and `backup.yml`
+          lists the absent objects under `photos.missing_storage`:
+
+          #{missing.map { |file| "- `#{file.path}` (photo `#{file.slug}`)" }.join("\n")}
         MARKDOWN
       end
 

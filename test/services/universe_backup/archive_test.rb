@@ -102,7 +102,33 @@ class UniverseBackup::ArchiveTest < ActiveSupport::TestCase
     assert row
     assert_equal "photos/#{photo.slug}-#{photo.id}.jpg", row["archive_path"]
     assert_equal "stored image bytes", files.fetch(row["archive_path"])
-    assert_equal 1, YAML.safe_load(files.fetch("backup.yml")).dig("photos", "count")
+    manifest = YAML.safe_load(files.fetch("backup.yml"))
+    assert_equal 1, manifest.dig("photos", "count")
+    assert_equal true, manifest.dig("photos", "complete")
+    assert_empty manifest.dig("photos", "missing_storage")
+    refute_includes files.fetch("README.md"), "Missing photo files"
+  end
+
+  test "a stored photo file that cannot be read is reported instead of aborting the archive" do
+    photo = Photo.new(universe: @universe, name: "Lost portrait")
+    photo.file.attach(io: StringIO.new("stored image bytes"), filename: "lost.png", content_type: "image/png")
+    photo.save!
+    path = "photos/#{photo.slug}-#{photo.id}.png"
+    photo.file.blob.service.delete(photo.file.blob.key)
+
+    files = read_archive(UniverseBackup::Archive.new(@universe, generated_at: @generated_at))
+    row = YAML.safe_load(files.fetch("data/photos.yml")).find { |record| record["id"] == photo.id }
+    manifest = YAML.safe_load(files.fetch("backup.yml"))
+    readme = files.fetch("README.md")
+
+    refute files.key?(path), "an absent stored object must not be written as an empty file"
+    assert_nil row["archive_path"]
+    assert_equal "lost.png", row["file_name"]
+    assert_equal false, manifest.dig("photos", "complete")
+    assert_equal 0, manifest.dig("photos", "count")
+    assert_equal [ { "slug" => photo.slug, "archive_path" => path } ], manifest.dig("photos", "missing_storage")
+    assert_includes readme, "This archive is **incomplete**"
+    assert_includes readme, "#{path}` (photo `#{photo.slug}`)"
   end
 
   test "projects layout-covered records into readable Markdown" do

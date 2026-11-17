@@ -10252,3 +10252,44 @@ value truncated to the second, and passes after it: 10 runs, 87 assertions. Full
 `bin/rails test:system` (the dump writes the same YAML shape for every row, so nothing
 browser-visible changed), `bun run check:js` (no JavaScript changed), `bin/brakeman --no-pager` (no
 request, view, or authorization path changed), `bin/bundler-audit`, `bin/importmap audit`.
+
+### Quirk: a missing stored photo file aborted the backup (fixed)
+
+**Then:** `UniverseBackup::DataDump#photo_files` reported a Photo with no attachment, but called
+`blob.download` for every attachment it had. If the attachment and blob rows existed and the object
+they pointed at did not — an interrupted copy, a deleted storage root, a partially restored volume —
+Active Storage raised `ActiveStorage::FileNotFoundError`, `UniverseBackupsController#download` failed,
+and neither an archive nor a manifest was delivered. A 2026-11-12 probe simulated the storage failure
+and reproduced the exception.
+
+**The decision.** The archive is the safety net, and the moment it is needed is the moment something
+has already gone wrong in storage. Refusing to deliver anything because one photo out of many is
+unreadable would withhold the rest of the data exactly when it is most valuable. The owner chose a
+partial archive with an explicit report — machine-readable in `backup.yml`, human-readable in the
+archive README — over failing the download. The rejected alternative was to abort with an error naming
+the missing photos.
+
+**How it reads now.** `photo_files` rescues only `ActiveStorage::FileNotFoundError`, a genuine
+absence, and records the photo as `:missing_storage` with no bytes; any other storage error still
+aborts, because a transient failure is not evidence that the object is gone. A row without an
+attachment stays `:no_attachment`, so the two conditions remain distinguishable rather than collapsing
+into one "missing" list. `Archive#to_s` writes a photo only when bytes exist, so an absent object
+cannot become an empty file in the tar. `data/photos.yml` keeps the photo row and its file metadata
+but writes a null `archive_path`, `backup.yml`'s `photos` section gains `complete: false` and a
+`missing_storage` list of `{slug, archive_path}` entries, and the archive README gains a "Missing photo
+files" section naming every absent object. `photos.count` remains the number of files written. The
+manifest paragraph of [universe_backup.md](features/universe_backup.md) now states this, and the
+finding left [known_quirks.md](known_quirks.md).
+
+**Verification.** A new case in `test/services/universe_backup/archive_test.rb` attaches a photo,
+deletes the stored object through its service, and asserts that the archive still builds, no empty
+file is written, the row keeps its `file_name` while `archive_path` is null, `photos.complete` is
+false with the `{slug, archive_path}` entry, `photos.count` is zero, and the README names the path and
+the photo. The file's existing photo case now also asserts `photos.complete: true` and an empty
+`missing_storage` list. `test/services/universe_backup/archive_test.rb` — 11 runs, 102 assertions.
+Full `bin/rails test` — 3618 runs, 22553 assertions, 0 failures, 0 errors, 13 skips (the pre-existing
+skips). `bin/rubocop` on the three changed Ruby files — no offenses. `test/docs_test.rb` — 5 runs, 10
+assertions (it also validates the changelog entry). Not run, and not applicable:
+`bin/rails test:system` (the archive contents changed, but nothing browser-visible did),
+`bun run check:js` (no JavaScript changed), `bin/brakeman --no-pager` (no request, view, or
+authorization path changed), `bin/bundler-audit`, `bin/importmap audit`.

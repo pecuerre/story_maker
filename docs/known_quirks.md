@@ -33,7 +33,7 @@ finding had at the time and are not rewritten.
 
 The findings were first gathered by an audit on 2026-09-24 against commit `8fcf4d4`, with the
 DataFactor follow-ups checked against the tree on 2026-09-25; the list has been renumbered since
-without being re-gathered, most recently on 2026-11-15. Entries are not re-verified by being written
+without being re-gathered, most recently on 2026-11-17. Entries are not re-verified by being written
 down, so **re-read a finding against the code before acting on it** — see
 [Audit baseline and evidence](#audit-baseline-and-evidence) for what that pass actually ran. The entries added on 2026-11-12 state their own evidence; that
 review sampled important paths and did not prove the absence of other issues.
@@ -71,13 +71,7 @@ review sampled important paths and did not prove the absence of other issues.
 
 ## Open findings
 
-4. **Medium — the backup truncates timestamp fractions.** `UniverseBackup::DataDump#attributes_for`
-    calls `iso8601` without a precision, so `2026-11-12T12:30:00.123456Z` was written as
-    `2026-11-12T12:30:00Z` in a 2026-11-12 probe. The table dump is therefore not a byte- or
-    value-exact copy of timestamp columns, including version-relevant `updated_at` values. Restore
-    does not yet exist; preserve and test the original precision before relying on a round trip.
-
-5. **Medium — a missing stored photo file aborts the backup instead of being reported.**
+4. **Medium — a missing stored photo file aborts the backup instead of being reported.**
     `DataDump#photo_files` reports a Photo with no attachment, but if the attachment and blob rows
     exist and the storage object is missing, `blob.download` raises `ActiveStorage::FileNotFoundError`.
     A 2026-11-12 probe simulated the storage failure and reproduced the exception, so no archive or
@@ -85,14 +79,14 @@ review sampled important paths and did not prove the absence of other issues.
     Decide whether to fail clearly or produce a partial archive with an explicit missing-file entry;
     do not call a partial result complete.
 
-6. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
+5. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
     `PARALLEL_WORKERS=1 bin/rails test:system` also failed the dark-theme Map and Settings cases and
     two Scene Element dropdown cases. All four passed when rerun together serially. The full run's
     theme assertions saw light colors and the dropdown assertions did not find an open menu; the
     cause and whether a user-visible race exists remain unverified. Separate simultaneous reruns
     also hit SQLite locks, so concurrent system-test processes are not a valid isolation check.
 
-7. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
+6. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
     `COVERAGE_GATE` solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
     `CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
     2 for low coverage. Recent SimpleCov results may also be merged locally, so the resulting partial

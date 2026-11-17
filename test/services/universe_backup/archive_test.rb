@@ -69,6 +69,19 @@ class UniverseBackup::ArchiveTest < ActiveSupport::TestCase
     end
   end
 
+  test "the dump keeps a timestamp's sub-second digits" do
+    stamped_at = Time.utc(2026, 11, 12, 12, 30, 0, 123456)
+    characters(:character_one).update_columns(updated_at: stamped_at)
+
+    archive = UniverseBackup::Archive.new(@universe, generated_at: @generated_at)
+    rows = YAML.safe_load(read_archive(archive).fetch("data/characters.yml"))
+    row = rows.find { |record| record["id"] == characters(:character_one).id }
+
+    assert_equal stamped_at, Time.iso8601(row["updated_at"]),
+      "a restore must be able to reproduce the stored instant, not just its second"
+    assert_match(/\.123456/, row["updated_at"])
+  end
+
   test "the dump leaves identity, memberships, and change history out" do
     %w[data/users.yml data/universe_memberships.yml data/drafts.yml data/draft_changes.yml
       data/notifications.yml data/api_tokens.yml].each do |path|

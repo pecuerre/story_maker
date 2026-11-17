@@ -47,9 +47,10 @@ assembled in memory from the database and Active Storage. There is no stored bac
 ## The data dump
 
 `UniverseBackup::DataDump` writes one YAML file per table and one per join table. A record is a hash
-of its own columns; `created_at` and `updated_at` are ISO 8601 strings, and a `json` column stays a
-hash. Soft-deleted core records are included with their `deleted_at`, because a restore should be able
-to rebuild the Universe as it was, not only its live view.
+of its own columns; `created_at` and `updated_at` are ISO 8601 strings at the database's microsecond
+precision, so a stored instant is copied to the fraction rather than truncated to the second, and a
+`json` column stays a hash. Soft-deleted core records are included with their `deleted_at`, because a
+restore should be able to rebuild the Universe as it was, not only its live view.
 
 The dump covers the core records:
 

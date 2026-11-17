@@ -95,6 +95,12 @@ module UniverseBackup
       "section_id" => Section
     }.freeze
 
+    # The database stores datetimes with microsecond precision, so the dump asks
+    # for all six digits. `iso8601` alone writes whole seconds, which would make
+    # the lossless copy disagree with the row it copied and lose the
+    # `updated_at` a remembered change compares against.
+    TIMESTAMP_PRECISION = 6
+
     PhotoFile = Data.define(:path, :bytes, :missing)
 
     attr_reader :universe
@@ -212,10 +218,14 @@ module UniverseBackup
 
       def attributes_for(record)
         record.attributes.transform_values do |value|
-          if !value.is_a?(String) && value.respond_to?(:iso8601)
-            value.iso8601
-          else
+          if value.is_a?(String) || !value.respond_to?(:iso8601)
             value
+          elsif value.respond_to?(:usec)
+            # A Time or TimeWithZone: keep its sub-second digits.
+            value.iso8601(TIMESTAMP_PRECISION)
+          else
+            # A Date: its `iso8601` takes no argument and has nothing below a day.
+            value.iso8601
           end
         end
       end

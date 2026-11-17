@@ -10218,3 +10218,37 @@ entry). Not run, and not applicable: `bin/rails test:system` (the importer write
 so nothing browser-visible changed), `bun run check:js` (no JavaScript changed), `bin/brakeman
 --no-pager` (no request, view, or authorization path changed), `bin/bundler-audit`, `bin/importmap
 audit`.
+
+### Quirk: the backup truncated timestamp fractions (fixed)
+
+**Then:** `UniverseBackup::DataDump#attributes_for` turned every value that answered `iso8601` into a
+string, but called it with no argument. That method writes whole seconds, so a 2026-11-12 probe wrote
+`2026-11-12T12:30:00.123456Z` as `2026-11-12T12:30:00Z`. The dump is the archive's authoritative copy
+and `updated_at` is the version a remembered change compares against, so the truncation both made the
+copy inexact and lost the version a restore would need. Restore does not exist yet, which is why the
+finding asked for the precision to be preserved and tested before a round trip was relied on.
+
+**Why the precision lives in the dump rather than in a parser.** The fraction is the database's own:
+Rails stores datetimes at microsecond precision, so the same six digits the row holds are the ones the
+dump has to write. Reading them back is a `Time.iso8601` parse, which already understands the fraction;
+the only change needed was to stop dropping it on the way out.
+
+**How it reads now.** `attributes_for` branches on the value it was handed. A String passes through
+untouched. A value that answers `usec` — a `Time`, or an `ActiveSupport::TimeWithZone` — is written as
+`iso8601(TIMESTAMP_PRECISION)` with `TIMESTAMP_PRECISION = 6`. Anything else that answers `iso8601` is
+written without an argument, because `Date#iso8601` accepts none; the dump has no date columns today,
+but the branch keeps a later one from raising. The join tables have no timestamp columns, so their raw
+SQL rows are unaffected, and `backup.yml`'s `generated_at` stays whole-second because it names the
+archive rather than copying a row. The data-dump paragraph of
+[universe_backup.md](features/universe_backup.md#the-data-dump) now states the precision, and the
+finding left [known_quirks.md](known_quirks.md).
+
+**Verification.** A new case in `test/services/universe_backup/archive_test.rb` sets a Character's
+`updated_at` to `2026-11-12T12:30:00.123456Z` through `update_columns`, reads the archive back, and
+asserts both the exact instant and the `.123456` fraction. It failed before the change with the actual
+value truncated to the second, and passes after it: 10 runs, 87 assertions. Full `bin/rails test` —
+3617 runs, 22538 assertions, 0 failures, 0 errors, 13 skips (the pre-existing skips). `bin/rubocop` —
+815 files, no offenses. Not run, and not applicable:
+`bin/rails test:system` (the dump writes the same YAML shape for every row, so nothing
+browser-visible changed), `bun run check:js` (no JavaScript changed), `bin/brakeman --no-pager` (no
+request, view, or authorization path changed), `bin/bundler-audit`, `bin/importmap audit`.

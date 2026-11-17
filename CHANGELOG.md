@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-17
+
+### fixed
+
+- **Interchange moment chains.** An imported forward chain of relative `moment`s now resolves from its anchored end, a `before` span subtracts instead of adding, and a cycle without an anchor stays relation-only; the finding leaves `known_quirks.md`.
+
 ## 2026-11-15
 
 ### added

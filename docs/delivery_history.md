@@ -10174,3 +10174,47 @@ Document identifier ... is invalid`, and a removal against an index that does no
 before this change. `bin/rubocop` (472 files, no offenses) and `bin/brakeman --no-pager` (0 warnings).
 Not run, and not applicable: `bun run check:js` (no JavaScript changed), `bin/rails test:system` (no
 browser-visible behaviour changed), `bin/bundler-audit`, `bin/importmap audit`.
+
+### Quirk: a forward chain of imported relative moments lost its computable dates (fixed)
+
+**Then:** `StoryInterchange::Importers::Events` gave every Event its concrete date up front, then
+applied each Scene's `moment` relation exactly once, in reading order. A relation names its target
+rather than the target's date, so a span could only be computed from a target that already had a start
+when its own turn came. If A was one day after B, B one day after C, and C carried a concrete date, A
+was visited before B had acquired its date and was never revisited: a validated 2026-11-12 import
+produced `nil`, January 2, and January 1 for A, B, and C. The temporal links were written; the start A
+could have had was not. Rewriting the method also exposed a second gap in the same expression: it
+advanced by the span amount without reading the direction, so `2 days before <scene>` added two days
+instead of subtracting them. The finding named cycles and other relation shapes as needing a policy
+too.
+
+**Why a fixed point rather than one ordered pass.** The obvious repair is to order the relations so
+every target is resolved first — a topological sort. That needs a graph with no cycles, and the
+validator only refuses a Scene naming itself; A referencing B and B referencing A are accepted today.
+A sort would therefore need a cycle rule bolted on before it could run, and it would still have to
+choose which member of a cycle to date first. Repeating the pass until it computes nothing new needs
+neither: each pass fills in only the starts that are now derivable, so an anchored chain resolves from
+the anchor outward whatever order the Scenes appear in, and a cycle with no anchor simply stops making
+progress. The loop terminates because every pass that continues assigned at least one previously blank
+start, and an Event has only one.
+
+**How it reads now.** `resolve_moments` writes every relation once (`simultaneous_event`,
+`before_event`, `after_event`) and then repeats a date pass until a pass changes nothing.
+`computed_start` is the single place that says what a relation implies: a bare `before`/`after` states
+order and no instant, a span subtracts for `before` and adds for `after`, and `at the same time as`
+copies the target's start. A relation never overwrites a start the Event already has, so a concrete
+`moment` always wins; a cycle whose members all state relations and no date stays relation-only rather
+than raising or inventing an instant. The Events section of
+[story_interchange.md](features/story_interchange.md) now states that resolution order, its direction
+rule, and the cycle outcome, and the finding left [known_quirks.md](known_quirks.md).
+
+**Verification.** Three new cases in `test/lib/story_interchange/import_test.rb`: the forward span
+chain in reading order with a `before` span (2050-01-12, 01-11, 01-10, and 01-09), the forward
+simultaneity chain from a clock-time anchor, and a two-Event cycle that resolves to two empty starts
+and two written links. That file — 37 runs, 413 assertions, 0 failures. Full `bin/rails test` — 3616
+runs, 22535 assertions, 0 failures, 0 errors, 13 skips (the pre-existing skips). `bin/rubocop` — 815
+files, no offenses. `test/docs_test.rb` — 5 runs, 10 assertions (it also validates this changelog
+entry). Not run, and not applicable: `bin/rails test:system` (the importer writes the same Event rows,
+so nothing browser-visible changed), `bun run check:js` (no JavaScript changed), `bin/brakeman
+--no-pager` (no request, view, or authorization path changed), `bin/bundler-audit`, `bin/importmap
+audit`.

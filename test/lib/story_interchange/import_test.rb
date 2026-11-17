@@ -547,6 +547,68 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_nil after_event.start_datetime
   end
 
+  test "computes a forward chain of spans from the far anchor, including a before span" do
+    # Reading order names each target before that target can be dated, which is
+    # the shape that used to lose the computed starts: the anchor is last.
+    write_scene(id: "B-201", slug: "10-first", title: "First", moment: "1 day after 02-winter/11-middle")
+    write_scene(id: "B-202", slug: "11-middle", title: "Middle", moment: "1 day after 02-winter/12-anchored")
+    write_scene(id: "B-203", slug: "12-anchored", title: "Anchored", moment: "2050-01-10")
+    write_scene(id: "B-204", slug: "13-earlier", title: "Earlier", moment: "2 days before 02-winter/11-middle")
+
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    first = story.scenes.find_by!(slug: "first").events.sole
+    middle = story.scenes.find_by!(slug: "middle").events.sole
+    anchored = story.scenes.find_by!(slug: "anchored").events.sole
+    earlier = story.scenes.find_by!(slug: "earlier").events.sole
+
+    assert_equal Time.utc(2050, 1, 12), first.start_datetime
+    assert_equal Time.utc(2050, 1, 11), middle.start_datetime
+    assert_equal Time.utc(2050, 1, 10), anchored.start_datetime
+    # A span in the `before` direction subtracts its amount rather than adding it.
+    assert_equal Time.utc(2050, 1, 9), earlier.start_datetime
+    assert_equal middle, first.after_event
+    assert_equal anchored, middle.after_event
+    assert_equal middle, earlier.before_event
+  end
+
+  test "computes a forward chain of simultaneous moments from the far anchor" do
+    write_scene(id: "B-211", slug: "20-same-first", title: "Same first",
+      moment: "at the same time as 02-winter/21-same-middle")
+    write_scene(id: "B-212", slug: "21-same-middle", title: "Same middle",
+      moment: "at the same time as 02-winter/22-same-anchored")
+    write_scene(id: "B-213", slug: "22-same-anchored", title: "Same anchored", moment: "2050-01-10 20:00")
+
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    anchored = story.scenes.find_by!(slug: "same-anchored").events.sole
+    middle = story.scenes.find_by!(slug: "same-middle").events.sole
+    first = story.scenes.find_by!(slug: "same-first").events.sole
+
+    assert_equal Time.utc(2050, 1, 10, 20), anchored.start_datetime
+    assert_equal anchored.start_datetime, middle.start_datetime
+    assert_equal anchored.start_datetime, first.start_datetime
+    assert_equal anchored, middle.simultaneous_event
+    assert_equal middle, first.simultaneous_event
+  end
+
+  test "leaves a cycle of relations without a concrete date relation-only" do
+    write_scene(id: "B-221", slug: "30-cycle-a", title: "Cycle a", moment: "1 day after 02-winter/31-cycle-b")
+    write_scene(id: "B-222", slug: "31-cycle-b", title: "Cycle b", moment: "1 day after 02-winter/30-cycle-a")
+
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    a = story.scenes.find_by!(slug: "cycle-a").events.sole
+    b = story.scenes.find_by!(slug: "cycle-b").events.sole
+
+    # Nothing in the cycle can anchor a date, and a relation never guesses one:
+    # the links are written and both starts stay empty rather than raising.
+    assert_nil a.start_datetime
+    assert_nil b.start_datetime
+    assert_equal b, a.after_event
+    assert_equal a, b.after_event
+  end
+
   test "joins a dialogue turn that wraps across physical lines" do
     path = File.join(@root, "stories/synthetic-story/chapters/01-arrival/01-the-gate.md")
     File.write(path, File.read(path).sub(
@@ -848,6 +910,26 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       path = File.join(@root, relative_path)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
+    end
+
+    def write_scene(id:, slug:, title:, moment:)
+      write("stories/synthetic-story/chapters/02-winter/#{slug}.md", <<~MARKDOWN)
+        ---
+        id: #{id}
+        title: #{title}
+        pov: ada
+        location: keep
+        timeline: "#{title}"
+        moment: "#{moment}"
+        branch: main
+        ---
+
+        # #{title}
+
+        ## Narration
+
+        #{title}.
+      MARKDOWN
     end
 
     def write_character(slug, name, relationships)

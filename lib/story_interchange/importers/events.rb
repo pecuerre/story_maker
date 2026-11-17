@@ -14,6 +14,13 @@ module StoryInterchange
     # The target is a scene path under `chapters/` without `.md`, so a relation
     # can point into another chapter. Relations may point forward, which is why
     # every Event is created before any relation is written.
+    #
+    # A relation states where its target is, not when the target is, so a chain
+    # is resolved from the anchored end outward: every pass fills in the starts
+    # a pass can now compute, and the passes repeat until one fills in nothing.
+    # An Event keeps the start it was given and is never rewritten by a
+    # relation, and a cycle of relations with no concrete date anywhere stays
+    # relation-only rather than raising or inventing a date.
     class Events < Importer
       slice label_key: "imports.slices.events",
         count: :events,
@@ -46,6 +53,7 @@ module StoryInterchange
       def call
         entities = report.entities(:scene)
         events = {}
+        moments = {}
 
         # First every Event, so a relation may point forward to a scene that
         # appears later in reading order.
@@ -58,14 +66,13 @@ module StoryInterchange
             start_datetime: moment.datetime
           )
           SceneEvent.create!(scene: scene, event: event)
-          events[self.class.scene_key(entity)] = event
+          key = self.class.scene_key(entity)
+          events[key] = event
+          moments[key] = moment
           event
         end
 
-        entities.each do |entity|
-          moment = Moment.parse(entity.frontmatter["moment"])
-          apply_moment(events.fetch(self.class.scene_key(entity)), moment, events, entity)
-        end
+        resolve_moments(entities, events, moments)
 
         Outcome.new(label_key: label_key, created: created.size, records: self.class.records(report))
       end
@@ -76,26 +83,57 @@ module StoryInterchange
             .scenes.find_by!(slug: self.class.scene_slug(entity))
         end
 
-        def apply_moment(event, moment, events, entity)
-          return unless moment.relation?
-
-          target = events[[ entity.story_slug, moment.reference ]]
-          return if target.nil?
-
-          if moment.simultaneous?
-            event.update!(simultaneous_event: target)
-            # The target's date, when it has one, is the same instant for this
-            # Event too. A relation-only target leaves this one relation-only.
-            event.update!(start_datetime: target.start_datetime) if
-              event.start_datetime.blank? && target.start_datetime.present?
-            return
+        # Relations are written once, then the dates they imply are filled
+        # until a whole pass adds none. A pass exists because a relation names
+        # its target, not its target's date: a chain anchored at the far end is
+        # only computable from the anchor outward, whatever order the Scenes
+        # appear in.
+        def resolve_moments(entities, events, moments)
+          relations = entities.map do |entity|
+            key = self.class.scene_key(entity)
+            moment = moments.fetch(key)
+            event = events.fetch(key)
+            target = events[[ entity.story_slug, moment.reference ]] if moment.relation?
+            [ moment, event, target ]
           end
 
-          link_reference(event, moment.direction, target)
+          relations.each do |moment, event, target|
+            next if target.nil?
 
-          return unless moment.span? && event.start_datetime.blank? && target.start_datetime.present?
+            if moment.simultaneous?
+              event.update!(simultaneous_event: target)
+            else
+              link_reference(event, moment.direction, target)
+            end
+          end
 
-          event.update!(start_datetime: target.start_datetime.advance(moment.unit => moment.amount))
+          changed = true
+          while changed
+            changed = false
+            relations.each do |moment, event, target|
+              next if target.nil? || event.start_datetime.present?
+
+              start_datetime = computed_start(moment, target)
+              next if start_datetime.nil?
+
+              event.update!(start_datetime: start_datetime)
+              changed = true
+            end
+          end
+        end
+
+        # The instant a relation supplies, or nil when it supplies none. A bare
+        # direction says only which way round two Events are; a span states a
+        # distance, so it is subtracted for `before` and added for `after`; a
+        # simultaneity is the target's own instant.
+        def computed_start(moment, target)
+          return if target.start_datetime.blank?
+
+          return target.start_datetime if moment.simultaneous?
+          return unless moment.span?
+
+          amount = moment.direction == "before" ? -moment.amount : moment.amount
+          target.start_datetime.advance(moment.unit => amount)
         end
 
         def link_reference(event, direction, target)

@@ -600,9 +600,13 @@ otherwise. **Events**
 runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
 `moment` becomes the Event's `start_datetime`; a `before`, `after`, or `at the same time as` relation
 becomes the matching `before_event`, `after_event`, or `simultaneous_event`; a span also computes
-the Event's start from its target when the target has one at that point in the pass. Every Event is
-created before any relation is written, so a relation may point forward to a later scene; chained
-forward dates have an [open issue](../known_quirks.md). **Plots** runs last and
+the Event's start from its target, subtracting for `before` and adding for `after`, and a
+simultaneity copies the target's start. Every Event is created before any relation is written, so a
+relation may point forward to a later scene. Because a relation names its target rather than the
+target's date, the pass repeats until it computes no new start, so a chain is resolved from its
+anchored end whatever order the Scenes appear in. An Event keeps the start it already has and a
+relation never overwrites it; a cycle of relations with no concrete date anywhere stays
+relation-only rather than raising or inventing a date. **Plots** runs last and
 writes each Plot, then assigns it every Scene whose `plot` frontmatter names that thread. The
 assignment is read from the Scene side; the source's `## Progression` rows stay in the Plot
 description and are not a second source of assignment. A Scene that names no thread is simply left

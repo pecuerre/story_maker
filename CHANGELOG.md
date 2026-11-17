@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Browser theme test race.** The Settings and Map theme cases now wait for the server-rendered `data-bs-theme` before reading a color or attribute, so a full-page theme save can no longer be answered by the page it replaces.
+- **Browser dropdown test race.** The two Scene Element cases that failed on 2026-11-12 now use the visible Edit control instead of the row menu, and the remaining menu waits for Bootstrap to show it, so the intermittent finding leaves `known_quirks.md`.
 - **Backup missing photo files.** A stored photo file that cannot be read no longer aborts the archive: the bytes are omitted, `backup.yml` and the archive README name them, and `photos.complete` is false; the finding leaves `known_quirks.md`.
 - **Backup timestamp fractions.** The table dump now writes datetimes with all six sub-second digits, so a restored row reproduces its stored instant and `updated_at` version instead of losing the fraction; the finding leaves `known_quirks.md`.
 - **Interchange moment chains.** An imported forward chain of relative `moment`s now resolves from its anchored end, a `before` span subtracts instead of adding, and a cycle without an anchor stays relation-only; the finding leaves `known_quirks.md`.

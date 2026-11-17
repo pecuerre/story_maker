@@ -28,6 +28,7 @@ class SettingsThemeTest < ApplicationSystemTestCase
     click_button "Save theme"
 
     assert_selector "h1", text: "Settings"
+    assert_theme "dark"
     assert_checked_field "Dark", checked: true
     assert_equal "dark", theme_attribute
     # The page is not only labelled dark: Bootstrap's own variables changed, so
@@ -56,10 +57,12 @@ class SettingsThemeTest < ApplicationSystemTestCase
     visit settings_path
     choose "Dark"
     click_button "Save theme"
+    assert_theme "dark"
     dark_background = background_color("body")
 
     choose "Light"
     click_button "Save theme"
+    assert_theme "light"
 
     assert_checked_field "Light", checked: true
     assert_equal "light", theme_attribute
@@ -98,11 +101,10 @@ class SettingsThemeTest < ApplicationSystemTestCase
 
     # The preference is applied by a full document load, so the save has to land
     # before the next navigation rather than race it.
-    assert_selector "h1", text: "Settings"
-    assert_equal "dark", theme_attribute
+    assert_theme "dark"
 
     visit universe_path(universe_slug: universe.slug)
-    assert_equal "dark", theme_attribute
+    assert_theme "dark"
     canvas = background_color("body")
 
     %w[primary secondary].each do |variant|
@@ -143,13 +145,13 @@ class SettingsThemeTest < ApplicationSystemTestCase
     visit settings_path
     choose "Dark"
     click_button "Save theme"
-    # The confirmation is the wait: the preference is applied by the reloaded
-    # document, and the old one still carries the previous attribute, so reading
-    # the root element before this lands would answer for the page being left.
-    assert_text "Theme set to Dark."
+    # The preference is applied by the reloaded document, and the old one still
+    # carries the previous attribute, so the wait is for the new root element
+    # rather than for a flash that a slow page could still be without.
+    assert_theme "dark"
 
     visit scene_path
-    assert_equal "dark", theme_attribute
+    assert_theme "dark"
     dark_fill = file_button_style("background-color")
     assert_operator relative_luminance(dark_fill), :<, 0.1,
       "the dark theme should paint the file picker's button from the dark tertiary surface"
@@ -159,7 +161,7 @@ class SettingsThemeTest < ApplicationSystemTestCase
     visit settings_path
     choose "Light"
     click_button "Save theme"
-    assert_text "Theme set to Light."
+    assert_theme "light"
 
     visit scene_path
     light_fill = file_button_style("background-color")
@@ -169,6 +171,14 @@ class SettingsThemeTest < ApplicationSystemTestCase
   end
 
   private
+    # A theme save is a full page load (the form opts out of Turbo), so an
+    # immediate script or color read answers for the document being replaced.
+    # This waits for the server-rendered attribute on the new one; Capybara
+    # retries the selector, which a bare `evaluate_script` cannot do.
+    def assert_theme(name)
+      assert_selector "html[data-bs-theme='#{name}']", wait: REFRESH_WAIT
+    end
+
     def theme_attribute
       page.evaluate_script("document.documentElement.getAttribute('data-bs-theme')")
     end

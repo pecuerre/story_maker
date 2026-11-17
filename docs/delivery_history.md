@@ -10293,3 +10293,49 @@ assertions (it also validates the changelog entry). Not run, and not applicable:
 `bin/rails test:system` (the archive contents changed, but nothing browser-visible did),
 `bun run check:js` (no JavaScript changed), `bin/brakeman --no-pager` (no request, view, or
 authorization path changed), `bin/bundler-audit`, `bin/importmap audit`.
+
+### Quirk: browser smoke tests failed intermittently in the full run (fixed)
+
+**Then:** On 2026-11-12 a full `PARALLEL_WORKERS=1 bin/rails test:system` failed the dark-theme Map
+and Settings cases and two Scene Element dropdown cases. The four passed when rerun together
+serially; the theme assertions had seen light colors and the dropdown assertions had not found an
+open menu. Simultaneous reruns also hit SQLite locks, so concurrent processes were not a valid
+isolation check, and the cause was recorded as unverified.
+
+**The theme half was a test reading the page it replaced.** A theme save is a real page load, not a
+Turbo visit: the form opts out of Turbo because a Drive navigation replaces the body without the
+root element's attributes, and the cookie is rendered onto `<html>` by the next server response.
+Every failing theme read ran immediately after `click_button "Save theme"` and used a bare
+`page.evaluate_script` or `getComputedStyle` call, neither of which retries. The click returns before
+the new document exists, so the script answered for the old page, whose root element still carried
+the previous theme. Reproduced on 2026-11-17 before any edit: `map_flow_test.rb` failed its first run
+with `Expected: "dark"` / `Actual: "light"` on the line that read the attribute after the save.
+
+**How it reads now.** `settings_theme_test.rb` has an `assert_theme(name)` helper around
+`assert_selector "html[data-bs-theme='...']"`, and `map_flow_test.rb` uses the same selector
+directly; both take `REFRESH_WAIT`. Capybara retries a selector across the navigation, which a bare
+script cannot, and the assertion is the server's own answer rather than a paint read that could
+precede it. The photo-field case now waits on the attribute instead of the "Theme set to Dark."
+toast: the toast is removed four seconds after it connects, so a slow save could hide the very
+confirmation a longer wait was waiting for.
+
+**The dropdown half no longer exists.** The two failing cases opened a Scene Element's editor
+through the row's action menu. On 2026-11-13 the visible **Edit** control replaced that menu item, so
+those cases no longer click a dropdown at all; the only menu left on the page is Delete, which
+`click_row_menu_action` already drives by waiting for `.dropdown-menu.show` with `MENU_WAIT`.
+Bootstrap's data-api is a static import evaluated before the suite's Stimulus readiness signal
+passes, so "the toggle was clicked before its listener existed" is not available here. The observed
+shape — a click that opened nothing, passing on rerun — is the dropped-input environment flake this
+file has recorded before, not a race a writer can reach. Retrying the toggle click inside the shared
+helper was rejected: that would hide a genuinely broken menu, and no case still exercises the
+removed path.
+
+**Verification.** `test/system/map_flow_test.rb test/system/settings_theme_test.rb` — five consecutive
+runs, 7 runs and 161 assertions each, 0 failures and 0 errors. `test/system/scene_elements_test.rb` —
+five consecutive runs, 11 runs and 205 assertions each, 0 failures and 0 errors. Two consecutive full
+`PARALLEL_WORKERS=1 bin/rails test:system` runs — 247 runs, 4,681 assertions, 0 failures, 0 errors, 0
+skips (548s and 557s). `bin/rubocop` on the two changed test files — no offenses. `test/docs_test.rb` — the
+changelog entry and this history file pass the length and structure checks. Not run, and not
+applicable: `bin/rails test` beyond the docs test (only test files and documentation changed),
+`bun run check:js` (no JavaScript changed), `bin/brakeman --no-pager`, `bin/bundler-audit`, and
+`bin/importmap audit` (no request, view, authorization, dependency, or importmap pin changed).

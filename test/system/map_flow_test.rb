@@ -52,10 +52,14 @@ class MapFlowTest < ApplicationSystemTestCase
     visit settings_path
     choose "Dark"
     click_button "Save theme"
-    assert_equal "dark", page.evaluate_script("document.documentElement.getAttribute('data-bs-theme')")
+    # The theme form is a full page load (it opts out of Turbo), so the document
+    # still carries the old attribute until the save's navigation lands. Reading
+    # it here without waiting answers for the page being replaced; the retrying
+    # selector is what waits for the new one.
+    assert_selector "html[data-bs-theme='dark']", wait: REFRESH_WAIT
     visit universe_map_path(universe_slug: universe.slug)
 
-    assert_equal "dark", page.evaluate_script("document.documentElement.getAttribute('data-bs-theme')")
+    assert_selector "html[data-bs-theme='dark']"
     refute_equal light_fill, map_node_fill
 
     page.current_window.resize_to(390, 844)

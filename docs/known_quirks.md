@@ -71,14 +71,7 @@ review sampled important paths and did not prove the absence of other issues.
 
 ## Open findings
 
-4. **Medium — browser smoke tests failed intermittently in the full run.** On 2026-11-12,
-    `PARALLEL_WORKERS=1 bin/rails test:system` also failed the dark-theme Map and Settings cases and
-    two Scene Element dropdown cases. All four passed when rerun together serially. The full run's
-    theme assertions saw light colors and the dropdown assertions did not find an open menu; the
-    cause and whether a user-visible race exists remain unverified. Separate simultaneous reruns
-    also hit SQLite locks, so concurrent system-test processes are not a valid isolation check.
-
-5. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
+4. **Footgun — `CI=1` gates partial Rails test runs too.** `test/coverage_helper.rb` sets
     `COVERAGE_GATE` solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
     `CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
     2 for low coverage. Recent SimpleCov results may also be merged locally, so the resulting partial

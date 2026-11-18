@@ -21,6 +21,7 @@ class SceneBoardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav.content-tabs a", text: "Scene matrix", count: 0
     assert_select "nav.content-tabs a", text: "Scenes"
     assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current=page]", text: /Scenes/
+    assert_select ".content-intro", text: /not in its column/
 
     assert_select ".scene-board-column", count: 3
     assert_select ".scene-board-column h2", text: "Section one"
@@ -61,11 +62,17 @@ class SceneBoardsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".scene-board-card", count: 3
+    assert_select ".scene-board-order[role=group]", count: 3
+    assert_select ".scene-board-order .scene-board-control-label", text: "Narrative order", count: 3
     assert_select ".scene-board-card details.scene-board-regroup", count: 3
+    assert_select ".scene-board-card details.scene-board-regroup summary", text: "Change section only", count: 3
+    assert_select ".scene-board-card details.scene-board-regroup summary[title=?]",
+      "Changes only this scene's section. Its narrative position stays the same.", count: 3
     assert_select "form[action=?]", group_universe_story_scenes_path(story_id: @story), count: 3
     assert_select "select[name=section_id]", count: 3
     assert_select "select[name=section_id] option[value=?]", "", text: "Ungrouped"
     assert_select "input[name=return_to][value=?]", SceneBoard::RETURN_TO, count: 3
+    assert_select "input[type=submit][value='Save section']", count: 3
 
     # The boundary state is the whole sequence's, exactly as the list's is.
     assert_select "button[data-scene-board-move=up][disabled]", count: 1

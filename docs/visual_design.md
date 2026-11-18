@@ -663,11 +663,13 @@ The board's columns, ordering, and read-only contract are in
 - A card uses the tertiary background inside its column and carries the 1-based position pill and the
   Scene title link. The title uses the same link color at rest and underline on hover/focus as a list
   row's name. Nothing on the card depends on hover.
-- A writer's card adds the list's Move up/Move down buttons, with the same disabled boundary state, and
-  a **Move to section** disclosure holding a compact Section selector and its submit. The disclosure is
-  a native `<details>`, so regrouping needs no JavaScript and a keyboard or touch reader uses the same
-  control as a mouse. Read-only members and guests get the card without those controls, and there is no
-  drag handle.
+- A writer's card adds the list's Move up/Move down buttons under a visible **Narrative order**
+  label, with the same disabled boundary state, and a **Change section only** disclosure holding a
+  compact Section selector and its **Save section** submit. The labels keep the two operations apart
+  because an arrow inside a column otherwise reads as moving the card within that column. The
+  disclosure is a native `<details>`, so regrouping needs no JavaScript and a keyboard or touch reader
+  uses the same control as a mouse. Read-only members and guests get the card without those controls,
+  and there is no drag handle.
 - Print lets the columns wrap, removes the sticky heading offset, and keeps a column from breaking
   across pages.
 

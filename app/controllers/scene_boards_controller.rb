@@ -1,10 +1,11 @@
 # The Story-wide Scene planning board. It is a read of the Story, so it is
 # guest-readable like the Scene list, the Scene matrix, and the Appearance grid.
 #
-# There is no mutation action and no stored result: `SceneBoard` answers every
-# column from the Story's live Sections and Scenes. The board never reorders a
-# Scene and never becomes a second editor — a card links to Scene Details, where
-# the ordinary draft-backed form does the writing.
+# There is no mutation action and no stored result of its own: `SceneBoard`
+# answers every column from the Story's live Sections and Scenes. A card posts
+# the ordinary `ScenesController#move` and `#group` actions, so the board never
+# becomes a second editor with its own order or validation; Scene Details keeps
+# the draft-backed form that does the field writing.
 class SceneBoardsController < ApplicationController
   allow_unauthenticated_access only: %i[ show ]
 

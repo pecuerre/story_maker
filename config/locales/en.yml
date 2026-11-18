@@ -3322,13 +3322,15 @@ en:
   scene_boards:
     title: "Scene board"
     description: "The shape of %{story} at once: every section as a column, with its scenes in the order the story tells them."
-    intro: "Columns are sections and the ungrouped scenes, and every card is a scene in narrative order. Move a card in the story's telling order, regroup it into another section, or open it to edit its fields."
+    intro: "Columns group the story's scenes by section, and every card is a scene. A card's number is its place in the story's narrative order, not in its column: the arrows move it in that order across every column, while changing its section only moves the card to another column."
     scroll_label: "Scrollable scene board for %{story}."
     column_empty: "No scenes here"
     controls:
-      regroup: "Move to section"
+      order: "Narrative order"
+      regroup: "Change section only"
+      regroup_title: "Changes only this scene's section. Its narrative position stays the same."
       section: "Section"
-      regroup_submit: "Move scene"
+      regroup_submit: "Save section"
     empty:
       title: "No scenes yet"
       writable_description: "Add the first scene to start the board."

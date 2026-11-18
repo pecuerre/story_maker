@@ -96,6 +96,18 @@
   gap: .35rem;
 }
 
+// The arrows change the Story-wide narrative sequence, not the card's place in
+// its column, so the group carries a visible name instead of relying on the
+// arrow direction. The label stays quiet chrome above the buttons so it is not
+// read as another card title.
+.scene-board-control-label {
+  color: var(--bs-secondary-color);
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  margin-bottom: .2rem;
+}
+
 .scene-board-regroup-toggle {
   list-style: none;
 }

@@ -130,6 +130,32 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     assert_equal long_section, scenes(:scene_three).reload.section
   end
 
+  test "the board names the two operations and its section disclosure works from the keyboard" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_board_path(universe_slug: universe.slug, story_id: story)
+
+    # The intro and the visible label say the arrows follow the Story's narrative
+    # order rather than the card's place in its column, and the disclosure says it
+    # changes the section alone.
+    assert_selector ".content-intro", text: "not in its column"
+    assert_selector ".scene-board-control-label", text: "Narrative order"
+
+    card = find(".scene-board-card", text: "Scene one")
+    within(card) do
+      find("summary", text: "Change section only").send_keys(:return)
+      select "Section two", from: "Section"
+      click_button "Save section"
+    end
+
+    assert_selector ".alert-success", text: "is now grouped under Section one / Section two"
+    assert_selector ".alert-success", text: "narrative position did not change"
+    assert_equal sections(:section_two), scenes(:scene_one).reload.section
+    assert_equal 0, scenes(:scene_one).position
+  end
+
   test "a read-only member sees grouping and details without mutation controls" do
     owner = users(:user_one)
     reader = users(:user_two)

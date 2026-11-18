@@ -16,8 +16,8 @@
 <% if @board.scenes? %>
   <%# The board is a row of Section columns inside one focusable scroll region,
       so a Story with many Sections scrolls horizontally instead of squashing
-      every column below a readable width. Each card is a link into Scene
-      Details; nothing on the page writes. %>
+      every column below a readable width. Each card links into Scene Details,
+      and a writer's card also posts the Scene list's move and group actions. %>
   <div class="scene-board-scroll" role="region" tabindex="0"
     aria-label="<%= t("scene_boards.scroll_label", story: @story.name) %>">
     <div class="scene-board">
@@ -58,31 +58,40 @@
                         disclosure so a board of many cards stays scannable without
                         hiding the control behind hover or JavaScript. %>
                     <div class="scene-board-card-controls">
-                      <div class="d-flex align-items-center gap-1">
-                        <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
-                          method: :patch,
-                          params: { direction: "up" },
-                          class: "btn btn-sm btn-light border",
-                          disabled: at_first,
-                          title: at_first ? t("scenes.move.already_first") : t("scenes.move.up"),
-                          aria: { label: t("scenes.move.up_aria", name: scene.name) },
-                          data: { scene_board_move: "up" } do %>
-                          <i class="bi bi-arrow-up" aria-hidden="true"></i>
-                        <% end %>
-                        <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
-                          method: :patch,
-                          params: { direction: "down" },
-                          class: "btn btn-sm btn-light border",
-                          disabled: at_last,
-                          title: at_last ? t("scenes.move.already_last") : t("scenes.move.down"),
-                          aria: { label: t("scenes.move.down_aria", name: scene.name) },
-                          data: { scene_board_move: "down" } do %>
-                          <i class="bi bi-arrow-down" aria-hidden="true"></i>
-                        <% end %>
+                      <%# The arrows sit under a visible label because a column also
+                          groups cards: without it, an up/down arrow reads as moving
+                          the card inside this column, while it really moves the
+                          scene across the whole Story's narrative order. %>
+                      <div class="scene-board-order" role="group"
+                        aria-labelledby="scene-board-order-<%= scene.id %>">
+                        <span class="scene-board-control-label" id="scene-board-order-<%= scene.id %>"><%= t("scene_boards.controls.order") %></span>
+                        <div class="d-flex align-items-center gap-1">
+                          <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
+                            method: :patch,
+                            params: { direction: "up" },
+                            class: "btn btn-sm btn-light border",
+                            disabled: at_first,
+                            title: at_first ? t("scenes.move.already_first") : t("scenes.move.up"),
+                            aria: { label: t("scenes.move.up_aria", name: scene.name) },
+                            data: { scene_board_move: "up" } do %>
+                            <i class="bi bi-arrow-up" aria-hidden="true"></i>
+                          <% end %>
+                          <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
+                            method: :patch,
+                            params: { direction: "down" },
+                            class: "btn btn-sm btn-light border",
+                            disabled: at_last,
+                            title: at_last ? t("scenes.move.already_last") : t("scenes.move.down"),
+                            aria: { label: t("scenes.move.down_aria", name: scene.name) },
+                            data: { scene_board_move: "down" } do %>
+                            <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                          <% end %>
+                        </div>
                       </div>
 
                       <details class="scene-board-regroup">
-                        <summary class="btn btn-sm btn-light border scene-board-regroup-toggle"><i class="bi bi-folder-symlink" aria-hidden="true"></i> <%= t("scene_boards.controls.regroup") %></summary>
+                        <summary class="btn btn-sm btn-light border scene-board-regroup-toggle"
+                          title="<%= t("scene_boards.controls.regroup_title") %>"><i class="bi bi-folder-symlink" aria-hidden="true"></i> <%= t("scene_boards.controls.regroup") %></summary>
                         <%= form_with url: group_universe_story_scenes_path(story_id: @story), method: :patch,
                           class: "scene-board-regroup-form" do |form| %>
                           <%= hidden_field_tag :scene_id, scene.id %>

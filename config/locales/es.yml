@@ -3244,13 +3244,15 @@ es:
   scene_boards:
     title: "Tablero de escenas"
     description: "La forma de %{story} de un vistazo: cada sección como una columna, con sus escenas en el orden en que la historia las cuenta."
-    intro: "Las columnas son las secciones y las escenas sin agrupar, y cada tarjeta es una escena en orden narrativo. Mueve una tarjeta en el orden en que la historia se cuenta, reagrúpala en otra sección o ábrela para editar sus campos."
+    intro: "Las columnas agrupan las escenas de la historia por sección, y cada tarjeta es una escena. El número de una tarjeta es su lugar en el orden narrativo de la historia, no en su columna: las flechas la mueven en ese orden por todas las columnas, mientras que cambiar su sección solo mueve la tarjeta a otra columna."
     scroll_label: "Tablero de escenas desplazable de %{story}."
     column_empty: "Aquí no hay escenas"
     controls:
-      regroup: "Mover a sección"
+      order: "Orden narrativo"
+      regroup: "Cambiar solo la sección"
+      regroup_title: "Solo cambia la sección de esta escena. Su posición narrativa no cambia."
       section: "Sección"
-      regroup_submit: "Mover escena"
+      regroup_submit: "Guardar sección"
     empty:
       title: "Aún no hay escenas"
       writable_description: "Añade la primera escena para empezar el tablero."

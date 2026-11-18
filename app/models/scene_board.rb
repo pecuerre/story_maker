@@ -1,4 +1,4 @@
-# One Story's Scenes arranged by Section, for the read-only planning board.
+# One Story's Scenes arranged by Section, for the planning board.
 #
 # A board shows the Story's structure as columns: every Section in the Story's
 # own tree order, plus the **Ungrouped** column for Scenes that belong to none.

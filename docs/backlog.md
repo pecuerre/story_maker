@@ -212,14 +212,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-79. **Clarify what moving a Scene on the board does.**
-
-   [`scene_boards/show`](../app/views/scene_boards/show.html.erb) groups cards into Section columns,
-   but its arrows change the Story-wide narrative sequence while **Move to section** changes grouping.
-   Test concise visible guidance and labels that distinguish those operations, especially when adjacent
-   narrative Scenes are in different columns. Keep keyboard/touch alternatives and do not imply that
-   changing a Section automatically changes narrative order.
-
 80. **Give filters less visual weight without hiding their state.**
 
    The [Scene filter](../app/views/scenes/_filter.html.erb) displays search, Section, tag, status, and

@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-18
+
+### changed
+
+- **Scene board order guidance.** The board's intro now says the card arrows move a scene across every column in the Story's narrative order while a section change only moves the card, and the card controls read **Narrative order** and **Change section only**.
+
 ## 2026-11-17
 
 ### fixed

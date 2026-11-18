@@ -318,16 +318,22 @@ Scenes list and the Sections workspace already post.
   scenes yet** empty state as the list and the matrix.
 - **Grouping is a column, never a second order.** Each column keeps its Scenes in the Story's
   narrative position, so the board never sorts by title or renumbers anything.
+- **The board's copy separates the two operations.** Its intro says a card's number is the Scene's
+  place in the Story's narrative order rather than in its column, that the arrows move it in that
+  order across every column, and that changing its section only moves the card to another column.
+  Each writer's arrow pair sits under a visible **Narrative order** label, and the disclosure is
+  **Change section only**, because an arrow beside a column otherwise reads as moving the card
+  inside that column.
 - **The board reads less than the matrix.** It draws only the Section tree and the Story's Scenes, so
   it does not pay the matrix's Element, word, and participant counts for cards that show none of
   them. Both pages read the same stored records.
 - **A writer's card carries the existing move and regroup controls, never a new write.** Move up and
   Move down post `direction=up|down`; the Move control is disabled at the whole sequence's real first
-  and last positions, exactly as the list disables it. **Move to section** is a native disclosure
-  holding a Section selector and a submit that posts `scene_id` and `section_id` to `group`, so
-  regrouping changes only the grouping and never the narrative position. There is no drag gesture,
-  no in-place field editing, and no client-side scripting; a read-only member and a guest see the
-  same cards with no controls. A card that edits a field is the ordinary draft-backed editor.
+  and last positions, exactly as the list disables it. **Change section only** is a native disclosure
+  holding a Section selector and a **Save section** submit that posts `scene_id` and `section_id` to
+  `group`, so regrouping changes only the grouping and never the narrative position. There is no drag
+  gesture, no in-place field editing, and no client-side scripting; a read-only member and a guest
+  see the same cards with no controls. A card that edits a field is the ordinary draft-backed editor.
 - **A mutation returns to the workspace that posted it.** Both forms send
   `return_to=scene_board`, and the controller recognizes only that named destination; an unknown
   value falls back to the action's ordinary destination, so the parameter can never name a URL. In a

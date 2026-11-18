@@ -191,9 +191,10 @@ bundle exec simplecov uncovered --input tmp/coverage/coverage.json --top 20 --mi
   runner and their own gate (`bun run test:js`), and one number must not cover two toolchains.
 - The thresholds are **90% line / 75% branch**, set from a measured baseline (94.59% / 80.99% on
   2026-10-01) with a few points of headroom. They exist to catch a *drop*, not to reward adding
-  assertions, and they are enforced whenever `CI` is set, including partial runs. A single-file or
-  `-n`-filtered run can therefore fail the gate despite passing its tests; see
-  [known quirks](known_quirks.md). `CI=1 bin/rails test` checks the gate locally.
+  assertions. `CI` turns the gate on, and only a **whole-suite run** is held to it: a positional
+  test file, directory, or `file:line`, a name filter (`-n`/`-i`), or an exclude filter makes the
+  run partial, and the gate is then switched off with a printed warning instead of failing a run
+  that measured less than the whole application. `CI=1 bin/rails test` checks the gate locally.
 - Consecutive runs within 10 minutes can be **merged**, so a run may include coverage from another
   run and overstate its own coverage. Use a fresh coverage directory when measuring a single run;
   the GitHub full-suite job runs on a separate clean runner.

@@ -29,10 +29,12 @@ MINIMUM_BRANCH_COVERAGE = 75
 # `bin/rails test -n "/some_pattern/"` both measure a fraction of the application
 # by design, and failing those would make the number a reason to avoid running a
 # test. The project already uses `ENV["CI"]` to mean "this is CI" for eager
-# loading, so the same variable decides this; `CI=1 bin/rails test` checks the
-# gate locally with the same eager loading CI gets. The browser suite opts out of
-# the gate in `test/application_system_test_case.rb`, because it is a smoke suite
-# and its total is not comparable to this baseline.
+# loading, so the same variable decides whether a gate is wanted at all;
+# `CoverageGate` below decides whether this particular run can be gated, once
+# Minitest has parsed its arguments. `CI=1 bin/rails test` checks the gate
+# locally with the same eager loading CI gets. The browser suite opts out of the
+# gate in `test/application_system_test_case.rb`, because it is a smoke suite and
+# its total is not comparable to this baseline.
 COVERAGE_GATE = !ENV["CI"].to_s.empty?
 
 SimpleCov.start do
@@ -81,3 +83,32 @@ end
 # is missing. This is also why the gate lives in CI: there, one slow worker cannot
 # turn a real suite into a passing-looking partial one.
 SimpleCov.parallel_wait_timeout = 120
+
+# Minitest has already parsed the command line by the time this file loads, so
+# the parsed options — not `ARGV`, which keeps only the positional file
+# arguments and drops a name filter and its pattern — are what say whether a run
+# is the whole suite. A positional test file, directory, or `file:line` lands in
+# `:test_files`; `-n`/`-i` lands in `:include`; `--exclude` lands in `:exclude`.
+# `bin/rails test` with none of the three is the default glob, which is the only
+# run the floors were measured against. (`bin/rails test -e` never reaches
+# Minitest: `-e` is Rails' own `--environment` there.)
+#
+# Skipping the gate is announced rather than silent: a green partial run and a
+# green whole-suite run must not look alike, and the message names the reason the
+# number is not being held to the suite's floor.
+module CoverageGate
+  def self.whole_suite?(options)
+    Array(options[:test_files]).empty? && options[:include].nil? && options[:exclude].nil?
+  end
+
+  def self.minitest_plugin_init(options)
+    return unless COVERAGE_GATE
+    return if whole_suite?(options)
+
+    SimpleCov.coverage(:line) { minimum 0 }
+    SimpleCov.coverage(:branch) { minimum 0 }
+    warn "Coverage gate not applied: this run selected part of the suite."
+  end
+end
+
+Minitest.register_plugin(CoverageGate) if defined?(Minitest)

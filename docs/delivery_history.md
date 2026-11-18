@@ -7121,6 +7121,49 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: `CI` gated partial Rails test runs too (fixed)
+
+**Then:** the open list recorded a **Footgun** that `test/coverage_helper.rb` set `COVERAGE_GATE`
+solely from `ENV["CI"]`, with no check for a file or `-n` filter. On 2026-11-12,
+`CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` passed its 11 tests but exited
+2 for low coverage, because the floor is sized for the whole suite and a single file measures a
+fraction of it. Recent SimpleCov results may also be merged locally, so a partial run's total is not
+necessarily its own. The finding did not claim the GitHub full-suite job had lost its gate; that job
+runs the whole suite on a clean runner. The guidance in
+[data_factor_guidance.md](data_factor_guidance.md) already said the gate is deliberately off for a
+partial run, so the code was the side that disagreed.
+
+**Why the decision waits for Minitest's options.** By the time `coverage_helper.rb` loads, Minitest
+has already parsed the command line, and `ARGV` holds only the positional test arguments: a name
+filter and its pattern are gone. An `ARGV` check would therefore have fixed the file case in the
+finding while leaving `-n` broken, which is half a fix for a footgun that names both. Minitest hands
+a plugin the parsed options (`:test_files`, `:include`, `:exclude`) before the first test runs, which
+is the one place all three selection forms are visible. The alternatives were rejected: a second
+opt-in environment variable would have moved the gate off `CI`, and the workflow already sets `CI`
+explicitly because a run that silently lost the gate would still be green; comparing the number of
+loaded test files against the suite would have missed `-n` entirely, since a name filter loads every
+file and runs a few methods.
+
+**How it reads now.** `COVERAGE_GATE` still says "this run is in CI" and still configures the two
+floors, so the CI wiring is unchanged. `coverage_helper.rb` registers `CoverageGate` as a Minitest
+module plugin. When the parsed options name a test file, directory, or `file:line`, an include
+filter, or an exclude filter, the plugin sets both minimums to `0` and prints
+`Coverage gate not applied: this run selected part of the suite.` A whole-suite run — no positional
+argument and no filter, which is what `bin/rails test` and the CI job both pass — keeps the floors.
+The warning is deliberate: a green partial run and a green whole-suite run should not look alike.
+
+**Verification.** `test/coverage_gate_test.rb` covers the five cases — a whole suite; a file,
+directory, or `file:line`; an include filter; an exclude filter; and the plugin's registration — and
+reports 5 runs and 9 assertions.
+`CI=1 PARALLEL_WORKERS=1 bin/rails test test/models/session_test.rb` — the finding's own reproduction
+— now exits 0 with the warning; so do `CI=1 bin/rails test -n "/whole_suite/"` and
+`CI=1 bin/rails test --exclude "/whole_suite/"` (3622 runs, 22562 assertions). A whole-suite
+`CI=1 bin/rails test` prints no warning, exits 0, and passes against the unchanged floors (3623 runs,
+22564 assertions), which is what proves the gate still applies where it should. `bin/rubocop` reports
+no offenses.
+[development.md](development.md#test-coverage) now states the whole-suite rule, and the finding left
+[known_quirks.md](known_quirks.md).
+
 ### Quirk: a public interchange download assembled a whole Universe on an unthrottled GET (fixed)
 
 **Then:** the open list recorded a **Footgun** that `StoryInterchangeExportsController#show` permits a

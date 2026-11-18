@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Coverage gate on partial runs.** The line/branch floors now apply only to a whole-suite run: a test file, directory, name filter, or exclude filter turns the gate off with a warning, so `CI=1 bin/rails test test/models/session_test.rb` no longer fails for low coverage; the finding leaves `known_quirks.md`.
 - **Browser theme test race.** The Settings and Map theme cases now wait for the server-rendered `data-bs-theme` before reading a color or attribute, so a full-page theme save can no longer be answered by the page it replaces.
 - **Browser dropdown test race.** The two Scene Element cases that failed on 2026-11-12 now use the visible Edit control instead of the row menu, and the remaining menu waits for Bootstrap to show it, so the intermittent finding leaves `known_quirks.md`.
 - **Backup missing photo files.** A stored photo file that cannot be read no longer aborts the archive: the bytes are omitted, `backup.yml` and the archive README name them, and `photos.complete` is false; the finding leaves `known_quirks.md`.

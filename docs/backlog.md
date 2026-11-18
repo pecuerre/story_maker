@@ -212,14 +212,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-80. **Give filters less visual weight without hiding their state.**
-
-   The [Scene filter](../app/views/scenes/_filter.html.erb) displays search, Section, tag, status, and
-   two dates before the list, even when none is active. Compare an always-visible search plus an
-   **Advanced filters** disclosure against the current layout, particularly on phones. Active criteria,
-   result counts, a clear path, shareable URLs, and the difference between no records and no matches must
-   remain visible; preserve filtering and narrative-order semantics.
-
 81. **Keep a reader oriented between Scenes.**
 
    Scene Details shows its narrative position and an **All scenes** link, but

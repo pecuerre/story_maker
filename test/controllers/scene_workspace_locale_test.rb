@@ -95,6 +95,7 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "label[for=scene_filter_from]", text: "En el mundo desde"
     assert_select "label[for=scene_filter_to]", text: "En el mundo hasta"
     assert_select "input[type=submit][value=?]", "Filtrar escenas"
+    assert_select ".scene-filter summary", text: /Filtros avanzados/
     # The Ungrouped option's *value* is the query value that travels in the URL, so
     # it is the untranslated `ungrouped`; only its label is chrome.
     assert_select "select[name=section_id] option[value=?]", SceneFilter::UNGROUPED, text: "Sin agrupar"
@@ -115,6 +116,13 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # search text are interpolated into the locale's frame.
     assert_select ".scene-filter .badge", text: "Búsqueda: «second»"
     assert_select ".scene-filter .badge", text: "Sección: Section one / Section two"
+    # The badge counts the narrowing criteria, not the always-visible search.
+    assert_select ".scene-filter summary .badge", text: "1 activo"
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      section_id: sections(:section_one).id, status: "final")
+
+    assert_select ".scene-filter summary .badge", text: "2 activos"
   end
 
   test "a filter value that could not be used is reported in Spanish" do

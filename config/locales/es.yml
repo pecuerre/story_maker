@@ -148,6 +148,16 @@ es:
     # usa donde la lista ya se sabe que es un subconjunto de una Escena.
     scene_position_aria: "Posición narrativa %{position} de %{total}"
     scene_position_aria_short: "Posición narrativa %{position}"
+    # El par de controles que comparten todos los filtros de lista: el desplegable
+    # que mantiene sus campos de acotado fuera de la primera fila y el recuento
+    # que declara mientras está cerrado. La insignia dice «2 activos» y no «2
+    # filtros», porque un criterio puede ser una fecha y el filtro cuenta cada
+    # valor una vez.
+    list_filter:
+      advanced: "Filtros avanzados"
+      active:
+        one: "%{count} activo"
+        other: "%{count} activos"
     detail_fact:
       blank: "Sin definir todavía."
     in_world_range:

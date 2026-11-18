@@ -33,6 +33,9 @@ class CanonFilterTest < ApplicationSystemTestCase
     assert_current_path canon_rules_path
     assert_canon_names [ "Magic costs a memory", "The night crossing" ]
 
+    # The narrowing controls live behind the shared disclosure, so it is opened
+    # before the Canon type is chosen.
+    find(".canon-rule-filter summary", text: "Advanced filters").click
     select "Rule", from: "Canon type"
     click_button "Filter canon rules"
 
@@ -45,6 +48,7 @@ class CanonFilterTest < ApplicationSystemTestCase
     sign_in_via_form(users(:user_one))
     visit universe_canon_rules_path(universe_slug: @universe.slug)
 
+    find(".canon-rule-filter summary", text: "Advanced filters").click
     select @story.name, from: "Owned by"
     click_button "Filter canon rules"
 
@@ -52,6 +56,7 @@ class CanonFilterTest < ApplicationSystemTestCase
     assert_canon_names [ "The night crossing" ]
     assert_text "Owned by: Story One"
 
+    find(".canon-rule-filter summary", text: "Advanced filters").click
     select "Whole universe", from: "Owned by"
     click_button "Filter canon rules"
 

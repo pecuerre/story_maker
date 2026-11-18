@@ -38,6 +38,7 @@ How to use these docs:
   | Colors, tokens, theme, shell, responsive behavior, accessibility | [visual_design.md](visual_design.md) |
   | Visual aim, intended users, references, constraints before a redesign | [visual_design_brief.md](visual_design_brief.md) |
   | Visual directions: proposals, the chosen Index direction, and the review and applied prototypes | [visual_directions.md](visual_directions.md) |
+  | Choosing between UI shapes before changing views | [visual_design.md](visual_design.md#comparison-prototypes) |
   | The accepted Index visual direction and why it was chosen | [adr/0047](adr/0047-adopt-index-as-the-visual-direction.md) |
    | Scenes, Elements, participation, the Scene filter | [features/scenes.md](features/scenes.md) |
     | Story-owned Plot arcs and Scene assignments | [features/plots.md](features/plots.md) |

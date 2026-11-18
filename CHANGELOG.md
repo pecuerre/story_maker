@@ -43,6 +43,12 @@ Labels used below, in the order their groups appear:
 ### changed
 
 - **Scene board order guidance.** The board's intro now says the card arrows move a scene across every column in the Story's narrative order while a section change only moves the card, and the card controls read **Narrative order** and **Change section only**.
+- **Advanced filters disclosure across the list workspaces.** The Scenes, Characters, Items, Events, Relations, Ownerships, Canon, and Locations filters keep search and order in the first row and put the narrowing controls behind an **Advanced filters** disclosure that reports its active count while closed; a closed group still submits its fields.
+
+### docs
+
+- **Scene filter layout comparison.** A static prototype compares the current Scenes filter with an always-visible search plus an **Advanced filters** disclosure, across both widths and every filter state; no application view changed.
+- **Comparison prototypes in the guide.** A UI change with more than one reasonable shape now starts as a static current-vs-proposed page under `docs/`, with both states, themes, and widths measured before any view changes.
 
 ## 2026-11-17
 

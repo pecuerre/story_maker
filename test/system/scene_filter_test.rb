@@ -4,6 +4,17 @@ require "application_system_test_case"
 # search area is covered in the browser: the filter must narrow the list, stay in
 # the URL, survive a list-embedded reorder, and be removable.
 class SceneFilterTest < ApplicationSystemTestCase
+  # The width `application_system_test_case.rb` drives the browser at. Named here
+  # so the teardown puts back the value the suite actually uses rather than a
+  # number repeated from it.
+  DEFAULT_WINDOW_SIZE = [ 1400, 1400 ].freeze
+
+  teardown do
+    # Capybara keeps one browser window for the whole process, so a test that
+    # narrows it has to put it back or every test after this one runs narrow.
+    page.driver.browser.manage.window.resize_to(*DEFAULT_WINDOW_SIZE) if page.driver.browser
+  end
+
   test "a writer narrows the scene list, sees it in the URL, and clears it" do
     universe = universes(:universe_one)
     story = stories(:story_one)
@@ -25,6 +36,9 @@ class SceneFilterTest < ApplicationSystemTestCase
     assert_selector ".entity-row .badge", text: "2"
 
     fill_in "scene_filter_q", with: ""
+    # The narrowing controls are behind the shared disclosure, so a reader (and
+    # this test) opens it before choosing a Section.
+    find(".scene-filter summary", text: "Advanced filters").click
     select "Section one", from: "Section"
     click_button "Filter scenes"
 
@@ -36,6 +50,33 @@ class SceneFilterTest < ApplicationSystemTestCase
     assert_current_path scenes_path(universe, story)
     assert_scene_titles [ "Scene one", "Scene two", "Scene three" ]
     assert_no_link "Clear filters"
+  end
+
+  test "a closed advanced disclosure still applies its filter and reports it" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+
+    # The search stays visible; the narrowing controls start closed.
+    assert_selector "#scene_filter_q", visible: :visible
+    assert_no_selector "#scene_filter_section_id", visible: :visible
+
+    # Choose a Section and close the group again: the field stays in the form, so
+    # the ordinary submit still carries it, and the new page reports it from the
+    # closed summary and the criteria line.
+    find(".scene-filter summary", text: "Advanced filters").click
+    select "Section one", from: "Section"
+    find(".scene-filter summary", text: "Advanced filters").click
+    assert_no_selector "#scene_filter_section_id", visible: :visible
+
+    click_button "Filter scenes"
+
+    assert_current_path scenes_path(universe, story, section_id: sections(:section_one).id)
+    assert_scene_titles [ "Scene one" ]
+    assert_selector ".scene-filter summary .badge", text: "1 active"
+    assert_text "Section: Section one"
   end
 
   test "a filtered list keeps its filter through a reorder and reports no match separately" do
@@ -78,6 +119,23 @@ class SceneFilterTest < ApplicationSystemTestCase
     assert_current_path scenes_path(universe, story, q: "three")
     assert_equal [ scenes(:scene_one), scenes(:scene_three), scenes(:scene_two) ],
       story.scenes.reorder(:position, :id).to_a
+  end
+
+  test "a closed filter with active criteria does not widen a phone" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+
+    page.driver.browser.manage.window.resize_to(420, 900)
+    visit universe_story_scenes_path(
+      universe_slug: universe.slug,
+      story_id: story,
+      section_id: sections(:section_one).id,
+      status: "final"
+    )
+
+    assert_selector ".scene-filter summary .badge", text: "2 active"
+    assert_selector ".scene-filter", text: /Section: Section one/
+    assert_no_horizontal_overflow
   end
 
   test "a guest filters with the keyboard alone at a narrow width" do

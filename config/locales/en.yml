@@ -154,6 +154,15 @@ en:
     # already known to be one Scene's subset.
     scene_position_aria: "Narrative position %{position} of %{total}"
     scene_position_aria_short: "Narrative position %{position}"
+    # The one control pair every in-list filter shares: the disclosure that keeps
+    # its narrowing fields out of the first row, and the count it reports while
+    # closed. The badge says "2 active" rather than "2 filters", because one
+    # criterion can be a date and the filter object counts each value once.
+    list_filter:
+      advanced: "Advanced filters"
+      active:
+        one: "%{count} active"
+        other: "%{count} active"
     detail_fact:
       blank: "Not set yet."
     in_world_range:

@@ -107,6 +107,33 @@ the same as `active?` and needs no special case.
    text stays a bind in every branch. A label the model composes in Ruby — `Ownership`'s translated
    sentence — cannot be matched in any language and is deliberately not faked.
 
+## The search area's shape
+
+Every filter renders the same shape, so a reader who learns one list can read the rest and the
+partials do not drift into two layouts:
+
+- **The search and, where the list offers one, the order stay in the first row.** An order is a
+  reading choice rather than a narrowing, and hiding it would leave the list's own order
+  unexplained.
+- **Every narrowing control sits behind one closed `<details>`**, labelled **Advanced filters** and
+  carrying the shared `form-disclosure` treatment. It is a real `<details>`, so it works without
+  JavaScript. Its fields are still in the form and are submitted while it is closed, because a
+  closed `<details>` hides its content rather than disabling it, so the GET URL, the canonical
+  query, and the filter object are unchanged by the disclosure.
+- **The closed summary reports its own state.** While a narrowing criterion is in effect, a badge
+  beside the label reads **2 active**. The count comes from `query_params` with the always-visible
+  `q` and `sort` removed, so a value the filter dropped is not counted for the same reason it is
+  not in the URL, and an order alone never counts as a filter.
+- **The counts and the active criteria stay outside the disclosure.** A narrowed list opens with
+  the result count and the criteria as text whether the group is open or closed, and a list the
+  reader only sorted still names the chosen order. This is the half of the shape that keeps the
+  filter's state visible while its controls are put away.
+- **Clear filters keeps its existing rule.** It is offered in the search row while a narrowed list
+  has rows; a no-match result offers it inside its own empty state instead. The disclosure does not
+  own it.
+- **A tree with no tag filter renders no disclosure.** Only the tag select is a narrowing control on
+  a taxonomy tree, so a tree that offers no tag filter has nothing to put behind one.
+
 ## The empty result and the empty list are different sentences
 
 Every filtered list keeps these apart, and they are the single most common thing a new list gets
@@ -155,7 +182,8 @@ the drag control contradicts, so **a tree offers no sort**: `ListFilter#sortable
 Locations, by its own tag; it never reorders the tree.
 
 The filter area of a tree lives in `shared/_taxonomy_tree` rather than in a workspace partial: one
-search area, an optional tag select (tags carry no tags of their own), and no order control. The
+search area, an optional tag select behind the shared **Advanced filters** disclosure (tags carry no
+tags of their own), and no order control. The
 pending rows a draft would create render as `.taxonomy-pending` nodes after the real roots, not as
 rows, and a filtered tree shows none of them — a remembered create names no record, so it cannot
 match a text or tag filter.
@@ -177,8 +205,9 @@ no-match state: which filters produced nothing, repeated as text, and a way to c
    workspace whose mutations are JSON-only and answer with no redirect names only `index`, because
    the browser refreshes the URL the reader is already on.
 3. `#filtered_list_path_with`, the one thing the concern cannot know — where this list's own URL is.
-4. A search area over the canonical URL, a `flash_discarded_filter_values` call, the two empty
-   states, and a summaries helper.
+4. A search area over the canonical URL with the search and the order in its first row, one
+   `details.list-filter-advanced` holding the narrowing controls and reporting its active count, a
+   `flash_discarded_filter_values` call, the two empty states, and a summaries helper.
 5. Keys in **both** locale files, in the workspace's own `*.filter.*` namespace.
 6. Tests, and the pending-row rule above in the index view.
 

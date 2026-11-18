@@ -2,11 +2,16 @@
     URL, so a filter is visible in the address, shareable, and removable in one
     click. It narrows what the list shows and it orders it; it never writes, so
     it cannot renumber a position. Visible to every access level, because
-    filtering is reading. %>
+    filtering is reading.
+
+    The search and the order stay in the first row: the order is a reading
+    choice, not a filter, and hiding it would make the list's order unexplained.
+    The tag select sits behind the shared **Advanced filters** disclosure. %>
 <% filter = local_assigns.fetch(:filter) %>
 <% total = local_assigns.fetch(:total) %>
 <% shown = local_assigns.fetch(:shown) %>
 <% filters_path = universe_items_path %>
+<% advanced_count = advanced_filter_count(filter) %>
 
 <div class="list-filter item-filter mb-4">
   <h2 class="list-filter-title"><%= t("items.filter.title") %></h2>
@@ -14,42 +19,55 @@
     <%= t("items.filter.description") %>
   </p>
 
-  <%= form_with url: filters_path, method: :get, class: "row g-2 align-items-end" do %>
-    <div class="col-12 col-lg">
-      <label class="form-label" for="item_filter_q"><%= t("items.filter.search_label") %></label>
-      <input type="search" class="form-control" id="item_filter_q" name="q"
-        value="<%= filter.text %>" placeholder="<%= t("items.filter.search_placeholder") %>" autocomplete="off">
-    </div>
+  <%= form_with url: filters_path, method: :get, class: "list-filter-form" do %>
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-lg">
+        <label class="form-label" for="item_filter_q"><%= t("items.filter.search_label") %></label>
+        <input type="search" class="form-control" id="item_filter_q" name="q"
+          value="<%= filter.text %>" placeholder="<%= t("items.filter.search_placeholder") %>" autocomplete="off">
+      </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <label class="form-label" for="item_filter_item_tag_id"><%= t("items.filter.tag_label") %></label>
-      <select class="form-select" id="item_filter_item_tag_id" name="item_tag_id">
-        <option value=""><%= t("items.filter.all_tags") %></option>
-        <% item_filter_tag_choices.each do |label, value| %>
-          <option value="<%= value %>"<%= " selected" if filter.item_tag_id == value %>><%= label %></option>
+      <div class="col-12 col-sm-6 col-lg">
+        <label class="form-label" for="item_filter_sort"><%= t("items.filter.sort_label") %></label>
+        <%# Every option is a key in `ItemFilter::SORTS`, so the control and
+            the query allowlist cannot drift apart. %>
+        <select class="form-select" id="item_filter_sort" name="sort">
+          <% ItemFilter.sort_values.each do |value| %>
+            <option value="<%= value %>"<%= " selected" if filter.sort == value %>><%= t("items.filter.sort_options.#{value}") %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+        <%= submit_tag t("items.filter.submit"), class: "btn btn-outline-secondary", name: nil %>
+        <%# With no result there is nothing to clear from here, so the empty state
+            below offers the only way back. %>
+        <% if filter.active? && shown.positive? %>
+          <%= link_to t("items.filter.clear"), filters_path, class: "btn btn-light border" %>
         <% end %>
-      </select>
+      </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <label class="form-label" for="item_filter_sort"><%= t("items.filter.sort_label") %></label>
-      <%# Every option is a key in `ItemFilter::SORTS`, so the control and
-          the query allowlist cannot drift apart. %>
-      <select class="form-select" id="item_filter_sort" name="sort">
-        <% ItemFilter.sort_values.each do |value| %>
-          <option value="<%= value %>"<%= " selected" if filter.sort == value %>><%= t("items.filter.sort_options.#{value}") %></option>
+    <details class="form-disclosure list-filter-advanced">
+      <summary>
+        <%= t("shared.list_filter.advanced") %>
+        <% if advanced_count.positive? %>
+          <span class="badge rounded-pill text-bg-light border ms-2"><%= t("shared.list_filter.active", count: advanced_count) %></span>
         <% end %>
-      </select>
-    </div>
+      </summary>
 
-    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
-      <%= submit_tag t("items.filter.submit"), class: "btn btn-outline-secondary", name: nil %>
-      <%# With no result there is nothing to clear from here, so the empty state
-          below offers the only way back. %>
-      <% if filter.active? && shown.positive? %>
-        <%= link_to t("items.filter.clear"), filters_path, class: "btn btn-light border" %>
-      <% end %>
-    </div>
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg">
+          <label class="form-label" for="item_filter_item_tag_id"><%= t("items.filter.tag_label") %></label>
+          <select class="form-select" id="item_filter_item_tag_id" name="item_tag_id">
+            <option value=""><%= t("items.filter.all_tags") %></option>
+            <% item_filter_tag_choices.each do |label, value| %>
+              <option value="<%= value %>"<%= " selected" if filter.item_tag_id == value %>><%= label %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+    </details>
   <% end %>
 
   <% if filter.active? %>

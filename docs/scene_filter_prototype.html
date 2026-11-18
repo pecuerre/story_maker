@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-layout="current" data-width="desktop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universe Maker — Scene filter layout comparison</title>
+<style>
+  /* ============================================================
+     Review chrome. Not part of either layout.
+     ============================================================ */
+  :root { --review-h: 52px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  [hidden] { display: none !important; }
+  body {
+    background: #e5e2db;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar {
+    position: sticky; top: 0; z-index: 100; min-height: var(--review-h);
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 8px 16px; background: #14171a; color: #edf0f2;
+    font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar strong { font-size: 14px; letter-spacing: .01em; }
+  .reviewbar .sep { width: 1px; height: 22px; background: #394047; }
+  .reviewbar .group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .reviewbar .group-label {
+    color: #aab4bc; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; margin-right: 2px;
+  }
+  .reviewbar button {
+    appearance: none; border: 1px solid #3c454d; background: #20262b; color: #e8edf0;
+    border-radius: 4px; padding: 5px 9px; font: inherit; cursor: pointer;
+  }
+  .reviewbar button:hover { background: #2b3339; }
+  .reviewbar button[aria-pressed="true"] {
+    background: #e8edf0; border-color: #e8edf0; color: #15191c; font-weight: 650;
+  }
+  .reviewbar .note { margin-left: auto; color: #9aa5ad; font-size: 11.5px; }
+  .reviewbar a { color: #c9d6df; }
+
+  .urlbar {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 8px 16px; background: #f3f1ec; color: #4c4a44;
+    border-bottom: 1px solid #d3ccbc; font-size: 12px;
+  }
+  .urlbar .urlbar-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: #6d675c;
+  }
+  .urlbar code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; overflow-wrap: anywhere; color: #1e1d1a;
+  }
+  .urlbar .urlbar-note { margin-left: auto; color: #6d675c; font-size: 11px; }
+
+  /* ============================================================
+     Built Index tokens (app/assets/stylesheets/_theme.scss).
+     ============================================================ */
+  html {
+    --bg: #f6f4ee; --surface: #fffdf8; --surface-2: #ece8dd;
+    --text: #1e1d1a; --muted: #5f5a50;
+    --border: #d3ccbc; --control-border: #8c8371;
+    --primary: #1d4f7a; --primary-strong: #173f61; --primary-soft: #e4edf5;
+    --on-primary: #ffffff; --hover: #efebe2; --row-hover: #faf7f0;
+    --danger: #a32626;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+      Georgia, "Times New Roman", serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --bg: #171613; --surface: #1e1c18; --surface-2: #28241e;
+    --text: #ece7dc; --muted: #b3ab9b;
+    --border: #3d382e; --control-border: #8b8272;
+    --primary: #9cc0e0; --primary-strong: #c7ddf0; --primary-soft: #22384b;
+    --on-primary: #0d2237; --hover: #26221c; --row-hover: #242019;
+    --danger: #f09999;
+    color-scheme: dark;
+  }
+
+  .stage { padding: 24px 16px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .stage-caption {
+    align-self: center; color: #57534a; font-size: 11.5px; letter-spacing: .02em;
+  }
+  .mock {
+    width: min(1000px, 100%);
+    background: var(--bg); color: var(--text);
+    border: 1px solid #b5ae9f; border-radius: 6px;
+    box-shadow: 0 14px 44px rgba(25, 23, 19, .16);
+    overflow: hidden;
+    container-type: inline-size;
+    font-size: 15px; line-height: 1.5;
+  }
+  html[data-width="phone"] .mock { width: min(390px, 100%); }
+
+  .mock a { color: var(--primary); text-decoration: none; }
+  .mock a:hover { text-decoration: underline; }
+  .mock h1, .mock h2, .mock p { margin-top: 0; }
+
+  /* Page header */
+  .page { padding: 26px 28px 34px; }
+  .mock-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; padding-bottom: 14px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-head > div:first-child { flex: 1 1 18rem; min-width: 0; }
+  .page-eyebrow {
+    margin-bottom: 4px; color: var(--muted);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  }
+  .page-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .page-title {
+    margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 600;
+    line-height: 1.18; letter-spacing: -.012em;
+  }
+  .title-count {
+    display: inline-flex; align-items: center; padding: 1px 8px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11.5px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .page-description {
+    max-width: 64ch; margin: 6px 0 0; color: var(--muted);
+    font-family: var(--serif); font-size: 15px; line-height: 1.5;
+  }
+  .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tabs {
+    display: flex; gap: 2px; margin: 0 0 20px;
+    border-bottom: 1px solid var(--border); overflow-x: auto;
+  }
+  .tabs a {
+    display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px;
+    border-bottom: 2px solid transparent; color: var(--muted); font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .tabs a.active { border-bottom-color: var(--primary); color: var(--primary-strong); font-weight: 650; }
+  .tabs a:hover { color: var(--text); text-decoration: none; }
+
+  /* Controls, built Bootstrap values */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 31px; padding: 0 12px; border: 1px solid transparent;
+    border-radius: 4px; font: inherit; font-size: 12.8px; font-weight: 650;
+    line-height: 1; cursor: pointer; white-space: nowrap;
+    background: var(--primary); color: var(--on-primary);
+  }
+  .btn:hover { filter: brightness(1.05); text-decoration: none; }
+  .btn-outline { background: transparent; border-color: var(--control-border); color: var(--text); }
+  .btn-outline:hover { background: var(--hover); }
+  .btn-sm { min-height: 26px; padding: 0 7px; font-size: 11.5px; }
+
+  .control { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .form-label {
+    margin: 0; color: var(--text);
+    font-size: 11px; font-weight: 650; letter-spacing: .01em;
+  }
+  .form-control {
+    width: 100%; min-width: 0; min-height: 34px; padding: 0 9px;
+    border: 1px solid var(--control-border); border-radius: 4px;
+    background: var(--surface); color: var(--text);
+    font: inherit; font-size: 13.5px; line-height: 1.5;
+  }
+  select.form-control {
+    appearance: auto; padding-right: 6px; text-overflow: ellipsis;
+  }
+  .form-control::placeholder { color: var(--muted); opacity: .8; }
+  .form-control:focus-visible, .btn:focus-visible, summary:focus-visible,
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+
+  /* The filter block, as built today: a quiet instruction above the form. */
+  .list-filter { margin-bottom: 20px; }
+  .list-filter-title {
+    margin: 0 0 12px; color: var(--muted);
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .list-filter-description {
+    max-width: 64ch; margin: -8px 0 12px; color: var(--muted);
+    font-family: var(--serif); font-size: 13px; line-height: 1.5;
+  }
+  .filter-state {
+    margin: 12px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5;
+  }
+  .filter-state .pills { display: block; margin-top: 4px; }
+  .pills-label { margin-right: 2px; }
+  .pill {
+    display: inline-flex; align-items: center; padding: 1px 7px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11px; font-weight: 600;
+    line-height: 1.5; white-space: nowrap; margin: 0 4px 4px 0;
+  }
+  .count-pill {
+    display: inline-flex; align-items: center; padding: 1px 7px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11px; font-weight: 600;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .clear-link { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+
+  /* Layout visibility */
+  html[data-layout="current"] .layout-proposed,
+  html[data-layout="proposed"] .layout-current { display: none; }
+  /* Synchronous measuring shows both for one frame at most; nothing is painted. */
+  html[data-measure] .layout-current,
+  html[data-measure] .layout-proposed { display: block !important; }
+
+  /* ---------- Current layout ---------- */
+  .filter-row-current {
+    display: grid; gap: 8px;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) auto;
+    align-items: end;
+  }
+  .filter-row-current .c-actions { flex-direction: row; align-items: center; gap: 8px; }
+
+  /* ---------- Proposed layout ---------- */
+  .proposed-search { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+  .proposed-search .grow { flex: 1 1 240px; }
+  .proposed-actions { display: flex; align-items: center; gap: 8px; }
+  .filter-advanced {
+    margin-top: 12px; padding: 10px 0 2px;
+    border-top: 1px solid var(--border);
+  }
+  .filter-advanced > summary { cursor: pointer; font-size: 13px; font-weight: 650; }
+  .filter-advanced > summary .count-pill { margin-left: 6px; vertical-align: middle; }
+  .filter-advanced[open] > summary { margin-bottom: 12px; }
+  .advanced-grid {
+    display: grid; gap: 8px 12px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: end;
+  }
+  .advanced-dates { display: contents; }
+
+  /* ---------- List rows ---------- */
+  .content-surface {
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); overflow: hidden;
+  }
+  .scene-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+    min-height: 46px;
+  }
+  .scene-row:last-child { border-bottom: 0; }
+  .scene-row:hover { background: var(--row-hover); }
+  .pos {
+    display: inline-grid; place-items: center; flex: 0 0 auto;
+    min-width: 22px; height: 22px; margin-top: 2px; padding: 0 5px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  .row-main { flex: 1 1 auto; min-width: 0; }
+  .row-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .row-title { font-size: 14px; font-weight: 650; }
+  .row-tags .pill { margin: 0; }
+  .row-desc {
+    margin: 2px 0 0; color: var(--muted); font-family: var(--serif);
+    font-size: 13.5px; line-height: 1.45;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .row-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+  .row-actions button {
+    appearance: none; width: 26px; height: 26px; padding: 0;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: transparent; color: var(--muted); cursor: pointer;
+    font: inherit; font-size: 12px; line-height: 1;
+  }
+  .row-actions button:hover { background: var(--hover); color: var(--text); }
+
+  /* ---------- Empty states ---------- */
+  .empty-state {
+    padding: 40px 20px; border: 1px solid var(--border); border-radius: 4px;
+    background: rgba(255, 253, 248, .62); text-align: center;
+  }
+  html[data-theme="dark"] .empty-state { background: rgba(30, 28, 24, .62); }
+  .empty-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; margin-bottom: 12px; border-radius: 50%;
+    background: var(--primary-soft); color: var(--primary); font-size: 16px;
+  }
+  .empty-title { margin: 0 0 6px; font-family: var(--serif); font-size: 18px; font-weight: 600; }
+  .empty-description {
+    max-width: 36rem; margin: 0 auto; color: var(--muted);
+    font-family: var(--serif); font-size: 14px;
+  }
+  .empty-actions { margin-top: 16px; }
+  .empty-state .pills { display: block; margin-bottom: 12px; }
+
+  /* ============================================================
+     Responsive behavior. The container is the page's content box,
+     not the window: these are the widths the filter actually sees.
+     ============================================================ */
+  @container (max-width: 760px) {
+    .page { padding: 20px 18px 28px; }
+    .mock-head { flex-direction: column; gap: 12px; }
+    .mock-head > div:first-child { flex: 0 0 auto; }
+    .page-title { font-size: 26px; }
+    .filter-row-current { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    .filter-row-current .c-search { grid-column: span 12; }
+    .filter-row-current .c-select { grid-column: span 6; }
+    .filter-row-current .c-date { grid-column: span 3; }
+    .filter-row-current .c-actions { grid-column: span 12; }
+    .advanced-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .scene-row { flex-wrap: wrap; }
+    .row-actions { margin-left: 34px; }
+  }
+  @container (max-width: 730px) {
+    .list-filter-description { display: none; }
+  }
+  @container (max-width: 560px) {
+    .filter-row-current .c-select { grid-column: span 12; }
+    .filter-row-current .c-date { grid-column: span 6; }
+    .advanced-grid { grid-template-columns: minmax(0, 1fr); }
+    .proposed-actions { width: 100%; }
+    .proposed-actions .btn { flex: 1 1 auto; }
+    .scene-row { gap: 8px; }
+    .row-actions { margin-left: 30px; }
+    .empty-state { padding: 30px 14px; }
+  }
+  @container (max-width: 430px) {
+    .page-title { font-size: 23px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  /* ============================================================
+     Review notes below the stage. Chrome, not page design.
+     ============================================================ */
+  .notes {
+    max-width: 1000px; margin: 0 auto 40px; padding: 20px 24px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+  }
+  .notes h2 {
+    margin: 0 0 8px; font-family: var(--serif); font-size: 18px; font-weight: 600;
+  }
+  .notes h2:not(:first-child) { margin-top: 22px; }
+  .notes p, .notes li { font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+  .notes p { margin: 0 0 10px; }
+  .notes ul { margin: 0 0 10px; padding-left: 20px; }
+  .notes li + li { margin-top: 4px; }
+  .notes strong { color: var(--text); }
+  .notes code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text);
+  }
+  .notes .measurement {
+    padding: 10px 12px; border: 1px solid var(--border);
+    border-left: 3px solid var(--primary); border-radius: 4px;
+    color: var(--text); font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<div class="reviewbar">
+  <strong>Scene filter · layout comparison</strong>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Layout">
+    <span class="group-label">Layout</span>
+    <button type="button" data-set-layout="current" aria-pressed="true">Current</button>
+    <button type="button" data-set-layout="proposed" aria-pressed="false">Proposed</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Filter state">
+    <span class="group-label">State</span>
+    <button type="button" data-set-state="unfiltered" aria-pressed="true">Unfiltered</button>
+    <button type="button" data-set-state="filtered" aria-pressed="false">Filtered</button>
+    <button type="button" data-set-state="nomatch" aria-pressed="false">No matches</button>
+    <button type="button" data-set-state="empty" aria-pressed="false">Empty story</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Advanced filters">
+    <span class="group-label">Filters</span>
+    <button type="button" data-set-details="closed" aria-pressed="true">Closed</button>
+    <button type="button" data-set-details="open" aria-pressed="false">Open</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Theme">
+    <span class="group-label">Theme</span>
+    <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+    <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Width">
+    <span class="group-label">Width</span>
+    <button type="button" data-set-width="desktop" aria-pressed="true">Desktop</button>
+    <button type="button" data-set-width="phone" aria-pressed="false">Phone</button>
+  </div>
+  <span class="note">Review mockup · accepted 2026-11-18 · not production</span>
+</div>
+
+<div class="urlbar">
+  <span class="urlbar-label">GET</span>
+  <code data-url>/universes/meridian/stories/the-fifth-cabinet/scenes</code>
+  <span class="urlbar-note">same address in both layouts</span>
+</div>
+
+<div class="stage">
+  <span class="stage-caption" data-width-label>Desktop width</span>
+
+  <div class="mock" id="mock" data-state="unfiltered">
+    <main class="page">
+      <header class="mock-head">
+        <div>
+          <div class="page-eyebrow">Story: The Fifth Cabinet</div>
+          <div class="page-title-row">
+            <h1 class="page-title">Scenes</h1>
+            <span class="title-count" data-total-badge>24</span>
+          </div>
+          <p class="page-description">The order below is the order The Fifth Cabinet is told, not in-world chronology. A section group only organizes a scene; it never changes this order.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" type="button">+ Add scene</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Scene list and board">
+        <a class="active" href="#" aria-current="page">Scene list</a>
+        <a href="#">Board</a>
+      </nav>
+
+      <!-- ================= CURRENT LAYOUT ================= -->
+      <div class="layout layout-current">
+        <div class="list-filter scene-filter">
+          <h2 class="list-filter-title">Find scenes</h2>
+          <p class="list-filter-description">A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag, status, or in-world date range. Filtering never changes the narrative order, and a scene without an in-world time is not in a date range.</p>
+
+          <form class="filter-form filter-form-current" onsubmit="return false">
+            <div class="filter-row-current">
+              <div class="control c-search">
+                <label class="form-label" for="current-q">Search</label>
+                <input class="form-control" type="search" id="current-q" data-filter-q
+                  placeholder="Title or short description" autocomplete="off">
+              </div>
+              <div class="control c-select">
+                <label class="form-label" for="current-section">Section</label>
+                <select class="form-control" id="current-section" data-filter-section>
+                  <option value="">All sections</option>
+                  <option value="ungrouped">Ungrouped</option>
+                  <option value="chapter-one">Chapter one — The locked room</option>
+                  <option value="chapter-two">Chapter two — The harbour</option>
+                  <option value="chapter-three">Chapter three — The map</option>
+                </select>
+              </div>
+              <div class="control c-select">
+                <label class="form-label" for="current-tag">Scene tag</label>
+                <select class="form-control" id="current-tag" data-filter-tag>
+                  <option value="">All scene tags</option>
+                  <option value="investigation">Investigation</option>
+                  <option value="revelation">Revelation</option>
+                  <option value="travel">Travel</option>
+                </select>
+              </div>
+              <div class="control c-select">
+                <label class="form-label" for="current-status">Status</label>
+                <select class="form-control" id="current-status" data-filter-status>
+                  <option value="">All statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="revised">Revised</option>
+                  <option value="final">Final</option>
+                </select>
+              </div>
+              <div class="control c-date">
+                <label class="form-label" for="current-from">In-world from</label>
+                <input class="form-control" type="date" id="current-from" data-filter-from>
+              </div>
+              <div class="control c-date">
+                <label class="form-label" for="current-to">In-world to</label>
+                <input class="form-control" type="date" id="current-to" data-filter-to>
+              </div>
+              <div class="control c-actions">
+                <button class="btn btn-outline" type="submit">Filter scenes</button>
+                <a class="clear-link" href="#" data-only="filtered">Clear filters</a>
+              </div>
+            </div>
+          </form>
+
+          <p class="filter-state" data-only="filtered nomatch">
+            Showing <span data-shown>4</span> of 24.
+            <span class="pills">
+              <span class="pills-label">Filtered by</span>
+              <span class="pill">Search: “harbour”</span>
+              <span class="pill">Section: Chapter one — The locked room</span>
+              <span class="pill">Scene tag: Investigation</span>
+              <span class="pill">Status: Revised</span>
+              <span class="pill">In-world from 2026-09-11</span>
+              <span class="pill">In-world to 2026-09-20</span>
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- ================= PROPOSED LAYOUT ================= -->
+      <div class="layout layout-proposed">
+        <div class="list-filter scene-filter">
+          <h2 class="list-filter-title">Find scenes</h2>
+          <p class="list-filter-description">A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag, status, or in-world date range. Filtering never changes the narrative order, and a scene without an in-world time is not in a date range.</p>
+
+          <form class="filter-form filter-form-proposed" onsubmit="return false">
+            <div class="proposed-search">
+              <div class="control grow">
+                <label class="form-label" for="proposed-q">Search</label>
+                <input class="form-control" type="search" id="proposed-q" data-filter-q
+                  placeholder="Title or short description" autocomplete="off">
+              </div>
+              <div class="proposed-actions">
+                <button class="btn btn-outline" type="submit">Filter scenes</button>
+              </div>
+            </div>
+
+            <details class="filter-advanced">
+              <summary>Advanced filters <span class="count-pill" data-active-badge hidden>5 active</span></summary>
+              <div class="advanced-grid">
+                <div class="control">
+                  <label class="form-label" for="proposed-section">Section</label>
+                  <select class="form-control" id="proposed-section" data-filter-section>
+                    <option value="">All sections</option>
+                    <option value="ungrouped">Ungrouped</option>
+                    <option value="chapter-one">Chapter one — The locked room</option>
+                    <option value="chapter-two">Chapter two — The harbour</option>
+                    <option value="chapter-three">Chapter three — The map</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label class="form-label" for="proposed-tag">Scene tag</label>
+                  <select class="form-control" id="proposed-tag" data-filter-tag>
+                    <option value="">All scene tags</option>
+                    <option value="investigation">Investigation</option>
+                    <option value="revelation">Revelation</option>
+                    <option value="travel">Travel</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label class="form-label" for="proposed-status">Status</label>
+                  <select class="form-control" id="proposed-status" data-filter-status>
+                    <option value="">All statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="revised">Revised</option>
+                    <option value="final">Final</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label class="form-label" for="proposed-from">In-world from</label>
+                  <input class="form-control" type="date" id="proposed-from" data-filter-from>
+                </div>
+                <div class="control">
+                  <label class="form-label" for="proposed-to">In-world to</label>
+                  <input class="form-control" type="date" id="proposed-to" data-filter-to>
+                </div>
+              </div>
+            </details>
+          </form>
+
+          <p class="filter-state" data-only="filtered nomatch">
+            Showing <span data-shown>4</span> of 24.
+            <span class="pills">
+              <span class="pills-label">Filtered by</span>
+              <span class="pill">Search: “harbour”</span>
+              <span class="pill">Section: Chapter one — The locked room</span>
+              <span class="pill">Scene tag: Investigation</span>
+              <span class="pill">Status: Revised</span>
+              <span class="pill">In-world from 2026-09-11</span>
+              <span class="pill">In-world to 2026-09-20</span>
+              <a class="clear-link" href="#" data-only="filtered">Clear filters</a>
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- ================= RESULT AREA ================= -->
+      <div class="content-surface" data-only="unfiltered filtered">
+        <div class="scene-row">
+          <span class="pos" data-pos="1" data-pos-filtered="3">1</span>
+          <div class="row-main">
+            <div class="row-tags">
+              <a class="row-title" href="#">The cabinet unlocked</a>
+              <span class="pill">Revised</span>
+              <span class="pill">Chapter one</span>
+              <span class="pill">3 elements</span>
+              <span class="pill">4 characters</span>
+            </div>
+            <p class="row-desc">Elaine opens the drawer the index insists is empty and finds the harbour letter inside it.</p>
+          </div>
+          <div class="row-actions">
+            <button type="button" aria-label="Move The cabinet unlocked up">↑</button>
+            <button type="button" aria-label="Move The cabinet unlocked down">↓</button>
+            <button type="button" aria-label="Actions for The cabinet unlocked">⋯</button>
+          </div>
+        </div>
+        <div class="scene-row">
+          <span class="pos" data-pos="2" data-pos-filtered="7">2</span>
+          <div class="row-main">
+            <div class="row-tags">
+              <a class="row-title" href="#">A letter from the harbour</a>
+              <span class="pill">Revised</span>
+              <span class="pill">Chapter one</span>
+              <span class="pill">5 elements</span>
+              <span class="pill">3 characters</span>
+            </div>
+            <p class="row-desc">The letter names a ship that never docked, and Maren recognizes the handwriting.</p>
+          </div>
+          <div class="row-actions">
+            <button type="button" aria-label="Move A letter from the harbour up">↑</button>
+            <button type="button" aria-label="Move A letter from the harbour down">↓</button>
+            <button type="button" aria-label="Actions for A letter from the harbour">⋯</button>
+          </div>
+        </div>
+        <div class="scene-row">
+          <span class="pos" data-pos="3" data-pos-filtered="12">3</span>
+          <div class="row-main">
+            <div class="row-tags">
+              <a class="row-title" href="#">The index omits a name</a>
+              <span class="pill">Final</span>
+              <span class="pill">Chapter two</span>
+              <span class="pill">2 elements</span>
+              <span class="pill">2 characters</span>
+            </div>
+            <p class="row-desc">Tobias compares the harbour manifest with the index and finds the same gap in both.</p>
+          </div>
+          <div class="row-actions">
+            <button type="button" aria-label="Move The index omits a name up">↑</button>
+            <button type="button" aria-label="Move The index omits a name down">↓</button>
+            <button type="button" aria-label="Actions for The index omits a name">⋯</button>
+          </div>
+        </div>
+        <div class="scene-row">
+          <span class="pos" data-pos="4" data-pos-filtered="18">4</span>
+          <div class="row-main">
+            <div class="row-tags">
+              <a class="row-title" href="#">What the map remembered</a>
+              <span class="pill">Draft</span>
+              <span class="pill">Chapter three</span>
+              <span class="pill">6 elements</span>
+              <span class="pill">5 characters</span>
+            </div>
+            <p class="row-desc">Renata's map shows a harbour room that the cabinet no longer contains.</p>
+          </div>
+          <div class="row-actions">
+            <button type="button" aria-label="Move What the map remembered up">↑</button>
+            <button type="button" aria-label="Move What the map remembered down">↓</button>
+            <button type="button" aria-label="Actions for What the map remembered">⋯</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" data-only="nomatch">
+        <span class="empty-icon" aria-hidden="true">⌕</span>
+        <h2 class="empty-title">No scenes match these filters</h2>
+        <p class="empty-description">The Fifth Cabinet has 24 scenes, but none of them match the filters above. Clear them to see the whole narrative order.</p>
+        <span class="pills">
+          <span class="pill">Search: “harbour”</span>
+          <span class="pill">Section: Chapter one — The locked room</span>
+          <span class="pill">Scene tag: Investigation</span>
+          <span class="pill">Status: Revised</span>
+          <span class="pill">In-world from 2026-09-11</span>
+          <span class="pill">In-world to 2026-09-20</span>
+        </span>
+        <div class="empty-actions"><a class="btn" href="#">Clear filters</a></div>
+      </div>
+
+      <div class="empty-state" data-only="empty">
+        <span class="empty-icon" aria-hidden="true">▤</span>
+        <h2 class="empty-title">No scenes yet</h2>
+        <p class="empty-description">Scenes are the ordered units of this story. Add the first one to start its narrative order.</p>
+        <div class="empty-actions"><button class="btn" type="button">+ Add scene</button></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>What this comparison tested</h2>
+  <p>Item 80 asked whether an always-visible search plus an <strong>Advanced filters</strong> disclosure gives the Scenes filter less visual weight than the old six-control row, especially on phones, without hiding what the filter is doing. The comparison was accepted on 2026-11-18 and rolled out to every in-list filter, so <strong>Current</strong> here is the pre-rollout layout this page recorded. It is a static mock of the real markup, not a running Rails page.</p>
+
+  <h2>Preserved in both layouts</h2>
+  <ul>
+    <li>The search box, the submit action, and the result count are always on screen.</li>
+    <li>Active criteria stay visible as text beside the count, and the disclosure's own summary reports how many filters are in effect while it is closed, so a collapsed form is never a hidden form.</li>
+    <li><strong>Clear filters</strong> is offered while a narrowed list has rows; a no-match result offers it inside its own empty state, exactly as today.</li>
+    <li>The form is a GET over the canonical Scenes URL, so the address bar remains the shareable record of the filter. Fields inside a closed <code>&lt;details&gt;</code> still submit.</li>
+    <li>Filtering never renumbers: the row positions come from the whole narrative sequence, so the filtered rows are 3, 7, 12, and 18 rather than 1–4.</li>
+    <li>An empty Story (<strong>No scenes yet</strong>, with Add scene) and a filter that matched nothing (<strong>No scenes match these filters</strong>) stay two different sentences with two different actions.</li>
+  </ul>
+
+  <h2>What the disclosure moves</h2>
+  <p>Section, Scene tag, Status, and the two in-world dates leave the first row and join the existing no-JavaScript <code>&lt;details&gt;</code> treatment the forms already use. The search, the submit button, and the state line stay outside it. Open the group above to compare the full set; the <strong>Filters: Open</strong> control shows the proposal at its today-like height.</p>
+
+  <h2>Measured at this width</h2>
+  <p class="measurement" data-measurements>Measuring…</p>
+  <p>Heights are read from this page's own DOM at the selected width and state. The disclosure saves height where the five controls stack and costs one summary line where they already fit in a row, so the comparison above can go either way; that is the tradeoff to judge, not an assumption that the proposal is always shorter. Font fallback and browser date controls vary the numbers slightly.</p>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var mock = document.getElementById('mock');
+    var review = {
+      layout: 'current',
+      state: 'unfiltered',
+      theme: 'light',
+      width: 'desktop',
+      details: false
+    };
+    var urls = {
+      unfiltered: '/universes/meridian/stories/the-fifth-cabinet/scenes',
+      filtered: '/universes/meridian/stories/the-fifth-cabinet/scenes?q=harbour&section_id=chapter-one&scene_tag_id=investigation&status=revised&from=2026-09-11&to=2026-09-20',
+      nomatch: '/universes/meridian/stories/the-fifth-cabinet/scenes?q=harbour&section_id=chapter-one&scene_tag_id=investigation&status=revised&from=2026-09-11&to=2026-09-20',
+      empty: '/universes/meridian/stories/the-fifth-cabinet/scenes'
+    };
+
+    // The review state is a query string, the same way the visual-directions
+    // prototype is opened directly at one screen. It makes a state shareable and
+    // lets a screenshot name exactly what it captured.
+    var allowed = {
+      layout: ['current', 'proposed'],
+      state: ['unfiltered', 'filtered', 'nomatch', 'empty'],
+      theme: ['light', 'dark'],
+      width: ['desktop', 'phone']
+    };
+    var params = new URLSearchParams(window.location.search);
+    Object.keys(allowed).forEach(function (key) {
+      if (allowed[key].indexOf(params.get(key)) !== -1) review[key] = params.get(key);
+    });
+    if (params.get('filters') === 'open') review.details = true;
+
+    function applyPressed(selector, attribute, value) {
+      document.querySelectorAll(selector).forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.getAttribute(attribute) === value));
+      });
+    }
+
+    function setValues(active) {
+      document.querySelectorAll('[data-filter-q]').forEach(function (input) {
+        input.value = active ? 'harbour' : '';
+      });
+      document.querySelectorAll('[data-filter-section]').forEach(function (select) {
+        select.value = active ? 'chapter-one' : '';
+      });
+      document.querySelectorAll('[data-filter-tag]').forEach(function (select) {
+        select.value = active ? 'investigation' : '';
+      });
+      document.querySelectorAll('[data-filter-status]').forEach(function (select) {
+        select.value = active ? 'revised' : '';
+      });
+      document.querySelectorAll('[data-filter-from]').forEach(function (input) {
+        input.value = active ? '2026-09-11' : '';
+      });
+      document.querySelectorAll('[data-filter-to]').forEach(function (input) {
+        input.value = active ? '2026-09-20' : '';
+      });
+    }
+
+    function measure() {
+      var currentLayout = document.querySelector('.layout-current');
+      var proposedLayout = document.querySelector('.layout-proposed');
+      var currentFilter = currentLayout.querySelector('.list-filter');
+      var proposedFilter = proposedLayout.querySelector('.list-filter');
+      var details = proposedLayout.querySelector('.filter-advanced');
+
+      root.setAttribute('data-measure', '1');
+      var currentHeight = currentFilter.getBoundingClientRect().height;
+
+      var wasOpen = details.open;
+      details.open = false;
+      var closedHeight = proposedFilter.getBoundingClientRect().height;
+      details.open = true;
+      var openHeight = proposedFilter.getBoundingClientRect().height;
+      details.open = wasOpen;
+      root.removeAttribute('data-measure');
+
+      var page = document.querySelector('.page');
+      var pageStyle = window.getComputedStyle(page);
+      var pageWidth = Math.round(
+        page.clientWidth -
+        parseFloat(pageStyle.paddingLeft) -
+        parseFloat(pageStyle.paddingRight)
+      );
+      var stateLabel = {
+        unfiltered: 'unfiltered',
+        filtered: 'filtered',
+        nomatch: 'no matches',
+        empty: 'empty story'
+      }[review.state];
+
+      document.querySelector('[data-measurements]').textContent =
+        'At ' + pageWidth + ' px of content width, ' + stateLabel + ': current filter ' +
+        Math.round(currentHeight) + ' px tall; proposed ' + Math.round(closedHeight) +
+        ' px with the disclosure closed and ' + Math.round(openHeight) + ' px open.';
+    }
+
+    function render() {
+      var active = review.state === 'filtered' || review.state === 'nomatch';
+
+      root.setAttribute('data-layout', review.layout);
+      root.setAttribute('data-theme', review.theme);
+      root.setAttribute('data-width', review.width);
+      mock.setAttribute('data-state', review.state);
+
+      document.querySelectorAll('[data-only]').forEach(function (element) {
+        element.hidden = element.getAttribute('data-only').split(' ').indexOf(review.state) === -1;
+      });
+
+      setValues(active);
+
+      document.querySelectorAll('[data-shown]').forEach(function (element) {
+        element.textContent = review.state === 'filtered' ? '4' : '0';
+      });
+      document.querySelectorAll('[data-total-badge]').forEach(function (element) {
+        element.textContent = review.state === 'empty' ? '0' : '24';
+      });
+      document.querySelectorAll('[data-active-badge]').forEach(function (element) {
+        element.hidden = !active;
+      });
+      document.querySelectorAll('[data-pos]').forEach(function (element) {
+        element.textContent = active
+          ? element.getAttribute('data-pos-filtered')
+          : element.getAttribute('data-pos');
+      });
+      document.querySelectorAll('.filter-advanced').forEach(function (element) {
+        element.open = review.details;
+      });
+
+      document.querySelector('[data-url]').textContent = urls[review.state];
+      document.querySelector('[data-width-label]').textContent =
+        review.width === 'phone' ? 'Phone width' : 'Desktop width';
+
+      applyPressed('[data-set-layout]', 'data-set-layout', review.layout);
+      applyPressed('[data-set-state]', 'data-set-state', review.state);
+      applyPressed('[data-set-theme]', 'data-set-theme', review.theme);
+      applyPressed('[data-set-width]', 'data-set-width', review.width);
+      applyPressed('[data-set-details]', 'data-set-details', review.details ? 'open' : 'closed');
+
+      try {
+        var query = '?layout=' + review.layout + '&state=' + review.state +
+          '&theme=' + review.theme + '&width=' + review.width +
+          '&filters=' + (review.details ? 'open' : 'closed');
+        window.history.replaceState(null, '', query);
+      } catch (error) {
+        // A local file opened without a server can refuse history changes; the
+        // page still works, the address simply does not record the review state.
+      }
+
+      measure();
+    }
+
+    document.querySelectorAll('[data-set-layout]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.layout = button.getAttribute('data-set-layout');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-state]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.state = button.getAttribute('data-set-state');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-theme]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.theme = button.getAttribute('data-set-theme');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-width]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.width = button.getAttribute('data-set-width');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-details]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.details = button.getAttribute('data-set-details') === 'open';
+        render();
+      });
+    });
+    document.querySelectorAll('.filter-advanced').forEach(function (details) {
+      details.addEventListener('toggle', function () {
+        // `measure()` and `render()` also change `open`, and the browser queues a
+        // `toggle` event for each change. Only a state the review has not already
+        // recorded is a reader's own toggle, so those queued events stop here
+        // instead of re-rendering in a loop.
+        if (details.open === review.details) return;
+        review.details = details.open;
+        applyPressed('[data-set-details]', 'data-set-details', review.details ? 'open' : 'closed');
+        measure();
+      });
+    });
+
+    render();
+  })();
+</script>
+</body>
+</html>

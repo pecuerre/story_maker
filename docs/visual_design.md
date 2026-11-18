@@ -200,9 +200,12 @@ uppercase. The serif is the hierarchy device, so a heading does not need a box a
   intentional exception because they come from user data.
 - Every in-list filter is a quiet block rather than a second card: `.list-filter` names the block,
   its title is a small uppercase kicker, its explanatory sentence is hidden below `md`, and its
-  submit stays an outline button. The Characters filter established the treatment on the prototype
-  and the rollout gave the same classes to the Universe record lists, the Scenes list, and the shared
-  taxonomy tree.
+  submit stays an outline button. The search and any order control stay in the first row; the
+  narrowing controls sit behind the shared **Advanced filters** disclosure. The Characters filter
+  established the treatment on the prototype and the rollout gave the same classes to the Universe
+  record lists, the Scenes list, and the shared taxonomy tree. The disclosure's markup, its state
+  badge, and the rule that a closed group still submits are in
+  [`list_filters.md`](features/list_filters.md#the-search-areas-shape).
 
 ## Application shell
 
@@ -770,6 +773,29 @@ surface is a scrollable SVG inside the shared content surface:
   hover/drag or a drag-only path.
 - Preserve `prefers-reduced-motion` handling for transitions and drag feedback.
 - Tag color is supplementary information, never the only way to identify a record.
+
+## Comparison prototypes
+
+A UI change that has more than one reasonable shape starts as a **static comparison prototype**
+before any application view, stylesheet, or test changes. The page shows the current design and the
+proposed one on the same page, with the same content in each, and a review bar that switches layout,
+state, light/dark, and desktop/phone, so the two are judged like for like rather than from a
+description. The [visual directions](visual_directions.md) exercise is the precedent for a large
+comparison, and the [Scene filter comparison](scene_filter_prototype.html) is the working example.
+
+- Copy the built values from `_theme.scss` and the real view markup. A prototype is a hand-built
+  mock, not a running Rails page, but it must not introduce a second palette or a simplified
+  component that makes the proposal look better than it would ship.
+- Run both designs through the same states: unfiltered and empty, populated, filtered, and no match
+  where the surface has them. Keep the current design faithful, including its awkward states.
+- Measure both blocks at the selected width and state, and state the measurements on the page. A
+  proposal can be shorter in one state and taller in another; showing that is the point, not a
+  claim that the new one always wins.
+- Save it as `docs/<subject>_prototype.html`, link it from the backlog item that owns the decision,
+  and leave application code untouched until the owner accepts a direction. An accepted comparison
+  stays as a record; the implementation then updates the owning document and the changelog.
+- A comparison does not replace rendered browser checks, accessibility inspection, or participant
+  testing.
 
 ## Change checklist for a new page
 

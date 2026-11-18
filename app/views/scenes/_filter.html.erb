@@ -2,7 +2,12 @@
     a filter is visible in the address, shareable, and removable in one click. It
     only narrows what the list shows: the order below is always the order the
     Story is told, and the Story's scene total is counted from the whole
-    sequence. Visible to every access level, because filtering is reading. %>
+    sequence. Visible to every access level, because filtering is reading.
+
+    The search stays in the first row, while the five narrowing controls sit
+    behind the shared **Advanced filters** disclosure. A closed disclosure still
+    submits its fields, so the URL and the filter object are unchanged; the badge
+    and the summaries below keep the applied criteria visible while it is closed. %>
 <% story = local_assigns.fetch(:story) %>
 <% filter = local_assigns.fetch(:filter) %>
 <% section_paths = local_assigns.fetch(:section_paths) %>
@@ -11,6 +16,7 @@
 <% total = local_assigns.fetch(:total) %>
 <% shown = local_assigns.fetch(:shown) %>
 <% filters_path = universe_story_scenes_path(story_id: story) %>
+<% advanced_count = advanced_filter_count(filter) %>
 
 <div class="list-filter scene-filter mb-4">
   <h2 class="list-filter-title"><%= t("scenes.filter.title") %></h2>
@@ -18,68 +24,81 @@
     <%= t("scenes.filter.description") %>
   </p>
 
-  <%= form_with url: filters_path, method: :get, class: "row g-2 align-items-end" do %>
-    <div class="col-12 col-lg">
-      <label class="form-label" for="scene_filter_q"><%= t("scenes.filter.search_label") %></label>
-      <input type="search" class="form-control" id="scene_filter_q" name="q"
-        value="<%= filter.text %>" placeholder="<%= t("scenes.filter.search_placeholder") %>" autocomplete="off">
-    </div>
+  <%= form_with url: filters_path, method: :get, class: "list-filter-form" do %>
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-lg">
+        <label class="form-label" for="scene_filter_q"><%= t("scenes.filter.search_label") %></label>
+        <input type="search" class="form-control" id="scene_filter_q" name="q"
+          value="<%= filter.text %>" placeholder="<%= t("scenes.filter.search_placeholder") %>" autocomplete="off">
+      </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <label class="form-label" for="scene_filter_section_id"><%= t("scenes.filter.section_label") %></label>
-      <%# The Ungrouped option's *value* is `SceneFilter::UNGROUPED`, a query value
-          that never changes with the locale; only the label beside it is
-          translated. It is the same label the Section selector offers, so it comes
-          from `SectionPaths` rather than being written out twice. %>
-      <select class="form-select" id="scene_filter_section_id" name="section_id">
-        <option value=""><%= t("scenes.filter.all_sections") %></option>
-        <option value="<%= SceneFilter::UNGROUPED %>"<%= " selected" if filter.ungrouped? %>><%= section_paths.ungrouped_label %></option>
-        <% section_paths.grouping_options.drop(1).each do |label, value| %>
-          <option value="<%= value %>"<%= " selected" if filter.section_id == value %>><%= label %></option>
+      <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+        <%= submit_tag t("scenes.filter.submit"), class: "btn btn-outline-secondary", name: nil %>
+        <%# With no result there is nothing to clear from here, so the empty state
+            below offers the only way back. %>
+        <% if filter.active? && shown.positive? %>
+          <%= link_to t("scenes.filter.clear"), filters_path, class: "btn btn-light border" %>
         <% end %>
-      </select>
+      </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <label class="form-label" for="scene_filter_scene_tag_id"><%= t("scenes.filter.scene_tag_label") %></label>
-      <select class="form-select" id="scene_filter_scene_tag_id" name="scene_tag_id">
-        <option value=""><%= t("scenes.filter.all_scene_tags") %></option>
-        <% scene_tag_choices(scene_tags, scene_tag_paths).each do |label, value| %>
-          <option value="<%= value %>"<%= " selected" if filter.scene_tag_id == value %>><%= label %></option>
+    <details class="form-disclosure list-filter-advanced">
+      <summary>
+        <%= t("shared.list_filter.advanced") %>
+        <% if advanced_count.positive? %>
+          <span class="badge rounded-pill text-bg-light border ms-2"><%= t("shared.list_filter.active", count: advanced_count) %></span>
         <% end %>
-      </select>
-    </div>
+      </summary>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <label class="form-label" for="scene_filter_status"><%= t("scenes.filter.status_label") %></label>
-      <select class="form-select" id="scene_filter_status" name="status">
-        <option value=""><%= t("scenes.filter.all_statuses") %></option>
-        <% Scene::STATUSES.each do |status| %>
-          <option value="<%= status %>"<%= " selected" if filter.status == status %>><%= scene_status_label(status) %></option>
-        <% end %>
-      </select>
-    </div>
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg">
+          <label class="form-label" for="scene_filter_section_id"><%= t("scenes.filter.section_label") %></label>
+          <%# The Ungrouped option's *value* is `SceneFilter::UNGROUPED`, a query value
+              that never changes with the locale; only the label beside it is
+              translated. It is the same label the Section selector offers, so it comes
+              from `SectionPaths` rather than being written out twice. %>
+          <select class="form-select" id="scene_filter_section_id" name="section_id">
+            <option value=""><%= t("scenes.filter.all_sections") %></option>
+            <option value="<%= SceneFilter::UNGROUPED %>"<%= " selected" if filter.ungrouped? %>><%= section_paths.ungrouped_label %></option>
+            <% section_paths.grouping_options.drop(1).each do |label, value| %>
+              <option value="<%= value %>"<%= " selected" if filter.section_id == value %>><%= label %></option>
+            <% end %>
+          </select>
+        </div>
 
-    <div class="col-6 col-sm-3 col-lg">
-      <label class="form-label" for="scene_filter_from"><%= t("scenes.filter.from_label") %></label>
-      <input type="date" class="form-control" id="scene_filter_from" name="from"
-        value="<%= filter.from_date&.iso8601 %>">
-    </div>
+        <div class="col-12 col-sm-6 col-lg">
+          <label class="form-label" for="scene_filter_scene_tag_id"><%= t("scenes.filter.scene_tag_label") %></label>
+          <select class="form-select" id="scene_filter_scene_tag_id" name="scene_tag_id">
+            <option value=""><%= t("scenes.filter.all_scene_tags") %></option>
+            <% scene_tag_choices(scene_tags, scene_tag_paths).each do |label, value| %>
+              <option value="<%= value %>"<%= " selected" if filter.scene_tag_id == value %>><%= label %></option>
+            <% end %>
+          </select>
+        </div>
 
-    <div class="col-6 col-sm-3 col-lg">
-      <label class="form-label" for="scene_filter_to"><%= t("scenes.filter.to_label") %></label>
-      <input type="date" class="form-control" id="scene_filter_to" name="to"
-        value="<%= filter.to_date&.iso8601 %>">
-    </div>
+        <div class="col-12 col-sm-6 col-lg">
+          <label class="form-label" for="scene_filter_status"><%= t("scenes.filter.status_label") %></label>
+          <select class="form-select" id="scene_filter_status" name="status">
+            <option value=""><%= t("scenes.filter.all_statuses") %></option>
+            <% Scene::STATUSES.each do |status| %>
+              <option value="<%= status %>"<%= " selected" if filter.status == status %>><%= scene_status_label(status) %></option>
+            <% end %>
+          </select>
+        </div>
 
-    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
-      <%= submit_tag t("scenes.filter.submit"), class: "btn btn-outline-secondary", name: nil %>
-      <%# With no result there is nothing to clear from here, so the empty state
-          below offers the only way back. %>
-      <% if filter.active? && shown.positive? %>
-        <%= link_to t("scenes.filter.clear"), filters_path, class: "btn btn-light border" %>
-      <% end %>
-    </div>
+        <div class="col-6 col-sm-3 col-lg">
+          <label class="form-label" for="scene_filter_from"><%= t("scenes.filter.from_label") %></label>
+          <input type="date" class="form-control" id="scene_filter_from" name="from"
+            value="<%= filter.from_date&.iso8601 %>">
+        </div>
+
+        <div class="col-6 col-sm-3 col-lg">
+          <label class="form-label" for="scene_filter_to"><%= t("scenes.filter.to_label") %></label>
+          <input type="date" class="form-control" id="scene_filter_to" name="to"
+            value="<%= filter.to_date&.iso8601 %>">
+        </div>
+      </div>
+    </details>
   <% end %>
 
   <% if filter.active? %>

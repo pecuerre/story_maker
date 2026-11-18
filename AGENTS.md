@@ -33,6 +33,7 @@ the subject and read its owner:
 | Colors, tokens, light/dark, typography, shell, responsive behavior, accessibility, the painted treatment of a view | [`docs/visual_design.md`](docs/visual_design.md) |
 | Visual aim: intended users, character, references, constraints, representative screens | [`docs/visual_design_brief.md`](docs/visual_design_brief.md) |
 | Visual directions: proposals, the chosen Index direction, contrast checks, and the review prototype | [`docs/visual_directions.md`](docs/visual_directions.md) |
+| Choosing between UI shapes before changing views | [`docs/visual_design.md`](docs/visual_design.md#comparison-prototypes) |
 | The accepted Index visual direction and why it was chosen | [`docs/adr/0047-adopt-index-as-the-visual-direction.md`](docs/adr/0047-adopt-index-as-the-visual-direction.md) |
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
@@ -79,6 +80,25 @@ Two rules keep that index trustworthy, and both are enforced by `test/docs_test.
 Add a new ADR for a decision that changes the project's structure, domain boundaries, or long-term
 workflow; do not rewrite an accepted ADR to hide its history. When behavior changes, update the
 document that owns the subject, in the same change.
+
+## UI change comparisons
+
+A UI change that has more than one reasonable shape starts as a **static comparison prototype**
+under `docs/`, before any application view, stylesheet, or test changes. The page shows the current
+design and the proposed one on the same page, with a review bar that switches layout, state, light
+and dark, and desktop and phone, so the owner can judge them like for like instead of reading a
+description. It is a hand-built mock of the real markup, not a running Rails page. The owning rules
+are in [`docs/visual_design.md`](docs/visual_design.md#comparison-prototypes).
+
+- Copy the built values from `_theme.scss` and the real view markup; do not invent a second palette
+  or a simplified component.
+- Flip both designs through the same states, including the empty and no-match states, and keep the
+  current design faithful.
+- Measure both blocks and state the numbers on the page. A proposal can be shorter in one state and
+  taller in another; the comparison is the point, not a claim that the new one always wins.
+- Name it `docs/<subject>_prototype.html`, link it from the backlog item that owns the decision, and
+  leave application code untouched until the owner accepts a direction. An accepted comparison is a
+  record; the implementation then updates the owning docs and the changelog as usual.
 
 ## Task intake: clarify before starting
 

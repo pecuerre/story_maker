@@ -32,6 +32,7 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".character-filter label[for=character_filter_character_tag_id]", text: "Etiqueta de personaje"
     assert_select ".character-filter label[for=character_filter_sort]", text: "Orden"
     assert_select ".character-filter input[type=submit][value=?]", "Filtrar personajes"
+    assert_select ".character-filter summary", text: /Filtros avanzados/
     assert_select ".character-filter option", text: "Todas las etiquetas de personajes"
   end
 
@@ -42,6 +43,13 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "select[name=character_tag_id] option",
       { text: "Character tag one / Character tag child" },
       "the separator and the labels come from the locale, the tag names do not"
+
+    get universe_characters_url(
+      universe_slug: @universe.slug,
+      character_tag_id: character_tags(:character_tag_two).id
+    )
+
+    assert_select ".character-filter summary .badge", text: "1 activo"
   end
 
   test "the order options are Spanish while the order values stay English" do

@@ -1583,6 +1583,14 @@ $um-search-match: #ffc107;
   }
 }
 
+// The narrowing fields of every in-list filter sit behind one disclosure, so the
+// search stays the first row's task. `.form-disclosure` already owns the
+// no-JavaScript summary, the hairline, and the open-state spacing; the filter
+// only adds the gap between the search row and that hairline.
+.list-filter-advanced {
+  margin-top: .75rem;
+}
+
 // The first-session guide is a page-level instruction, not a system alert: it
 // reads as a quiet surface with a primary rule instead of a filled info banner.
 .starting-guide {

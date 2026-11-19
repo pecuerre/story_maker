@@ -212,14 +212,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-81. **Keep a reader oriented between Scenes.**
-
-   Scene Details shows its narrative position and an **All scenes** link, but
-   [`scenes/show`](../app/views/scenes/show.html.erb) has no previous/next navigation. Explore labelled
-   neighboring-Scene links to support sequential reading and editing. Define whether a filtered-list
-   visit should carry its filter or navigate the whole narrative order; keep boundary states,
-   permissions, and direct links understandable.
-
 82. **Rebalance the workspace at constrained widths.**
 
    The [application shell](../app/views/layouts/application.html.erb) has left and right navigation

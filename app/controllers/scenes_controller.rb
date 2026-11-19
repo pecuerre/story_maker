@@ -59,6 +59,7 @@ class ScenesController < ApplicationController
   # GET /u/:universe_slug/s/:story_id/scenes/:id
   def show
     @scene_total = @story.scenes.count
+    @previous_scene, @next_scene = adjacent_scenes
     @scene_tab = "details"
   end
   # GET /u/:universe_slug/s/:story_id/scenes/new
@@ -191,6 +192,28 @@ class ScenesController < ApplicationController
 
   def set_scene
     @scene = @story.scenes.includes(:scene_tags, :plots, :scene_tropes, :pov_character).find(params.expect(:id))
+  end
+
+  # The two Scenes on either side of this one in the Story's narrative order.
+  #
+  # The query belongs to `@story.scenes`, so another Story's or Universe's Scene
+  # can never be named. It compares the `(position, id)` pair rather than
+  # `position` alone because that pair is the order every Scene list reads; a
+  # duplicate position therefore still has an unambiguous neighbour. The
+  # association's default scope already excludes a soft-deleted Scene, so the
+  # rail cannot link to a hidden record.
+  def adjacent_scenes
+    scope = @story.scenes
+    previous_scene = scope.where(
+      "position < :position OR (position = :position AND id < :id)",
+      position: @scene.position, id: @scene.id
+    ).reorder(position: :desc, id: :desc).first
+    next_scene = scope.where(
+      "position > :position OR (position = :position AND id > :id)",
+      position: @scene.position, id: @scene.id
+    ).reorder(position: :asc, id: :asc).first
+
+    [ previous_scene, next_scene ]
   end
 
   # The grouping form posts the chosen scene next to the chosen group, so the

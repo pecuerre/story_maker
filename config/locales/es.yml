@@ -1792,6 +1792,26 @@ es:
     show:
       description: "Escena %{position} de %{total} en el orden en que se cuenta %{story}. El orden narrativo no es la cronología en el mundo."
       all_scenes: "Todas las escenas"
+      # El carril narrativo de arriba y de abajo de los detalles de la escena. Los
+      # dos carriles son el mismo contenido bajo puntos de referencia distintos,
+      # así que el del final de la página tiene su propio nombre accesible en
+      # lugar de duplicar exactamente el de arriba.
+      adjacent:
+        aria_label: "Escenas adyacentes"
+        aria_label_end: "Escenas adyacentes, final de la página"
+        previous: "Escena anterior"
+        next: "Escena siguiente"
+        meta: "Escena %{position} de %{total} · %{grouping}"
+        position: "Escena %{position} de %{total}"
+        start_title: "Inicio de la historia"
+        start_meta: "Esta es la escena 1 de %{total}."
+        end_title: "Fin de la historia"
+        end_meta: "Esta es la escena %{total} de %{total}."
+        only_kicker: "Única escena"
+        only_title: "Esta es la única escena de %{story}."
+        only_meta: "No hay ninguna escena anterior ni siguiente. «Todas las escenas» muestra la historia completa."
+        previous_aria: "Escena anterior, %{position} de %{total}: %{name}"
+        next_aria: "Escena siguiente, %{position} de %{total}: %{name}"
       facts:
         title: "Título"
         narrative_position: "Posición narrativa"

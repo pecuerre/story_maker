@@ -1,0 +1,89 @@
+<%# The narrative rail on Scene Details: the two Scenes beside this one in the
+    Story's telling order. It is rendered above the Elements and again after the
+    drafting contract, so a reader can continue on arrival or after finishing the
+    page. `scene`, the Story, and the Section index all come from the controller;
+    this partial only formats the pair it is given.
+
+    The rail is read-only and belongs to the page's narrative order, never to a
+    filtered list. A filter narrows a list; it is not a second order, and a
+    "next matching scene" would silently skip a Scene the reader cannot reach.
+    Every meta line therefore names the whole sequence.
+
+    A boundary is plain text rather than a disabled link, so it cannot look like
+    an action that might work later. A one-Scene Story says so once; the page
+    renders only the top rail in that case. %>
+<% previous_scene = local_assigns[:previous_scene] %>
+<% next_scene = local_assigns[:next_scene] %>
+<% scene = local_assigns.fetch(:scene) %>
+<% story = local_assigns.fetch(:story) %>
+<% total = local_assigns.fetch(:total) %>
+<% section_paths = local_assigns.fetch(:section_paths) %>
+<% placement = local_assigns.fetch(:placement) %>
+
+<nav class="scene-rail scene-rail--<%= placement %>"
+  aria-label="<%= t("scenes.show.adjacent.#{placement == "top" ? "aria_label" : "aria_label_end"}") %>">
+  <% if total == 1 %>
+    <div class="scene-rail-only">
+      <span class="scene-step-kicker"><%= t("scenes.show.adjacent.only_kicker") %></span>
+      <span class="scene-step-title"><%= t("scenes.show.adjacent.only_title", story: story.name) %></span>
+      <span class="scene-step-meta"><%= t("scenes.show.adjacent.only_meta") %></span>
+    </div>
+  <% else %>
+    <div class="scene-rail-grid">
+      <% if previous_scene %>
+        <%= link_to universe_story_scene_path(story_id: story, id: previous_scene),
+          class: "scene-step scene-step--prev",
+          rel: (placement == "top" ? "prev" : nil),
+          aria: { label: t("scenes.show.adjacent.previous_aria",
+            position: previous_scene.position + 1, total: total, name: previous_scene.name) } do %>
+          <span class="scene-step-kicker">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            <%= t("scenes.show.adjacent.previous") %>
+          </span>
+          <span class="scene-step-title"><%= previous_scene.name %></span>
+          <span class="scene-step-meta"><%= t("scenes.show.adjacent.meta",
+            position: previous_scene.position + 1, total: total,
+            grouping: scene_grouping_label_by_id(section_paths, previous_scene.section_id)) %></span>
+        <% end %>
+      <% else %>
+        <span class="scene-step scene-step--prev scene-step--boundary">
+          <span class="scene-step-kicker">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            <%= t("scenes.show.adjacent.previous") %>
+          </span>
+          <span class="scene-step-title"><%= t("scenes.show.adjacent.start_title") %></span>
+          <span class="scene-step-meta"><%= t("scenes.show.adjacent.start_meta", total: total) %></span>
+        </span>
+      <% end %>
+
+      <span class="scene-rail-center"><%= t("scenes.show.adjacent.position",
+        position: scene.position + 1, total: total) %></span>
+
+      <% if next_scene %>
+        <%= link_to universe_story_scene_path(story_id: story, id: next_scene),
+          class: "scene-step scene-step--next",
+          rel: (placement == "top" ? "next" : nil),
+          aria: { label: t("scenes.show.adjacent.next_aria",
+            position: next_scene.position + 1, total: total, name: next_scene.name) } do %>
+          <span class="scene-step-kicker">
+            <%= t("scenes.show.adjacent.next") %>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </span>
+          <span class="scene-step-title"><%= next_scene.name %></span>
+          <span class="scene-step-meta"><%= t("scenes.show.adjacent.meta",
+            position: next_scene.position + 1, total: total,
+            grouping: scene_grouping_label_by_id(section_paths, next_scene.section_id)) %></span>
+        <% end %>
+      <% else %>
+        <span class="scene-step scene-step--next scene-step--boundary">
+          <span class="scene-step-kicker">
+            <%= t("scenes.show.adjacent.next") %>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </span>
+          <span class="scene-step-title"><%= t("scenes.show.adjacent.end_title") %></span>
+          <span class="scene-step-meta"><%= t("scenes.show.adjacent.end_meta", total: total) %></span>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+</nav>

@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-19
+
+### added
+
+- **Scene neighbour rail.** Scene Details now opens and closes with previous/next links to the adjacent Scenes in narrative order, with named story boundaries and one-scene copy; the rail is read-only and never follows a filtered list.
+
 ## 2026-11-18
 
 ### changed
@@ -47,6 +53,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Scene neighbour comparison.** A static prototype compares Scene Details without previous/next links against a narrative rail above the Elements, below the drafting contract, or both, with first/last/only boundaries and whole-story or filtered arrivals; no application view changed.
 - **Scene filter layout comparison.** A static prototype compares the current Scenes filter with an always-visible search plus an **Advanced filters** disclosure, across both widths and every filter state; no application view changed.
 - **Comparison prototypes in the guide.** A UI change with more than one reasonable shape now starts as a static current-vs-proposed page under `docs/`, with both states, themes, and widths measured before any view changes.
 

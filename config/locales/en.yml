@@ -1874,6 +1874,25 @@ en:
     show:
       description: "Scene %{position} of %{total} in the order %{story} is told. Narrative order is not in-world chronology."
       all_scenes: "All scenes"
+      # The narrative rail above and below Scene Details. The two rails are the
+      # same content under different landmarks, so the end-of-page one has its own
+      # accessible name instead of duplicating the top one exactly.
+      adjacent:
+        aria_label: "Adjacent scenes"
+        aria_label_end: "Adjacent scenes, end of page"
+        previous: "Previous scene"
+        next: "Next scene"
+        meta: "Scene %{position} of %{total} · %{grouping}"
+        position: "Scene %{position} of %{total}"
+        start_title: "Start of the story"
+        start_meta: "This is scene 1 of %{total}."
+        end_title: "End of the story"
+        end_meta: "This is scene %{total} of %{total}."
+        only_kicker: "Only scene"
+        only_title: "This is the only scene in %{story}."
+        only_meta: "There is no previous or next scene. All scenes is the whole story."
+        previous_aria: "Previous scene, %{position} of %{total}: %{name}"
+        next_aria: "Next scene, %{position} of %{total}: %{name}"
       facts:
         title: "Title"
         narrative_position: "Narrative position"

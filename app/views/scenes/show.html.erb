@@ -17,6 +17,14 @@
 
 <%= render "scenes/workspace_tabs" %>
 
+<%# The top rail puts the neighbouring Scenes within reach on arrival, before the
+    Element prose. It is read-only navigation and follows the whole narrative
+    order, never a filter the reader may have arrived from. %>
+<%= render "scenes/adjacent_scenes",
+  scene: @scene, story: @story, total: @scene_total,
+  previous_scene: @previous_scene, next_scene: @next_scene,
+  section_paths: @section_paths, placement: "top" %>
+
 <%# The Elements come first, before the identity card. Scene Details is the page a
     writer returns to in order to write, and the identity facts are reference
     matter around the prose rather than the prose's gateway: a page that opens
@@ -45,7 +53,7 @@
   <% end %>
 </div>
 
-<%# The drafting contract closes the page: it is the writer's note about the
+<%# The drafting contract closes the page's content: it is the writer's note about the
     scene as a whole, not one of its identity facts. It is a browser display
     preference, so hiding it draws nothing here; the stored note and the import
     that wrote it are untouched. %>
@@ -58,4 +66,14 @@
       <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.drafting_contract_blank") %></p>
     <% end %>
   </section>
+<% end %>
+
+<%# The bottom rail catches a reader who has finished the page. A one-Scene Story
+    omits it, because the top rail has already said there is nowhere to go; two
+    copies of the same sentence would not add a destination. %>
+<% if @scene_total > 1 %>
+  <%= render "scenes/adjacent_scenes",
+    scene: @scene, story: @story, total: @scene_total,
+    previous_scene: @previous_scene, next_scene: @next_scene,
+    section_paths: @section_paths, placement: "bottom" %>
 <% end %>

@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-layout="proposed" data-rail="both" data-width="desktop" data-arrival="whole">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universe Maker — Scene neighbour navigation comparison</title>
+<style>
+  /* ============================================================
+     Review chrome. Not part of either layout.
+     ============================================================ */
+  :root { --review-h: 52px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  [hidden] { display: none !important; }
+  body {
+    background: #e5e2db;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar {
+    position: sticky; top: 0; z-index: 100; min-height: var(--review-h);
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 8px 16px; background: #14171a; color: #edf0f2;
+    font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar strong { font-size: 14px; letter-spacing: .01em; }
+  .reviewbar .sep { width: 1px; height: 22px; background: #394047; }
+  .reviewbar .group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .reviewbar .group-label {
+    color: #aab4bc; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; margin-right: 2px;
+  }
+  .reviewbar button {
+    appearance: none; border: 1px solid #3c454d; background: #20262b; color: #e8edf0;
+    border-radius: 4px; padding: 5px 9px; font: inherit; cursor: pointer;
+  }
+  .reviewbar button:hover { background: #2b3339; }
+  .reviewbar button[aria-pressed="true"] {
+    background: #e8edf0; border-color: #e8edf0; color: #15191c; font-weight: 650;
+  }
+  .reviewbar .note { margin-left: auto; color: #9aa5ad; font-size: 11.5px; }
+
+  .urlbar {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 8px 16px; background: #f3f1ec; color: #4c4a44;
+    border-bottom: 1px solid #d3ccbc; font-size: 12px;
+  }
+  .urlbar .urlbar-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: #6d675c;
+  }
+  .urlbar code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; overflow-wrap: anywhere; color: #1e1d1a;
+  }
+  .urlbar .urlbar-note { margin-left: auto; color: #6d675c; font-size: 11px; }
+
+  /* ============================================================
+     Built Index tokens (app/assets/stylesheets/_theme.scss).
+     ============================================================ */
+  html {
+    --bg: #f6f4ee; --surface: #fffdf8; --surface-2: #ece8dd;
+    --text: #1e1d1a; --muted: #5f5a50;
+    --border: #d3ccbc; --control-border: #8c8371;
+    --primary: #1d4f7a; --primary-strong: #173f61; --primary-soft: #e4edf5;
+    --on-primary: #ffffff; --hover: #efebe2; --row-hover: #faf7f0;
+    --danger: #a32626;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+      Georgia, "Times New Roman", serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --bg: #171613; --surface: #1e1c18; --surface-2: #28241e;
+    --text: #ece7dc; --muted: #b3ab9b;
+    --border: #3d382e; --control-border: #8b8272;
+    --primary: #9cc0e0; --primary-strong: #c7ddf0; --primary-soft: #22384b;
+    --on-primary: #0d2237; --hover: #26221c; --row-hover: #242019;
+    --danger: #f09999;
+    color-scheme: dark;
+  }
+
+  .stage { padding: 24px 16px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .stage-caption {
+    align-self: center; color: #57534a; font-size: 11.5px; letter-spacing: .02em;
+    text-align: center; max-width: 900px;
+  }
+  .mock {
+    width: min(1000px, 100%);
+    background: var(--bg); color: var(--text);
+    border: 1px solid #b5ae9f; border-radius: 6px;
+    box-shadow: 0 14px 44px rgba(25, 23, 19, .16);
+    overflow: hidden;
+    container-type: inline-size;
+    font-size: 15px; line-height: 1.5;
+  }
+  html[data-width="phone"] .mock { width: min(390px, 100%); }
+
+  .mock a { color: var(--primary); text-decoration: none; }
+  .mock a:hover { text-decoration: underline; }
+  .mock h1, .mock h2, .mock p { margin-top: 0; }
+  .mock h2 { font-family: var(--serif); font-size: 15px; font-weight: 600; line-height: 1.3; }
+
+  /* Page header, from `shared/_page_header` and `_application_custom.scss`. */
+  .page { padding: 26px 28px 34px; }
+  .mock-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; padding-bottom: 14px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-head > div:first-child { flex: 1 1 18rem; min-width: 0; }
+  .page-eyebrow {
+    margin-bottom: 4px; color: var(--muted);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  }
+  .page-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .page-title {
+    margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 600;
+    line-height: 1.18; letter-spacing: -.012em;
+  }
+  .page-description {
+    max-width: 64ch; margin: 6px 0 0; color: var(--muted);
+    font-family: var(--serif); font-size: 15px; line-height: 1.5;
+  }
+  .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tabs {
+    display: flex; gap: 2px; margin: 0 0 20px;
+    border-bottom: 1px solid var(--border); overflow-x: auto;
+  }
+  .tabs a {
+    display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px;
+    border-bottom: 2px solid transparent; color: var(--muted); font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .tabs a.active { border-bottom-color: var(--primary); color: var(--primary-strong); font-weight: 650; }
+  .tabs a:hover { color: var(--text); text-decoration: none; }
+
+  /* Controls, built Bootstrap values. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 31px; padding: 0 12px; border: 1px solid transparent;
+    border-radius: 4px; font: inherit; font-size: 12.8px; font-weight: 650;
+    line-height: 1; cursor: pointer; white-space: nowrap;
+    background: var(--primary); color: var(--on-primary);
+  }
+  .btn:hover { filter: brightness(1.05); text-decoration: none; }
+  .btn-outline { background: transparent; border-color: var(--control-border); color: var(--text); }
+  .btn-outline:hover { background: var(--hover); }
+  .btn-sm { min-height: 26px; padding: 0 7px; font-size: 11.5px; }
+  .btn:focus-visible, .mock a:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+
+  /* ---------- Scene Details blocks ---------- */
+  .detail-section { margin-top: 24px; }
+  .section-head {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .section-head h2 { margin: 0; }
+  .section-head .btn { margin-left: auto; }
+  .count-pill {
+    display: inline-flex; align-items: center; padding: 1px 8px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .form-text { margin: 0 0 10px; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+  .mention { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .16em; }
+  .mention--suggested { text-decoration-style: dashed; }
+
+  .content-surface {
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); overflow: hidden;
+  }
+  .entity-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    min-height: 46px; padding: 7px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .entity-row:last-child { border-bottom: 0; }
+  .entity-row:hover, .entity-row:focus-within { background: var(--row-hover); }
+  .entity-pos {
+    display: inline-grid; place-items: center; flex: 0 0 auto;
+    min-width: 22px; height: 22px; margin-top: 2px; padding: 0 5px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  .entity-copy { flex: 1 1 auto; min-width: 0; }
+  .entity-title-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .entity-title { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+  .entity-description {
+    max-width: 52rem; margin-top: 2px; color: var(--muted);
+    font-family: var(--serif); font-size: 13.5px; line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .entity-actions { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+  .entity-actions .btn { min-height: 26px; }
+  .icon-btn {
+    appearance: none; width: 26px; height: 26px; padding: 0;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: transparent; color: var(--muted); cursor: pointer;
+    font: inherit; font-size: 12px; line-height: 1;
+  }
+  .icon-btn:hover { background: var(--hover); color: var(--text); }
+
+  .surface-card {
+    margin-top: 24px; padding: 16px;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface);
+  }
+  .scene-facts {
+    border-top: 1px solid var(--border);
+  }
+  .scene-fact {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .scene-fact .page-eyebrow { margin-bottom: 2px; }
+  .scene-fact p { margin-bottom: 0; }
+  .scene-fact .form-text { margin-top: 2px; margin-bottom: 0; }
+
+  .drafting-contract-body {
+    max-width: 52rem; padding: 14px 16px;
+    border: 1px solid var(--border); border-left: 3px solid var(--primary-strong);
+    border-radius: 4px; background: var(--surface-2);
+    overflow-wrap: anywhere;
+  }
+  .drafting-contract-body p { margin-bottom: 8px; }
+  .drafting-contract-body ul { margin: 0 0 8px; padding-left: 20px; }
+  .drafting-contract-body li + li { margin-top: 4px; }
+  .drafting-contract-body > :last-child { margin-bottom: 0; }
+
+  /* ============================================================
+     The proposal: a narrative rail. Nothing here exists in the app.
+     ============================================================ */
+  .scene-rail {
+    display: block; margin: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .scene-rail--bottom { margin-top: 24px; }
+  .scene-rail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 56px;
+  }
+  .scene-step {
+    display: flex; flex-direction: column; justify-content: center; gap: 1px;
+    min-width: 0; min-height: 56px; padding: 9px 12px;
+    color: var(--text);
+  }
+  .scene-step:hover, .scene-step:focus-visible {
+    background: var(--row-hover); text-decoration: none;
+  }
+  .scene-step--prev { align-items: flex-start; text-align: left; }
+  .scene-step--next { align-items: flex-end; text-align: right; }
+  .scene-step-kicker {
+    color: var(--muted); font-size: 10.5px; font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase;
+  }
+  .scene-step-title {
+    max-width: 100%; font-family: var(--serif); font-size: 16px;
+    font-weight: 600; line-height: 1.25; overflow-wrap: anywhere;
+  }
+  .scene-step:hover .scene-step-title,
+  .scene-step:focus-visible .scene-step-title {
+    text-decoration: underline; text-underline-offset: .14em;
+  }
+  .scene-step-meta { color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+  .scene-step--boundary { cursor: default; background: transparent; }
+  .scene-step--boundary:hover { background: transparent; }
+  .scene-step--boundary .scene-step-title {
+    font-family: inherit; font-size: 13px; font-weight: 650;
+  }
+  .scene-step--boundary .scene-step-kicker { color: var(--muted); }
+  .scene-rail-center {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    color: var(--muted); font-size: 11px; font-weight: 600;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .scene-rail-only {
+    padding: 12px;
+  }
+  .scene-rail-only .scene-step-title { display: block; }
+  .scene-rail-only .scene-step-meta { display: block; margin-top: 2px; }
+
+  /* Layout and rail visibility. */
+  html[data-layout="current"] .scene-rail { display: none; }
+  html[data-rail="top"] .scene-rail--bottom,
+  html[data-rail="bottom"] .scene-rail--top { display: none; }
+
+  /* The width is the page's content box, not the window. */
+  @container (max-width: 700px) {
+    .page { padding: 20px 18px 28px; }
+    .mock-head { flex-direction: column; gap: 12px; }
+    .mock-head > div:first-child { flex: 0 0 auto; }
+    .page-title { font-size: 26px; }
+    .page-actions { width: 100%; }
+  }
+  @container (max-width: 560px) {
+    .page-title { font-size: 23px; }
+    .scene-rail-grid { grid-template-columns: minmax(0, 1fr); }
+    .scene-rail-center {
+      order: -1; justify-content: flex-start;
+      padding: 6px 12px;
+      border: 0; border-bottom: 1px solid var(--border);
+    }
+    .scene-step--prev { border-bottom: 1px solid var(--border); }
+    .scene-step--next { align-items: flex-start; text-align: left; }
+    .entity-row { flex-wrap: wrap; }
+    .entity-actions { margin-left: 34px; }
+    .section-head .btn { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  /* ============================================================
+     Review notes below the stage. Chrome, not page design.
+     ============================================================ */
+  .notes {
+    max-width: 1000px; margin: 0 auto 40px; padding: 20px 24px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+  }
+  .notes h2 {
+    margin: 0 0 8px; font-family: var(--serif); font-size: 18px; font-weight: 600;
+  }
+  .notes h2:not(:first-child) { margin-top: 22px; }
+  .notes p, .notes li { font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+  .notes p { margin: 0 0 10px; }
+  .notes ul { margin: 0 0 10px; padding-left: 20px; }
+  .notes li + li { margin-top: 4px; }
+  .notes strong { color: var(--text); }
+  .notes code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text);
+  }
+  .notes .measurement {
+    padding: 10px 12px; border: 1px solid var(--border);
+    border-left: 3px solid var(--primary); border-radius: 4px;
+    color: var(--text); font-variant-numeric: tabular-nums;
+  }
+  .notes .recommendation {
+    padding: 10px 12px; border: 1px solid var(--border);
+    border-left: 3px solid var(--primary-strong); border-radius: 4px;
+    background: var(--surface-2); color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="reviewbar">
+  <strong>Scene neighbours · comparison</strong>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Layout">
+    <span class="group-label">Layout</span>
+    <button type="button" data-set-layout="current" aria-pressed="false">Current</button>
+    <button type="button" data-set-layout="proposed" aria-pressed="true">Proposed</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Boundary state">
+    <span class="group-label">Scene</span>
+    <button type="button" data-set-scene="middle" aria-pressed="true">Middle</button>
+    <button type="button" data-set-scene="first" aria-pressed="false">First</button>
+    <button type="button" data-set-scene="last" aria-pressed="false">Last</button>
+    <button type="button" data-set-scene="only" aria-pressed="false">Only</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Rail placement">
+    <span class="group-label">Rail</span>
+    <button type="button" data-set-rail="top" aria-pressed="false">Top</button>
+    <button type="button" data-set-rail="bottom" aria-pressed="false">Bottom</button>
+    <button type="button" data-set-rail="both" aria-pressed="true">Both</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Arrival">
+    <span class="group-label">Arrival</span>
+    <button type="button" data-set-arrival="whole" aria-pressed="true">Whole list</button>
+    <button type="button" data-set-arrival="filtered" aria-pressed="false">Filtered list</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Theme">
+    <span class="group-label">Theme</span>
+    <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+    <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Width">
+    <span class="group-label">Width</span>
+    <button type="button" data-set-width="desktop" aria-pressed="true">Desktop</button>
+    <button type="button" data-set-width="phone" aria-pressed="false">Phone</button>
+  </div>
+  <span class="note">Review mockup · accepted 2026-11-19 · not production</span>
+</div>
+
+<div class="urlbar">
+  <span class="urlbar-label">GET</span>
+  <code data-url>/u/meridian/s/the-fifth-cabinet/scenes/7</code>
+  <span class="urlbar-note" data-arrival-note>Opened from the whole Scenes list</span>
+</div>
+
+<div class="stage">
+  <span class="stage-caption" data-width-label>Desktop width</span>
+  <span class="stage-caption" data-state-label>Middle scene · rail both</span>
+
+  <div class="mock" id="mock">
+    <main class="page">
+      <header class="mock-head">
+        <div>
+          <div class="page-eyebrow">Story: The Fifth Cabinet</div>
+          <div class="page-title-row">
+            <h1 class="page-title" data-scene-title>A letter from the harbour</h1>
+          </div>
+          <p class="page-description" data-scene-description>Scene 7 of 24 in the order The Fifth Cabinet is told. Narrative order is not in-world chronology.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" type="button">Edit scene</button>
+          <button class="btn btn-outline" type="button">All scenes</button>
+          <button class="btn btn-outline" type="button">Discuss</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Scene workspace">
+        <a class="active" href="#" aria-current="page">Scene Details</a>
+        <a href="#">Events</a>
+        <a href="#">Characters</a>
+        <a href="#">Items</a>
+        <a href="#">Locations</a>
+        <a href="#">Tropes</a>
+      </nav>
+
+      <!-- ================= TOP RAIL (proposal only) ================= -->
+      <nav class="scene-rail scene-rail--top" aria-label="Adjacent scenes">
+        <div class="scene-rail-grid" data-rail-grid>
+          <a class="scene-step scene-step--prev" data-step="prev" href="#" rel="prev">
+            <span class="scene-step-kicker">&larr; Previous scene</span>
+            <span class="scene-step-title" data-step-title></span>
+            <span class="scene-step-meta" data-step-meta></span>
+          </a>
+          <span class="scene-step scene-step--boundary" data-step-boundary="prev" hidden>
+            <span class="scene-step-kicker">&larr; Previous scene</span>
+            <span class="scene-step-title">Start of the story</span>
+            <span class="scene-step-meta" data-boundary-meta="prev"></span>
+          </span>
+          <span class="scene-rail-center" data-rail-center></span>
+          <a class="scene-step scene-step--next" data-step="next" href="#" rel="next">
+            <span class="scene-step-kicker">Next scene &rarr;</span>
+            <span class="scene-step-title" data-step-title></span>
+            <span class="scene-step-meta" data-step-meta></span>
+          </a>
+          <span class="scene-step scene-step--boundary" data-step-boundary="next" hidden>
+            <span class="scene-step-kicker">Next scene &rarr;</span>
+            <span class="scene-step-title">End of the story</span>
+            <span class="scene-step-meta" data-boundary-meta="next"></span>
+          </span>
+        </div>
+        <div class="scene-rail-only" data-rail-only hidden>
+          <span class="scene-step-kicker">Only scene</span>
+          <span class="scene-step-title">This is the only scene in The Fifth Cabinet.</span>
+          <span class="scene-step-meta">There is no previous or next scene. All scenes is the whole story.</span>
+        </div>
+      </nav>
+
+      <section class="detail-section scene-elements">
+        <div class="section-head">
+          <h2>Scene elements</h2>
+          <span class="count-pill" aria-label="3 elements">3</span>
+          <button class="btn btn-outline btn-sm" type="button">+ Add element</button>
+        </div>
+        <p class="form-text">The scene's prose, in reading order. Narration is description or action; dialogue is written as spoken lines.</p>
+        <p class="form-text">Linked names are prose mentions, not appearances. A dashed underline means the character is not recorded as present in this scene.</p>
+
+        <div class="content-surface">
+          <div class="entity-row">
+            <span class="entity-pos" aria-label="Element 1 of 3">1</span>
+            <div class="entity-copy">
+              <div class="entity-title-row">
+                <span class="entity-title">The letter on the table</span>
+                <span class="count-pill">Dialogue</span>
+                <span class="form-text" style="margin:0">4 spoken lines</span>
+              </div>
+              <div class="entity-description"><span class="mention">Maren</span> reads the letter aloud. The harbour is named twice, and neither mention is a ship that ever docked.</div>
+            </div>
+            <div class="entity-actions">
+              <button class="btn btn-outline btn-sm" type="button">Edit</button>
+              <button class="icon-btn" type="button" aria-label="Move The letter on the table up" disabled>&uarr;</button>
+              <button class="icon-btn" type="button" aria-label="Move The letter on the table down">&darr;</button>
+              <button class="icon-btn" type="button" aria-label="Actions for The letter on the table">&hellip;</button>
+            </div>
+          </div>
+          <div class="entity-row">
+            <span class="entity-pos" aria-label="Element 2 of 3">2</span>
+            <div class="entity-copy">
+              <div class="entity-title-row">
+                <span class="entity-title">The ship that never docked</span>
+                <span class="count-pill">Narration</span>
+                <span class="form-text" style="margin:0">126 words</span>
+              </div>
+              <div class="entity-description">Outside, the tide turns against the harbour wall. <span class="mention mention--suggested">Tobias</span> counts the moored boats twice and still finds one missing.</div>
+            </div>
+            <div class="entity-actions">
+              <button class="btn btn-outline btn-sm" type="button">Edit</button>
+              <button class="icon-btn" type="button" aria-label="Move The ship that never docked up">&uarr;</button>
+              <button class="icon-btn" type="button" aria-label="Move The ship that never docked down">&darr;</button>
+              <button class="icon-btn" type="button" aria-label="Actions for The ship that never docked">&hellip;</button>
+            </div>
+          </div>
+          <div class="entity-row">
+            <span class="entity-pos" aria-label="Element 3 of 3">3</span>
+            <div class="entity-copy">
+              <div class="entity-title-row">
+                <span class="entity-title">What the index leaves out</span>
+                <span class="count-pill">Dialogue</span>
+                <span class="form-text" style="margin:0">2 spoken lines</span>
+              </div>
+              <div class="entity-description">“The index is not wrong,” <span class="mention">Renata</span> says. “It simply stops before the part that matters.”</div>
+            </div>
+            <div class="entity-actions">
+              <button class="btn btn-outline btn-sm" type="button">Edit</button>
+              <button class="icon-btn" type="button" aria-label="Move What the index leaves out up">&uarr;</button>
+              <button class="icon-btn" type="button" aria-label="Move What the index leaves out down" disabled>&darr;</button>
+              <button class="icon-btn" type="button" aria-label="Actions for What the index leaves out">&hellip;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="surface-card scene-identity">
+        <div class="scene-facts">
+          <div class="scene-fact">
+            <div class="page-eyebrow">Title</div>
+            <p data-scene-fact-title>A letter from the harbour</p>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Narrative position</div>
+            <p data-scene-fact-position>7 of 24</p>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Status</div>
+            <p><span class="count-pill">Revised</span></p>
+            <div class="form-text">A writing label for this scene. The export can include only final scenes; this does not change the narrative order.</div>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Scene tags</div>
+            <p><span class="count-pill">Investigation</span> <span class="count-pill">Revelation</span></p>
+            <div class="form-text">Tags are optional and belong to this story. Change them from the scene editor. The taxonomy is available in the Scene Tags workspace.</div>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Section group</div>
+            <p data-scene-fact-section>Chapter one — The locked room</p>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Plot arcs</div>
+            <p>The harbour ledger</p>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Tropes</div>
+            <p><span class="count-pill">The locked room</span> <span class="count-pill">A letter read aloud</span></p>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">In-world events</div>
+            <p>The harbour manifest is opened</p>
+            <div class="form-text">Link or unlink events from the Events tab.</div>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">In-world time</div>
+            <p data-scene-fact-time>11 September 2026, evening</p>
+            <div class="form-text">This is the order in world time, kept separate from the narrative position above.</div>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Point of view</div>
+            <p data-scene-fact-pov>Maren Holt</p>
+            <div class="form-text">The character whose perspective presents this scene. It is separate from the scene's participants and its speakers.</div>
+          </div>
+          <div class="scene-fact">
+            <div class="page-eyebrow">Story</div>
+            <p>The Fifth Cabinet</p>
+          </div>
+        </div>
+      </div>
+
+      <section class="detail-section scene-drafting-contract">
+        <h2 style="margin-bottom:12px">Drafting contract</h2>
+        <div class="drafting-contract-body">
+          <p><strong>One place.</strong> The locked room above the harbour, after the office has closed.</p>
+          <p><strong>One beat of time.</strong> The hour in which the tide turns.</p>
+          <p><strong>One point of view.</strong> Maren, who recognizes the handwriting before she reads the name.</p>
+          <p><strong>Dramatic question.</strong> Does she tell the others what the letter asks her to do?</p>
+        </div>
+      </section>
+
+      <!-- ================= BOTTOM RAIL (proposal only) ================= -->
+      <nav class="scene-rail scene-rail--bottom" aria-label="Adjacent scenes, end of page">
+        <div class="scene-rail-grid" data-rail-grid>
+          <a class="scene-step scene-step--prev" data-step="prev" href="#" rel="prev">
+            <span class="scene-step-kicker">&larr; Previous scene</span>
+            <span class="scene-step-title" data-step-title></span>
+            <span class="scene-step-meta" data-step-meta></span>
+          </a>
+          <span class="scene-step scene-step--boundary" data-step-boundary="prev" hidden>
+            <span class="scene-step-kicker">&larr; Previous scene</span>
+            <span class="scene-step-title">Start of the story</span>
+            <span class="scene-step-meta" data-boundary-meta="prev"></span>
+          </span>
+          <span class="scene-rail-center" data-rail-center></span>
+          <a class="scene-step scene-step--next" data-step="next" href="#" rel="next">
+            <span class="scene-step-kicker">Next scene &rarr;</span>
+            <span class="scene-step-title" data-step-title></span>
+            <span class="scene-step-meta" data-step-meta></span>
+          </a>
+          <span class="scene-step scene-step--boundary" data-step-boundary="next" hidden>
+            <span class="scene-step-kicker">Next scene &rarr;</span>
+            <span class="scene-step-title">End of the story</span>
+            <span class="scene-step-meta" data-boundary-meta="next"></span>
+          </span>
+        </div>
+        <div class="scene-rail-only" data-rail-only hidden>
+          <span class="scene-step-kicker">Only scene</span>
+          <span class="scene-step-title">This is the only scene in The Fifth Cabinet.</span>
+          <span class="scene-step-meta">There is no previous or next scene. All scenes is the whole story.</span>
+        </div>
+      </nav>
+    </main>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>What this comparison tests</h2>
+  <p>Item 81 asks whether Scene Details should carry labelled links to its neighbours. Today the page states its narrative position and offers <strong>All scenes</strong>, but it has no previous or next link, so reading a story end to end means returning to the list after every scene. The proposal is one <strong>narrative rail</strong> above the Elements and one below the drafting contract. It is a static mock of the real page markup, not a running Rails page; the application view is untouched. The scene's prose and identity values are illustrative, and only the scene identity and the rail's boundaries change between states. The direction was accepted on 2026-11-19 and is now implemented; the one-scene Story renders only the top rail so its message is not repeated.</p>
+
+  <h2>Recommended</h2>
+  <p class="recommendation"><strong>Both rails, always the whole story.</strong> The top rail is reachable on arrival; the bottom rail catches a reader who has finished the page. Previous and next mean the adjacent scenes in <code>Scene#position</code>, never the adjacent rows of a filtered list.</p>
+  <p>Each link names its direction, the neighbouring title, and the whole-story position (<em>Scene 6 of 24 · Chapter one</em>). At a boundary the missing side becomes plain text — <strong>Start of the story</strong> or <strong>End of the story</strong> — rather than a disabled or dead link. A single-scene Story says so once instead of drawing two empty halves.</p>
+
+  <h2>A filtered list stays a filtered list</h2>
+  <p><strong>The proposal does not carry the filter into Scene Details.</strong> A filter narrows the list; it is a view of the Story, not a second narrative order. If the rail walked only matching rows, <em>Next</em> would mean “next scene that still matches”, silently skipping scenes the reader cannot reach, and the last match would need a third action to continue. Instead every rail meta names the whole sequence, and the header already says <em>Scene 7 of 24</em>, so a reader arriving from four matches can see that the rail is the Story. The filtered list itself is one browser Back away; <strong>All scenes</strong> remains the canonical whole list. Use the <strong>Arrival: Filtered list</strong> control to see the same page and rail with that origin recorded in the address bar.</p>
+
+  <h2>Preserved in both layouts</h2>
+  <ul>
+    <li>The title, the Story eyebrow, the position sentence, the <strong>Edit scene</strong> primary action, <strong>All scenes</strong>, and the workspace tabs are unchanged.</li>
+    <li>The Elements stay the first substantive block, above the identity card and the drafting contract.</li>
+    <li>Every access level sees the rail, because following the Story is reading; it is not a write control and does not appear only for writers.</li>
+    <li>The rail is a <code>&lt;nav&gt;</code> landmark with normal anchors, visible labels, and a visible focus ring. It never depends on hover, a menu, or colour.</li>
+    <li>The centre position is text, not a control, and each link's accessible name carries its direction and the neighbour's position and title. <strong>All scenes</strong> stays in the header rather than being repeated in the rail.</li>
+    <li>Boundary states are explicit text. No control is rendered as a disabled button, so it cannot look like an action that might work later.</li>
+    <li>The page still has one editor and one write path; the rail never changes grouping, status, or position.</li>
+  </ul>
+
+  <h2>What the placement changes</h2>
+  <p><strong>Top</strong> puts the next scene within reach before the long identity list; <strong>Bottom</strong> closes the page like the end of a chapter, after the drafting contract; <strong>Both</strong> is the proposal, at the cost of a second rail. At phone width the rail stops being three columns: the position sits on its own line above stacked previous and next cards, so long titles are not squeezed into half a phone.</p>
+
+  <h2>Measured at this width</h2>
+  <p class="measurement" data-measurements>Measuring…</p>
+  <p>Heights are read from this page's own DOM at the selected width, scene, and rail placement. A rail adds its own height, and the second rail adds it again; the comparison does not claim the proposal is shorter, only that it puts the neighbouring scenes on the page. Font fallback changes the numbers slightly.</p>
+
+  <h2>Still to check outside this page</h2>
+  <p>The direction was accepted on 2026-11-19; the implementation adds request coverage for every boundary and the canonical tie-break, localized labels, and the Scene Details docs update. A comparison still does not replace rendered browser checks, keyboard and screen-reader inspection, or participant testing.</p>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var mock = document.getElementById('mock');
+    var review = {
+      layout: 'proposed',
+      scene: 'middle',
+      rail: 'both',
+      arrival: 'whole',
+      theme: 'light',
+      width: 'desktop'
+    };
+    var scenes = {
+      middle: {
+        position: 7,
+        total: 24,
+        title: 'A letter from the harbour',
+        section: 'Chapter one — The locked room',
+        time: '11 September 2026, evening',
+        pov: 'Maren Holt',
+        prev: { position: 6, title: 'The cabinet unlocked', section: 'Chapter one — The locked room' },
+        next: { position: 8, title: 'The index omits a name', section: 'Chapter two — The harbour' }
+      },
+      first: {
+        position: 1,
+        total: 24,
+        title: 'The cabinet unlocked',
+        section: 'Chapter one — The locked room',
+        time: '9 September 2026, morning',
+        pov: 'Elaine Voss',
+        prev: null,
+        next: { position: 2, title: 'A letter from the harbour', section: 'Chapter one — The locked room' }
+      },
+      last: {
+        position: 24,
+        total: 24,
+        title: 'The last drawer',
+        section: 'Chapter three — The map',
+        time: '2 October 2026, night',
+        pov: 'Renata Vale',
+        prev: { position: 23, title: 'What the map remembered', section: 'Chapter three — The map' },
+        next: null
+      },
+      only: {
+        position: 1,
+        total: 1,
+        title: 'The only room',
+        section: 'Ungrouped',
+        time: 'No in-world time recorded yet.',
+        pov: 'No point of view recorded yet.',
+        prev: null,
+        next: null,
+        only: true
+      }
+    };
+
+    var allowed = {
+      layout: ['current', 'proposed'],
+      scene: ['middle', 'first', 'last', 'only'],
+      rail: ['top', 'bottom', 'both'],
+      arrival: ['whole', 'filtered'],
+      theme: ['light', 'dark'],
+      width: ['desktop', 'phone']
+    };
+    var params = new URLSearchParams(window.location.search);
+    Object.keys(allowed).forEach(function (key) {
+      if (allowed[key].indexOf(params.get(key)) !== -1) review[key] = params.get(key);
+    });
+
+    function applyPressed(selector, attribute, value) {
+      document.querySelectorAll(selector).forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.getAttribute(attribute) === value));
+      });
+    }
+
+    function stepLabel(step) {
+      if (!step) return '';
+      return 'Scene ' + step.position + ' of ' + scenes[review.scene].total +
+        ' · ' + step.section;
+    }
+
+    function updateRails() {
+      var scene = scenes[review.scene];
+      var total = scene.total;
+
+      document.querySelectorAll('[data-step="prev"]').forEach(function (link) {
+        link.hidden = !scene.prev;
+        if (scene.prev) {
+          link.querySelector('[data-step-title]').textContent = scene.prev.title;
+          link.querySelector('[data-step-meta]').textContent = stepLabel(scene.prev);
+          link.setAttribute('aria-label',
+            'Previous scene, ' + scene.prev.position + ' of ' + total +
+            ': ' + scene.prev.title);
+        }
+      });
+      document.querySelectorAll('[data-step="next"]').forEach(function (link) {
+        link.hidden = !scene.next;
+        if (scene.next) {
+          link.querySelector('[data-step-title]').textContent = scene.next.title;
+          link.querySelector('[data-step-meta]').textContent = stepLabel(scene.next);
+          link.setAttribute('aria-label',
+            'Next scene, ' + scene.next.position + ' of ' + total +
+            ': ' + scene.next.title);
+        }
+      });
+      document.querySelectorAll('[data-step-boundary="prev"]').forEach(function (boundary) {
+        boundary.hidden = Boolean(scene.prev) || Boolean(scene.only);
+        boundary.querySelector('[data-boundary-meta]').textContent =
+          'This is scene 1 of ' + total + '.';
+      });
+      document.querySelectorAll('[data-step-boundary="next"]').forEach(function (boundary) {
+        boundary.hidden = Boolean(scene.next) || Boolean(scene.only);
+        boundary.querySelector('[data-boundary-meta]').textContent =
+          'This is scene ' + total + ' of ' + total + '.';
+      });
+      document.querySelectorAll('[data-rail-grid]').forEach(function (grid) {
+        grid.hidden = Boolean(scene.only);
+      });
+      document.querySelectorAll('[data-rail-only]').forEach(function (only) {
+        only.hidden = !scene.only;
+      });
+      document.querySelectorAll('[data-rail-center]').forEach(function (center) {
+        center.textContent = 'Scene ' + scene.position + ' of ' + total;
+      });
+
+      document.querySelectorAll('[data-scene-title]').forEach(function (element) {
+        element.textContent = scene.title;
+      });
+      document.querySelectorAll('[data-scene-description]').forEach(function (element) {
+        element.textContent = 'Scene ' + scene.position + ' of ' + total +
+          ' in the order The Fifth Cabinet is told. Narrative order is not in-world chronology.';
+      });
+      document.querySelectorAll('[data-scene-fact-title]').forEach(function (element) {
+        element.textContent = scene.title;
+      });
+      document.querySelectorAll('[data-scene-fact-position]').forEach(function (element) {
+        element.textContent = scene.position + ' of ' + total;
+      });
+      document.querySelectorAll('[data-scene-fact-section]').forEach(function (element) {
+        element.textContent = scene.section;
+      });
+      document.querySelectorAll('[data-scene-fact-time]').forEach(function (element) {
+        element.textContent = scene.time;
+      });
+      document.querySelectorAll('[data-scene-fact-pov]').forEach(function (element) {
+        element.textContent = scene.pov;
+      });
+    }
+
+    function measure() {
+      var page = document.querySelector('.page');
+      var previousLayout = root.getAttribute('data-layout');
+
+      root.setAttribute('data-layout', 'current');
+      var withoutRail = page.getBoundingClientRect().height;
+
+      root.setAttribute('data-layout', 'proposed');
+      var withRail = page.getBoundingClientRect().height;
+
+      var pageTop = page.getBoundingClientRect().top;
+      var rails = Array.prototype.slice.call(document.querySelectorAll('.scene-rail'))
+        .filter(function (rail) { return rail.getClientRects().length > 0; });
+      var railHeights = rails.map(function (rail) {
+        return Math.round(rail.getBoundingClientRect().height);
+      });
+      var railTops = rails.map(function (rail) {
+        return Math.round(rail.getBoundingClientRect().top - pageTop);
+      });
+
+      root.setAttribute('data-layout', previousLayout);
+
+      var pageStyle = window.getComputedStyle(page);
+      var pageWidth = Math.round(
+        page.clientWidth -
+        parseFloat(pageStyle.paddingLeft) -
+        parseFloat(pageStyle.paddingRight)
+      );
+      var sceneLabel = {
+        middle: 'middle scene',
+        first: 'first scene',
+        last: 'last scene',
+        only: 'only scene'
+      }[review.scene];
+      var placement = {
+        top: 'top rail',
+        bottom: 'bottom rail',
+        both: 'both rails'
+      }[review.rail];
+
+      var detail = '';
+      if (rails.length === 0) {
+        detail = ' no rail, because this is the current layout.';
+      } else if (rails.length === 1) {
+        detail = ' one ' + railHeights[0] + ' px rail starting ' +
+          railTops[0] + ' px from the page top.';
+      } else {
+        detail = ' two rails, ' + railHeights.join(' px and ') +
+          ' px, starting ' + railTops.join(' px and ') + ' px from the page top.';
+      }
+
+      document.querySelector('[data-measurements]').textContent =
+        'At ' + pageWidth + ' px of content width, ' + sceneLabel + ', ' +
+        placement + ': ' + Math.round(withoutRail) + ' px tall without the rail and ' +
+        Math.round(withRail) + ' px with it;' + detail;
+    }
+
+    function render() {
+      root.setAttribute('data-layout', review.layout);
+      root.setAttribute('data-theme', review.theme);
+      root.setAttribute('data-width', review.width);
+      root.setAttribute('data-rail', review.rail);
+      root.setAttribute('data-arrival', review.arrival);
+
+      updateRails();
+
+      var arrivalNote = review.arrival === 'filtered'
+        ? 'Opened from /u/meridian/s/the-fifth-cabinet/scenes?q=harbour&status=revised — 4 matches; the page and rail do not read that query'
+        : 'Opened from the whole Scenes list';
+      document.querySelector('[data-arrival-note]').textContent = arrivalNote;
+
+      document.querySelector('[data-width-label]').textContent =
+        review.width === 'phone' ? 'Phone width' : 'Desktop width';
+      var arrivalLabel = review.arrival === 'filtered'
+        ? ' · arrived from 4 filtered scenes'
+        : '';
+      document.querySelector('[data-state-label]').textContent =
+        (review.layout === 'current'
+          ? 'Current layout · no rail'
+          : ({ middle: 'Middle scene', first: 'First scene', last: 'Last scene', only: 'Only scene' })[review.scene] +
+            ' · rail ' + review.rail) + arrivalLabel;
+
+      applyPressed('[data-set-layout]', 'data-set-layout', review.layout);
+      applyPressed('[data-set-scene]', 'data-set-scene', review.scene);
+      applyPressed('[data-set-rail]', 'data-set-rail', review.rail);
+      applyPressed('[data-set-arrival]', 'data-set-arrival', review.arrival);
+      applyPressed('[data-set-theme]', 'data-set-theme', review.theme);
+      applyPressed('[data-set-width]', 'data-set-width', review.width);
+
+      try {
+        var query = '?layout=' + review.layout + '&scene=' + review.scene +
+          '&rail=' + review.rail + '&arrival=' + review.arrival +
+          '&theme=' + review.theme + '&width=' + review.width;
+        window.history.replaceState(null, '', query);
+      } catch (error) {
+        // A local file opened without a server can refuse history changes; the
+        // page still works, the address simply does not record the review state.
+      }
+
+      measure();
+    }
+
+    document.querySelectorAll('[data-set-layout]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.layout = button.getAttribute('data-set-layout');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-scene]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.scene = button.getAttribute('data-set-scene');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-rail]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.rail = button.getAttribute('data-set-rail');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-arrival]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.arrival = button.getAttribute('data-set-arrival');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-theme]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.theme = button.getAttribute('data-set-theme');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-width]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.width = button.getAttribute('data-set-width');
+        render();
+      });
+    });
+
+    render();
+  })();
+</script>
+</body>
+</html>

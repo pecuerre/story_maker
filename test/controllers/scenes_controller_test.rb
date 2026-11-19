@@ -460,6 +460,99 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene), count: 0
   end
 
+  test "scene details links the adjacent scenes in narrative order" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+
+    assert_response :success
+    # A middle Scene has both neighbours, and each link names the record it opens
+    # rather than only "previous" or "next".
+    assert_select ".scene-rail--top a.scene-step--prev[href=?][rel=prev]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one)) do
+      assert_select ".scene-step-kicker", text: /Previous scene/
+      assert_select ".scene-step-title", text: "Scene one"
+      assert_select ".scene-step-meta", text: "Scene 1 of 3 · Section one"
+      assert_select "[aria-label=?]", "Previous scene, 1 of 3: Scene one"
+    end
+    assert_select ".scene-rail--top a.scene-step--next[href=?][rel=next]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three)) do
+      assert_select ".scene-step-kicker", text: /Next scene/
+      assert_select ".scene-step-title", text: "Scene three"
+      assert_select ".scene-step-meta", text: "Scene 3 of 3 · Ungrouped"
+      assert_select "[aria-label=?]", "Next scene, 3 of 3: Scene three"
+    end
+    assert_select ".scene-rail--top .scene-rail-center", text: "Scene 2 of 3"
+    # The same pair closes the page after the drafting contract.
+    assert_select ".scene-rail--bottom a.scene-step--prev",
+      text: /Previous scene.*Scene one/m
+    assert_select ".scene-rail--bottom a.scene-step--next",
+      text: /Next scene.*Scene three/m
+  end
+
+  test "scene details states the story boundaries instead of drawing dead links" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one))
+
+    assert_response :success
+    assert_select ".scene-rail--top a.scene-step--prev", count: 0
+    assert_select ".scene-rail--top .scene-step--prev.scene-step--boundary .scene-step-title",
+      text: "Start of the story"
+    assert_select ".scene-rail--top .scene-step--prev.scene-step--boundary .scene-step-meta",
+      text: "This is scene 1 of 3."
+    assert_select ".scene-rail--top a.scene-step--next[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+
+    assert_response :success
+    assert_select ".scene-rail--top a.scene-step--next", count: 0
+    assert_select ".scene-rail--top .scene-step--next.scene-step--boundary .scene-step-title",
+      text: "End of the story"
+    assert_select ".scene-rail--top .scene-step--next.scene-step--boundary .scene-step-meta",
+      text: "This is scene 3 of 3."
+    assert_select ".scene-rail--top a.scene-step--prev[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+  end
+
+  test "a one-scene story says so once and omits the bottom rail" do
+    story = stories(:story_alt)
+    scene = scenes(:scene_alt)
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: story, id: scene)
+
+    assert_response :success
+    assert_select ".scene-rail--top .scene-rail-only .scene-step-title",
+      text: "This is the only scene in Spin-off."
+    assert_select ".scene-rail--top a.scene-step", count: 0
+    assert_select ".scene-rail--bottom", count: 0
+  end
+
+  test "a soft-deleted neighbour is not offered" do
+    scenes(:scene_two).soft_delete
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one))
+
+    assert_response :success
+    assert_select ".scene-rail--top a.scene-step--next[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+    assert_select ".scene-rail--top a.scene-step--next[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two)), count: 0
+  end
+
+  test "adjacent scenes keep the canonical position and id order when positions tie" do
+    tied = @story.scenes.create!(name: "Tied scene", position: 1)
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+
+    assert_response :success
+    assert_select ".scene-rail--top a.scene-step--next[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: tied)
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: tied)
+
+    assert_response :success
+    assert_select ".scene-rail--top a.scene-step--prev[href=?]",
+      universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+  end
+
   test "scene details separates narrative order from in-world time" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
@@ -586,6 +679,10 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='modal-form#move']", count: 0
     assert_select "button[data-action='modal-form#destroy']", count: 0
     assert_select "[data-controller='scene-element-form']", count: 0
+    # Following the Story is reading, so a guest keeps the rail and its boundary.
+    assert_select ".scene-rail--top a.scene-step--next", count: 1
+    assert_select ".scene-rail--top .scene-step--prev.scene-step--boundary .scene-step-title",
+      text: "Start of the story"
   end
 
   test "the element list is the page's writing surface, above the identity facts" do

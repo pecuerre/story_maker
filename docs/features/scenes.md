@@ -209,6 +209,34 @@ JSON-only: there is no Turbo form to follow, so the visible Move buttons are iss
 `modal_form_controller.js#move`, which `PATCH`es the same `move` action and then performs the same-URL
 refresh a save performs.
 
+## Moving between Scenes
+
+Scene Details opens and closes with the same **narrative rail**: the two Scenes on either side of this
+one in the Story's telling order. The top rail sits below the workspace tabs, above the Elements; the
+bottom rail follows the drafting contract. Both are read-only, both render for every access level, and
+neither is a write path, so a guest and a read-only member see exactly the links a writer sees.
+
+- **The rail always follows the whole Story.** It never reads a filtered list's query, and it never
+  means "next matching Scene". A filter narrows a list; it is not a second narrative order, so walking
+  only matching rows would silently skip Scenes the reader cannot reach. The header's position
+  sentence and every rail meta line name the whole sequence, and **All scenes** remains the canonical
+  list.
+- **The neighbours come from `(position, id)` within the Story.** `ScenesController#adjacent_scenes`
+  reads `@story.scenes` before and after the current pair, so another Story's or Universe's Scene can
+  never be named and the canonical tie-break is preserved. The association's default scope excludes a
+  soft-deleted Scene, and no filter is carried into Scene Details.
+- **Each link names what it opens.** The direction, the neighbour's title, and its whole-story position
+  with its Section path or **Ungrouped** are all visible, and the link's accessible name carries the
+  direction, position, and title. The top pair carries `rel="prev"`/`rel="next"`; the bottom pair is the
+  same destination without the document relationship.
+- **A boundary is text, not a disabled control.** The first Scene says **Start of the story** and the
+  last says **End of the story**, each with its position, rather than drawing a dead link that might
+  appear to work later. A Story with one Scene says so once, and the bottom rail is omitted because
+  there is no second destination to offer.
+- **The rail is not a second ordering path.** It creates no record, changes no `position`, and has no
+  mutation route or form. Moving a Scene still happens only through the Scenes list or board's
+  **Move up**/**Move down** controls.
+
 ## Narrative order beside the Timeline
 
 The **Narrative order** entry in the Story analytics block of the left sidebar

@@ -621,6 +621,12 @@ The painted shape:
   **Edit** button beside its Move controls and keeps Delete in the menu. The editor's Content field is
   a tall, growing textarea (`.scene-element-body`) rather than a five-row box, and the dialog is
   full-screen below `sm`, so a phone's keyboard has room above the paragraph it is writing into.
+- Scene Details opens and closes with the same `.scene-rail`, whose reading rules and boundaries are in
+  [features/scenes.md](features/scenes.md#moving-between-scenes). It is a quiet hairline band rather
+  than a card: two halves around a centre position, the whole half clickable, and the title underlined
+  on hover or focus. A boundary side is plain text, not a disabled control. Below `sm` the position
+  sits on its own line above stacked previous and next halves, so long titles are not squeezed into
+  half a phone.
 - A Scene's drafting contract, when the browser preference shows it, is a `.drafting-contract-body`
   surface closing the page: a tertiary-background card with a leading accent rule, rendered
   Markdown, and tighter list spacing than body prose, so an imported contract reads as an outline
@@ -782,6 +788,8 @@ proposed one on the same page, with the same content in each, and a review bar t
 state, light/dark, and desktop/phone, so the two are judged like for like rather than from a
 description. The [visual directions](visual_directions.md) exercise is the precedent for a large
 comparison, and the [Scene filter comparison](scene_filter_prototype.html) is the working example.
+The [Scene neighbour comparison](scene_neighbor_prototype.html) applies the same review bar to a
+details page, where the states are first, last, and only scenes rather than list filters.
 
 - Copy the built values from `_theme.scss` and the real view markup. A prototype is a hand-built
   mock, not a running Rails page, but it must not introduce a second palette or a simplified

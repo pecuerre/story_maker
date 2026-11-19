@@ -2083,6 +2083,152 @@ $um-search-match: #ffc107;
   flex: 0 0 9rem;
 }
 
+// Scene Details opens and closes with the same narrative rail: the two Scenes
+// beside this one in the Story's telling order. It is a quiet hairline band, not
+// a card, so it reads as navigation between records rather than as another block
+// of the page's content. The whole half is the link, and hover only strengthens
+// the title that is already visible.
+.scene-rail {
+  border-top: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--bs-border-color);
+  background: var(--bs-card-bg);
+}
+
+.scene-rail--bottom {
+  margin-top: 1.5rem;
+}
+
+.scene-rail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 3.5rem;
+}
+
+.scene-step {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .0625rem;
+  min-width: 0;
+  min-height: 3.5rem;
+  padding: .5625rem .75rem;
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.scene-step:hover,
+.scene-step:focus-visible {
+  background: var(--um-row-hover);
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.scene-step--prev {
+  align-items: flex-start;
+  text-align: start;
+}
+
+.scene-step--next {
+  align-items: flex-end;
+  text-align: end;
+}
+
+.scene-step-kicker {
+  color: var(--bs-secondary-color);
+  font-size: .65625rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.scene-step-title {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: var(--um-font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.scene-step:hover .scene-step-title,
+.scene-step:focus-visible .scene-step-title {
+  text-decoration: underline;
+  text-underline-offset: .14em;
+}
+
+.scene-step-meta {
+  color: var(--bs-secondary-color);
+  font-size: .71875rem;
+  line-height: 1.35;
+}
+
+// A sequence boundary is a fact, not a disabled control: it stays plain text and
+// never looks like a button that might start working.
+.scene-step--boundary {
+  cursor: default;
+}
+
+.scene-step--boundary:hover {
+  background: transparent;
+}
+
+.scene-step--boundary .scene-step-title {
+  font-family: inherit;
+  font-size: .8125rem;
+  font-weight: 650;
+}
+
+.scene-rail-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 .75rem;
+  border-right: 1px solid var(--bs-border-color);
+  border-left: 1px solid var(--bs-border-color);
+  color: var(--bs-secondary-color);
+  font-size: .6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scene-rail-only {
+  padding: .75rem;
+}
+
+.scene-rail-only .scene-step-title,
+.scene-rail-only .scene-step-meta {
+  display: block;
+}
+
+.scene-rail-only .scene-step-meta {
+  margin-top: .125rem;
+}
+
+@media (max-width: 575.98px) {
+  .scene-rail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scene-rail-center {
+    order: -1;
+    justify-content: flex-start;
+    padding: .375rem .75rem;
+    border: 0;
+    border-bottom: 1px solid var(--bs-border-color);
+  }
+
+  .scene-step--prev {
+    border-bottom: 1px solid var(--bs-border-color);
+  }
+
+  .scene-step--next {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
+
 .scene-identity {
   margin-top: 1.25rem;
 }

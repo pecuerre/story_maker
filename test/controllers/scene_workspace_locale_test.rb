@@ -185,6 +185,45 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".taxonomy-tag", text: "Scene tag one"
   end
 
+  test "the adjacent-scene rail is Spanish and names the whole story" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
+
+    assert_response :success
+    assert_select ".scene-rail--top[aria-label=?]", "Escenas adyacentes"
+    assert_select ".scene-rail--bottom[aria-label=?]", "Escenas adyacentes, final de la página"
+    assert_select ".scene-rail--top a.scene-step--prev" do
+      assert_select ".scene-step-kicker", text: /Escena anterior/
+      assert_select ".scene-step-title", text: "Scene one"
+      assert_select ".scene-step-meta", text: "Escena 1 de 3 · Section one"
+      assert_select "[aria-label=?]", "Escena anterior, 1 de 3: Scene one"
+    end
+    assert_select ".scene-rail--top .scene-rail-center", text: "Escena 2 de 3"
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one))
+
+    assert_select ".scene-rail--top .scene-step--prev.scene-step--boundary .scene-step-title",
+      text: "Inicio de la historia"
+    assert_select ".scene-rail--top .scene-step--prev.scene-step--boundary .scene-step-meta",
+      text: "Esta es la escena 1 de 3."
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+
+    assert_select ".scene-rail--top .scene-step--next.scene-step--boundary .scene-step-title",
+      text: "Fin de la historia"
+    assert_select ".scene-rail--top .scene-step--next.scene-step--boundary .scene-step-meta",
+      text: "Esta es la escena 3 de 3."
+  end
+
+  test "a one-scene story explains the empty rail in Spanish, once" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: stories(:story_alt), id: scenes(:scene_alt))
+
+    assert_response :success
+    assert_select ".scene-rail--top .scene-step-title", text: "Esta es la única escena de Spin-off."
+    assert_select ".scene-rail--top .scene-step-meta",
+      text: "No hay ninguna escena anterior ni siguiente. «Todas las escenas» muestra la historia completa."
+    assert_select ".scene-rail--bottom", count: 0
+  end
+
   test "Scene Details states the facts a scene without references does not have" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
 

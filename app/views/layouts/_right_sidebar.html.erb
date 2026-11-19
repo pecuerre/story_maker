@@ -3,6 +3,23 @@
 ] %>
 
 <nav class="right-navigation" aria-label="<%= t("sidebar.tools.navigation_label") %>">
+  <%# The rail's own width control. It is a browser preference (ADR 0013), not a
+      universe setting, and it renders only where the rail is a column; below
+      `xl` the same content is a drawer, whose close control is the header's.
+      The label is the button's accessible name and is visually hidden when the
+      rail is collapsed, so the control never loses its name as it shrinks. %>
+  <button type="button" class="tools-rail-toggle"
+    data-action="tools-rail#toggle"
+    data-tools-rail-toggle
+    data-collapse-label="<%= t("sidebar.tools.collapse") %>"
+    data-expand-label="<%= t("sidebar.tools.expand") %>"
+    aria-controls="workspace-tools-navigation"
+    aria-expanded="<%= tools_rail_collapsed? ? "false" : "true" %>">
+    <i class="bi bi-chevron-right tools-rail-icon tools-rail-icon--collapse" aria-hidden="true"></i>
+    <i class="bi bi-chevron-left tools-rail-icon tools-rail-icon--expand" aria-hidden="true"></i>
+    <span class="tools-rail-toggle-label" data-tools-rail-label><%= t(tools_rail_collapsed? ? "sidebar.tools.expand" : "sidebar.tools.collapse") %></span>
+  </button>
+
   <div class="sidebar-context sidebar-context--tools right-sidebar-intro">
     <div class="sidebar-eyebrow"><%= t("sidebar.tools.eyebrow") %></div>
     <p><%= t("sidebar.tools.intro") %></p>
@@ -122,7 +139,7 @@
       # than rendering an empty box. %>
   <% rows = contextual_inspector_rows %>
   <% if rows.any? %>
-    <section class="sidebar-section sidebar-section--tools" aria-labelledby="inspector-title">
+    <section class="sidebar-section sidebar-section--tools sidebar-section--inspector" aria-labelledby="inspector-title">
       <h3 class="sidebar-section-title" id="inspector-title"><%= t("sidebar.tools.inspector") %></h3>
       <%= render "layouts/contextual_inspector", rows: rows %>
     </section>

@@ -792,11 +792,11 @@ before any application view, stylesheet, or test changes. The page shows the cur
 proposed one on the same page, with the same content in each, and a review bar that switches layout,
 state, light/dark, and desktop/phone, so the two are judged like for like rather than from a
 description. The [visual directions](visual_directions.md) exercise is the precedent for a large
-comparison, and the [Scene filter comparison](scene_filter_prototype.html) is the working example.
-The [Scene neighbour comparison](scene_neighbor_prototype.html) applies the same review bar to a
-details page, where the states are first, last, and only scenes rather than list filters. The
-[workspace-width comparison](workspace_widths_prototype.html) applies it to the shell's rails,
-breakpoints, drawers, and 200% zoom.
+comparison, and the [Scene filter comparison](prototypes/scene_filter_prototype.html) is the working
+example. The [Scene neighbour comparison](prototypes/scene_neighbor_prototype.html) applies the same
+review bar to a details page, where the states are first, last, and only scenes rather than list
+filters. The [workspace-width comparison](prototypes/workspace_widths_prototype.html) applies it to
+the shell's rails, breakpoints, drawers, and 200% zoom.
 
 - Copy the built values from `_theme.scss` and the real view markup. A prototype is a hand-built
   mock, not a running Rails page, but it must not introduce a second palette or a simplified
@@ -806,7 +806,7 @@ breakpoints, drawers, and 200% zoom.
 - Measure both blocks at the selected width and state, and state the measurements on the page. A
   proposal can be shorter in one state and taller in another; showing that is the point, not a
   claim that the new one always wins.
-- Save it as `docs/<subject>_prototype.html`, link it from the backlog item that owns the decision,
+- Save it as `docs/prototypes/<subject>_prototype.html`, link it from the backlog item that owns the decision,
   and leave application code untouched until the owner accepts a direction. An accepted comparison
   stays as a record; the implementation then updates the owning document and the changelog.
 - A comparison does not replace rendered browser checks, accessibility inspection, or participant

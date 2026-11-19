@@ -22,6 +22,13 @@ module ApplicationHelper
     @current_theme ||= AppTheme.read(cookies)
   end
 
+  # Whether this browser shows the tools rail collapsed. Read from the same
+  # browser preference the rail's own toggle writes, so the first paint already
+  # has the chosen width instead of snapping after the controller connects.
+  def tools_rail_collapsed?
+    @tools_rail_collapsed ||= AppToolsRail.collapsed?(cookies)
+  end
+
   # The language this request renders in. Read from the same kind of signed
   # cookie as the theme, and therefore subject to the same "unknown value is the
   # default" rule. `I18n.locale` is already set from this by

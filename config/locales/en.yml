@@ -89,6 +89,11 @@ en:
       navigation_label: "Universe configuration and tools"
       eyebrow: "Universe tools"
       intro: "The inspector below shows what the page in front of you is about: a story's sections and scenes, and a record's relations and ownerships."
+      # The rail's own width control. It is a browser preference rather than a
+      # universe setting (ADR 0013), and it is only offered where the rail is a
+      # column rather than a drawer.
+      collapse: "Collapse tools"
+      expand: "Expand tools"
       configuration: "Configuration"
       tags: "Tags"
       members: "Members"

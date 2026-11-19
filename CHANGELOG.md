@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Collapsible tools rail.** At `xl` and above the right sidebar collapses to a 3rem icon strip from a control at its top, with labels kept for assistive technology and hover, a pending-count pill, and the choice remembered in the browser.
 - **Scene neighbour rail.** Scene Details now opens and closes with previous/next links to the adjacent Scenes in narrative order, with named story boundaries and one-scene copy; the rail is read-only and never follows a filtered list.
 
 ### fixed
@@ -51,6 +52,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Workspace width decision.** The prototype records the owner's choice of the collapsible rail over the compact rail and the tools drawer below 1400, and item 82 leaves the backlog.
+- **Prototype directory.** The four comparison prototypes now live in `docs/prototypes/`, and the visual-design guide, visual directions, backlog, and docs index use the new paths.
+- **Workspace width comparison at common viewports.** The prototype now adds 1400, 1366, and 1024 px, reports the navigation rail's scrolling under long scope names and the workspace bar's height, and measures gains against the current width.
 - **Workspace width comparison.** A static prototype compares the current rails with a compact rail, a collapsible rail, and a tools drawer below 1400, measured at the `lg`/`xl` boundaries and at 200% zoom; the backlog's 30rem rail figure is corrected to the built 27.25rem.
 
 ## 2026-11-18
@@ -128,7 +132,7 @@ Labels used below, in the order their groups appear:
 ### docs
 
 - **Index chosen.** The owner chose Index as the visual direction on 2026-11-14; ADR 0047 records the decision and the prototype stage is unblocked.
-- **Visual directions exploration.** Three directions — Index, Ledger, and Folio — are presented with light and dark palettes, typography, density, contrast checks, tradeoffs, and a recommendation in `docs/visual_directions.md`, with a review prototype in `docs/visual_directions_prototype.html`.
+- **Visual directions exploration.** Three directions — Index, Ledger, and Folio — are presented with light and dark palettes, typography, density, contrast checks, tradeoffs, and a recommendation in `docs/visual_directions.md`, with a review prototype in `docs/prototypes/visual_directions_prototype.html`.
 
 ### chore
 

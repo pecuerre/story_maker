@@ -212,17 +212,6 @@ The main opportunity is to make the next task easier to find and reduce competin
 losing the information writers need. Priorities are suggested, not commitments; evaluate each item on
 its own alongside the browser baseline follow-ups.
 
-82. **Rebalance the workspace at constrained widths.**
-
-   The [application shell](../app/views/layouts/application.html.erb) has left and right navigation
-   panels, a collapsed navbar, and a separate mobile Menu/Tools bar; at wide sizes the panels reserve
-   27.25rem together (436px). Test usable content width, panel scrolling, long scope names, and the
-   discoverability of search and Tools around the `lg`/`xl` breakpoints and at 200% zoom. Consider a
-   compact or collapsible tools panel only if the comparison shows a benefit; retain scope, keyboard
-   access, and pending-work visibility. A [static comparison](workspace_widths_prototype.html) measures
-   the current rails against a compact rail, a collapsible rail, and a tools drawer below 1400 at those
-   widths.
-
 83. **Reduce friction switching scope.**
 
    The [navbar](../app/views/layouts/_navbar.html.erb) links to the current Universe and Story, while

@@ -85,6 +85,11 @@ es:
       navigation_label: "Configuración y herramientas del universo"
       eyebrow: "Herramientas del universo"
       intro: "El inspector que aparece más abajo muestra de qué trata la página que tienes delante: las secciones y escenas de una historia, y las relaciones y propiedades de un registro."
+      # El control de anchura de la propia barra. Es una preferencia del navegador,
+      # no un ajuste del universo (ADR 0013), y solo se ofrece donde la barra es
+      # una columna y no un cajón.
+      collapse: "Contraer herramientas"
+      expand: "Expandir herramientas"
       configuration: "Configuración"
       tags: "Etiquetas"
       members: "Miembros"

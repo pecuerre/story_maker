@@ -537,8 +537,12 @@
     <span class="group-label">Width</span>
     <button type="button" data-set-width="1440" aria-pressed="false">1440</button>
     <button type="button" data-set-width="1400" aria-pressed="false">1400</button>
+    <button type="button" data-set-width="1399" aria-pressed="false">1399</button>
+    <button type="button" data-set-width="1366" aria-pressed="false">1366</button>
+    <button type="button" data-set-width="1280" aria-pressed="false">1280</button>
     <button type="button" data-set-width="1200" aria-pressed="true">1200</button>
     <button type="button" data-set-width="1199" aria-pressed="false">1199</button>
+    <button type="button" data-set-width="1024" aria-pressed="false">1024</button>
     <button type="button" data-set-width="992" aria-pressed="false">992</button>
     <button type="button" data-set-width="720" aria-pressed="false">720 (200%)</button>
     <button type="button" data-set-width="390" aria-pressed="false">390</button>
@@ -800,7 +804,7 @@
 <div class="notes">
   <h2>What this comparison tests</h2>
   <p>The workspace shell reserves a <code>232 px</code> left rail and a <code>204 px</code> right rail at its widest, so the writing column loses <code>436 px</code> before the page has drawn anything. The reserved width is fixed while the window is not, so the two breakpoints create two sudden losses of usable content: crossing below <code>xl</code> (1200 px) gives the main column <code>203 px</code> more, and crossing below <code>lg</code> (992 px) gives it another <code>231 px</code>. A narrower window is not consistently narrower content — at 1200 px the page holds 704 px, while at 1199 px it holds 907 px.</p>
-  <p>This is a static mock of the real shell markup and the built values in <code>_application_custom.scss</code>, not a running Rails page. The content, counts, and names are illustrative; the widths, paddings, row heights, top bar, drawers, and tools entries follow the application. The review bar switches the design, the simulated viewport, both themes, typical or long scope names, an empty or populated pending panel, and the expanded or collapsed tools rail. The application view and stylesheet are untouched.</p>
+  <p>This is a static mock of the real shell markup and the built values in <code>_application_custom.scss</code>, not a running Rails page. The content, counts, and names are illustrative; the widths, paddings, row heights, top bar, drawers, and tools entries follow the application. The review bar switches the design, the simulated viewport, both themes, typical or long scope names, an empty or populated pending panel, and the expanded or collapsed tools rail. The application view and stylesheet were untouched when this page was built; the collapsible rail was implemented on 2026-11-19, and this page remains the measurement record.</p>
 
   <h2>Measured in the running application</h2>
   <p>These values were read from the development application at <code>/u/lotr/s/4/scenes</code> as the signed-in owner, with <code>lotr@lotr</code>, at each CSS viewport. The page content is the <code>.page-shell</code> width minus its horizontal padding.</p>
@@ -823,6 +827,22 @@
   </div>
   <p class="table-note">“667 in 750” means 667 px of rail content in a 750 px column; no scrolling. At 992 the drawer is 645 px tall for 667 px of content, so its last 22 px need scrolling. At 720 × 450 the tools drawer body is 395 px tall for 737 px of content; with two pending rows the panel alone is 184 px, runs from 328 px to 511 px inside that body, and its lower rows need scrolling. The left drawer holds 874 px of content in the same 395 px. Long scope names wrap to 39 px and 58 px in the 232 px rail. At 720 the two-line phone context makes the mobile bar 48 px tall; at 390 it wraps to three lines and 85 px. No page width overflows — but at exactly 992 with long scope names the <em>navbar</em> did: the collapsed-behaviour breakpoint had not been reached, the two scope names truncated at their 12rem maximum, and the search and actions could not shrink enough, so the bar's scroll width was 1144 px against 992. The same change lets the bar's search and scope links shrink; `test/system/navbar_layout_test.rb` covers that boundary with long names, and the mock truncates the names rather than reproducing the old overflow.</p>
 
+  <h2>Three more viewports</h2>
+  <p>The same measurement at the boundary the proposal moves, at the common laptop panel, and at a landscape tablet just above <code>lg</code>. Scrollbars were hidden while measuring so the CSS viewport is exact:</p>
+  <div class="table-wrap">
+    <table class="measure">
+      <thead>
+        <tr><th>Viewport</th><th>Left rail</th><th>Right rail</th><th>Main</th><th>Page content</th><th>Page content if tools from 1400</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1400 × 900</td><td>232</td><td>204</td><td>964</td><td>900</td><td>900</td></tr>
+        <tr><td>1366 × 768</td><td>232</td><td>204</td><td>931</td><td>867</td><td>976</td></tr>
+        <tr><td>1024 × 768</td><td>232</td><td>drawer</td><td>792</td><td>741</td><td>741</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">The proposal changes only the middle row: 1400 is already the boundary and 1024 is below it, so both keep today's content width there. At 1366 the reading maximum has not yet capped the page, so the drawer returns about 110 px rather than the 196–204 px it returns at 1200–1280; the gain shrinks as the window approaches 1400 and reaches zero exactly at the boundary.</p>
+
   <h2>The four designs</h2>
   <ul>
     <li><strong>Current.</strong> Left rail at <code>lg</code>, right rail at <code>xl</code>; below those widths each becomes a labelled drawer button in the workspace bar.</li>
@@ -844,25 +864,32 @@
         <tr data-row="1440"><td>1440</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="1400"><td>1400</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="1399"><td>1399</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1366"><td>1366</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="1280"><td>1280</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="1200"><td>1200</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="1199"><td>1199</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1024"><td>1024</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="992"><td>992</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="720"><td>720 (200%)</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
         <tr data-row="390"><td>390</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="table-note">Page content in CSS pixels at each simulated viewport, from the mock's <code>.page-shell</code> minus padding. The “best gain” column is the largest improvement over the current design in that row. At 1440 the page's <code>65rem</code> maximum caps the gain at 36 px even after the tools rail is removed or collapsed, because the main column can then exceed the reading measure. At 1399 the <strong>Tools from 1400</strong> design is still a drawer and holds 976 px; at 1400 it becomes a rail and drops to 900 px, which is the 76 px step at its new boundary. The other three designs do not change at 1400 because their thresholds are 1200. Font fallback can move a boundary by a pixel.</p>
-  <p class="table-note">The recommended design is not the largest number in the 1400 row — the collapsible rail wins there. It is the only option that removes the 1200–1280 cliff without adding a control the reader must find, and at 1400 and above it matches the current design.</p>
+  <p class="table-note">Page content in CSS pixels at each simulated viewport, from the mock's <code>.page-shell</code> minus padding. The “best gain” column is the largest improvement over the current design in that row. At 1440 the page's <code>65rem</code> maximum caps the gain at 36 px even after the tools rail is removed or collapsed, because the main column can then exceed the reading measure. At 1399 the <strong>Tools from 1400</strong> design is still a drawer and holds 976 px; at 1400 it becomes a rail and drops to 900 px, which is the 76 px step at its new boundary. The same cap limits the 1366 row to 976 px, about 110 px over the current 867, and leaves the 1024 row unchanged at 741 because its tools rail is already a drawer. The other three designs do not change at 1400 because their thresholds are 1200. Font fallback can move a boundary by a pixel.</p>
+  <p class="table-note">The mock leaves the browser's own scrollbar in place, so wherever the page overflows it reports about 15 px less than the running-application table, which hid scrollbars to measure the CSS width exactly; the 992, 720, and 390 rows show that difference. With long scope names the navigation rail needs 734 px of content in its 650 px column at 992 × 700, so it scrolls.</p>
+  <p class="table-note">The comparison's recommendation is not the largest number in the 1400 row; the collapsible rail wins that row and was the owner's choice, recorded below. The recommendation preferred the drawer because it removes the 1200–1280 cliff without adding a control the reader must find.</p>
 
   <h2>Recommended</h2>
-  <p class="recommendation"><strong>Let the tools rail return at <code>xxl</code>: a drawer from 992 to 1399 and a rail at 1400 and above.</strong> Only the 1200–1399 range actually changes; below 1200 it is already a drawer. This is the smallest change that addresses the actual cliff: the current right rail costs 204 px exactly where the writing column is most constrained, and making it a drawer there returns 196–204 px at 1200–1280. At 1399 the page is already near its 1040 px reading maximum, so the same move shows only 77 px of content, though the main column is still wider. The Tools button is already the pattern below 1200, the top bar's search and draft indicator remain visible because the navbar is still expanded at these widths, and the rail returns at 1400 where the shell has room for it. The cost is one labelled click to reach Configuration and Collaboration between 1200 and 1399, and the 76 px step at the new boundary.</p>
+  <p class="recommendation"><strong>Let the tools rail return at <code>xxl</code>: a drawer from 992 to 1399 and a rail at 1400 and above.</strong> Only the 1200–1399 range actually changes; below 1200 it is already a drawer. This is the smallest change that addresses the actual cliff: the current right rail costs 204 px exactly where the writing column is most constrained, and making it a drawer there returns 196–204 px at 1200–1280, about 110 px at 1366, and 77 px at 1399 as the page approaches its 1040 px reading maximum. The Tools button is already the pattern below 1200, the top bar's search and draft indicator remain visible because the navbar is still expanded at these widths, and the rail returns at 1400 where the shell has room for it. The costs are one labelled click to reach Configuration and Collaboration between 1200 and 1399, the workspace bar's roughly 42 px of height that the current design does not spend at these widths, and the 76 px step at the new boundary.</p>
   <ul>
     <li><strong>Keep the left rail at <code>lg</code>.</strong> The comparison did not find a reason to move it; the 231 px cliff at 992 is the same problem on the other side, and moving that boundary would cost the content navigation its persistent home on tablets. It is recorded here for a later decision, not folded into this recommendation.</li>
     <li><strong>Keep the pending panel and the top bar indicator.</strong> At 1200–1399 the indicator still answers “is anything waiting?” without opening anything, which is the requirement this item sets. Do not move pending work into the tools drawer.</li>
     <li><strong>Do not collapse the rail automatically.</strong> A collapsible rail is a reasonable reader preference at 1400 and above, where it gains 36 px at 1440 and 76 px at 1400, but it is not the fix for a constrained width: the default still takes 204 px, and the collapsed state hides every visible tool label.</li>
   </ul>
+
+  <h2>Decision — 2026-11-19</h2>
+  <p>The owner reviewed this page and chose the <strong>collapsible rail</strong>. The compact rail and the tools drawer below 1400 were rejected, and the left rail stays at <code>lg</code>. The application now implements that choice at <code>xl</code> and above: the full 12.75rem column is the default, the control at its top collapses it to a 3rem icon strip (+156 px of writing width), and the choice is remembered in the browser so a later request renders the same width on the first paint. <a href="../features/navigation.md">navigation.md</a> owns the behavior.</p>
+  <p>The cost the recommendation named is the one that was accepted: the reader has to find and use the control, and an icon strip keeps the labels for assistive technology and a hover title rather than in the reading surface. The measured 1200–1399 cliff remains for a reader who leaves the rail expanded; nothing collapses automatically. The pending panel keeps its count as a pill, so the top bar is not the only statement of pending work, and every entry keeps its accessible name.</p>
 
   <h2>Rejected, and why</h2>
   <ul>
@@ -876,13 +903,14 @@
   <p>There is a separate finding here: below <code>lg</code> the draft indicator sat inside the collapsed navbar, so at 200% zoom it was not visible on first paint at all. That was true independently of which tools design is chosen, and at 1200–1399 the recommended design keeps the desktop indicator visible. The same change now renders the shared indicator beside the toggler below <code>lg</code>, so the count is on the first paint at 200% zoom too; <code>test/system/navbar_layout_test.rb</code> covers it.</p>
 
   <h2>Still to check outside this page</h2>
-  <p>This comparison does not replace rendered browser checks, keyboard and screen-reader inspection, or participant testing. Before accepting a direction, confirm the drawer toggle's focus order and <code>aria-expanded</code> state, the Tools button's placement at exactly 1400, the rail's scroll position after a route change, and the page at real 200% zoom in both themes. The mock's numbers are layout measurements, not a claim that every page has the same content width: wide tables, the appearance grid, and the scene matrix each have their own horizontal behavior.</p>
+  <p>This comparison does not replace rendered browser checks, keyboard and screen-reader inspection, or participant testing. The chosen collapsible rail was implemented on 2026-11-19; <code>test/system/tools_rail_test.rb</code> covers the width change, the accessible name, the hidden labels, and that a later request keeps the state. The rail's scroll position after a route change, the collapsed strip at real 200% zoom in both themes, and a screen-reader check of the clipped labels remain browser checks. The mock's numbers are layout measurements, not a claim that every page has the same content width: wide tables, the appearance grid, and the scene matrix each have their own horizontal behavior.</p>
 </div>
 
 <script>
   (function () {
     var root = document.documentElement;
     var mock = document.getElementById('mock');
+    var currentByWidth = {};
     var review = {
       design: 'current',
       width: '1200',
@@ -896,9 +924,11 @@
       '1440': { height: 900 },
       '1400': { height: 900 },
       '1399': { height: 900 },
+      '1366': { height: 768 },
       '1280': { height: 800 },
       '1200': { height: 800 },
       '1199': { height: 800 },
+      '1024': { height: 768 },
       '992': { height: 700 },
       '720': { height: 450 },
       '390': { height: 844 }
@@ -1042,13 +1072,18 @@
       var pageStyle = window.getComputedStyle(page);
       var content = Math.round(page.clientWidth - parseFloat(pageStyle.paddingLeft) - parseFloat(pageStyle.paddingRight));
       var rightBody = mock.querySelector('.um-tools .rail-body');
+      var leftBody = mock.querySelector('.um-rail--left .rail-body');
       var pending = mock.querySelector('.draft-pending-panel');
       var bodyRect = rightBody.getBoundingClientRect();
       var pendingRect = pending.getBoundingClientRect();
-      var lastChild = rightBody.lastElementChild;
-      var contentHeight = lastChild
-        ? Math.round(lastChild.getBoundingClientRect().bottom - bodyRect.top)
-        : rightBody.scrollHeight;
+      var bar = mock.querySelector('.mobile-workspace-bar');
+      var collapsedRail = layout.rightMode === 'rail' && layout.right < 204;
+      function contentHeight(body) {
+        var last = body.lastElementChild;
+        if (!last) return body.scrollHeight;
+        var bodyTop = body.getBoundingClientRect().top;
+        return Math.max(0, Math.round(last.getBoundingClientRect().bottom - bodyTop));
+      }
 
       return {
         layout: layout,
@@ -1059,7 +1094,13 @@
         pageWidth: Math.round(page.getBoundingClientRect().width),
         horizontalOverflow: page.scrollWidth > page.clientWidth + 1 ||
           mock.querySelector('.um-main').scrollWidth > mock.querySelector('.um-main').clientWidth + 1,
-        rightBody: { client: rightBody.clientHeight, content: contentHeight },
+        rightBody: {
+          client: rightBody.clientHeight,
+          content: collapsedRail ? 0 : contentHeight(rightBody)
+        },
+        leftBody: { client: leftBody.clientHeight, content: contentHeight(leftBody) },
+        collapsedRail: collapsedRail,
+        barHeight: layout.bar ? Math.round(bar.getBoundingClientRect().height) : 0,
         pending: {
           top: Math.round(pendingRect.top - bodyRect.top),
           bottom: Math.round(pendingRect.bottom - bodyRect.top),
@@ -1075,8 +1116,9 @@
 
     function renderMeasurements() {
       var data = readLayout();
-      var current = layoutFor('current', Number(review.width), 'expanded');
-      var gain = data.content - current.content;
+      var baseline = currentByWidth[review.width];
+      if (typeof baseline !== 'number') baseline = layoutFor('current', Number(review.width), 'expanded').content;
+      var gain = data.content - baseline;
       var parts = [];
 
       parts.push('Simulated viewport ' + review.width + ' × ' + presets[review.width].height + '.');
@@ -1085,7 +1127,9 @@
         ', main ' + data.mainWidth + ' px, page content ' + data.content + ' px.');
       parts.push('Page content is ' + plus(gain) + ' px against the current design at this width.');
 
-      if (data.layout.rightMode === 'rail') {
+      if (data.collapsedRail) {
+        parts.push('The tools rail is collapsed to a 48 px icon strip; its entries keep their title and accessible names.');
+      } else if (data.layout.rightMode === 'rail') {
         parts.push('The tools rail holds ' + data.rightBody.content + ' px of content in a ' +
           data.rightBody.client + ' px column' +
           (data.rightBody.content > data.rightBody.client + 1 ? ', so it scrolls' : ', so it does not scroll') + '.');
@@ -1094,9 +1138,19 @@
           data.rightBody.client + ' px tall for ' + data.rightBody.content + ' px of content.');
       }
 
-      parts.push('The pending panel runs ' + data.pending.top + '–' + data.pending.bottom +
-        ' px in that body (' + data.pending.height + ' px tall), ' +
-        (data.pending.fullyVisible ? 'fully visible' : 'partly below the fold') + '.');
+      parts.push('The navigation rail holds ' + data.leftBody.content + ' px of content in a ' +
+        data.leftBody.client + ' px column' +
+        (data.leftBody.content > data.leftBody.client + 1 ? ', so it scrolls' : ', so it does not scroll') + '.');
+
+      if (data.barHeight > 0 && Number(review.width) >= 1200) {
+        parts.push('The workspace bar costs ' + data.barHeight + ' px of height at this width, where the current design has no bar.');
+      }
+
+      if (!data.collapsedRail) {
+        parts.push('The pending panel runs ' + data.pending.top + '–' + data.pending.bottom +
+          ' px in that body (' + data.pending.height + ' px tall), ' +
+          (data.pending.fullyVisible ? 'fully visible' : 'partly below the fold') + '.');
+      }
       parts.push(Number(review.width) >= 992
         ? 'Search and Draft are in the top bar.'
         : 'Search is inside the collapsed navbar; Draft is beside the toggler.');
@@ -1149,7 +1203,7 @@
     }
 
     function buildTable() {
-      ['1440', '1400', '1399', '1280', '1200', '1199', '992', '720', '390'].forEach(function (widthKey) {
+      ['1440', '1400', '1399', '1366', '1280', '1200', '1199', '1024', '992', '720', '390'].forEach(function (widthKey) {
         var row = document.querySelector('[data-row="' + widthKey + '"]');
         if (!row) return;
         var values = {
@@ -1158,6 +1212,7 @@
           collapsible: snapshotContent('collapsible', widthKey, 'collapsed'),
           late: snapshotContent('late', widthKey, 'expanded')
         };
+        currentByWidth[widthKey] = values.current;
         row.querySelector('[data-current]').textContent = values.current;
         row.querySelector('[data-compact]').textContent = values.compact;
         row.querySelector('[data-collapsible]').textContent = values.collapsible;

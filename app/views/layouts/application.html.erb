@@ -44,7 +44,7 @@
     <%= render "layouts/navbar" %>
 
     <% if Current.universe.present? %>
-      <div class="workspace-shell">
+      <div class="workspace-shell<%= " tools-rail-collapsed" if tools_rail_collapsed? %>">
         <aside class="workspace-sidebar offcanvas-lg offcanvas-start"
           tabindex="-1"
           id="workspace-navigation"
@@ -102,7 +102,11 @@
         <aside class="right-sidebar offcanvas-xl offcanvas-end"
           tabindex="-1"
           id="workspace-tools-navigation"
-          aria-labelledby="workspace-tools-navigation-title">
+          aria-labelledby="workspace-tools-navigation-title"
+          data-controller="tools-rail"
+          data-tools-rail-cookie="<%= AppToolsRail::COOKIE_NAME %>"
+          data-tools-rail-collapsed="<%= AppToolsRail::COLLAPSED %>"
+          data-tools-rail-expanded="<%= AppToolsRail::EXPANDED %>">
           <div class="offcanvas-header border-bottom">
             <h2 class="offcanvas-title h5 mb-0" id="workspace-tools-navigation-title"><%= t("layouts.universe_tools") %></h2>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="<%= t("layouts.close_tools") %>"></button>

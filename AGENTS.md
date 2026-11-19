@@ -96,7 +96,7 @@ are in [`docs/visual_design.md`](docs/visual_design.md#comparison-prototypes).
   current design faithful.
 - Measure both blocks and state the numbers on the page. A proposal can be shorter in one state and
   taller in another; the comparison is the point, not a claim that the new one always wins.
-- Name it `docs/<subject>_prototype.html`, link it from the backlog item that owns the decision, and
+- Name it `docs/prototypes/<subject>_prototype.html`, link it from the backlog item that owns the decision, and
   leave application code untouched until the owner accepts a direction. An accepted comparison is a
   record; the implementation then updates the owning docs and the changelog as usual.
 

@@ -27,7 +27,8 @@
 <li class="draft-pending-panel">
   <p class="draft-pending-summary">
     <i class="bi bi-journal-text" aria-hidden="true"></i>
-    <span><%= t("drafts.pending.count", count: preview.count) %></span>
+    <span class="draft-pending-text"><%= t("drafts.pending.count", count: preview.count) %></span>
+    <span class="draft-pending-count" data-count="<%= preview.count %>" aria-hidden="true"></span>
   </p>
 
   <% if preview.any? %>

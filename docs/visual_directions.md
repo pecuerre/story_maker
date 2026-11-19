@@ -12,7 +12,7 @@ directions, their tradeoffs, the contrast and font checks, and the recommendatio
 The three directions are **Index** (a reference atlas), **Ledger** (a dense data index), and
 **Folio** (an editorial workspace). Each is applied to the same screens with the same content, so
 the comparison is like-for-like. The review prototype is
-[visual_directions_prototype.html](visual_directions_prototype.html). On 2026-11-14 the owner chose
+[visual_directions_prototype.html](prototypes/visual_directions_prototype.html). On 2026-11-14 the owner chose
 **Index**; [ADR 0047](adr/0047-adopt-index-as-the-visual-direction.md) records the decision, and the
 three proposals remain in this document as the comparison record.
 
@@ -37,7 +37,7 @@ longest. The screens are:
 - **Scene editor** — the editable Scene form, with the Element list and optional disclosures.
 
 A screen can also be opened directly, for example
-`visual_directions_prototype.html?dir=ledger&theme=dark&screen=characters`. Adding `&chrome=0`
+`prototypes/visual_directions_prototype.html?dir=ledger&theme=dark&screen=characters`. Adding `&chrome=0`
 hides the review bar for a clean screenshot.
 
 The prototype is a hand-built static mock of the real markup, not a running Rails page. Its colours,

@@ -17,7 +17,7 @@ visible is scoped to that choice.
    gets the plain **chooser**, whose only task is selecting or creating a universe.
 2. **Universe selected** (`Current.universe`): a 14.5rem workspace sidebar appears on large screens
    and as a left offcanvas below `lg`. At `xl` and above, a 12.75rem right utility sidebar is also
-   visible.
+   visible, collapsible to a 3rem icon strip.
 3. **Story selected** (`Current.story`): the left sidebar gains the **Story workspace** (Story
    overview, Sections, Scenes, Plots, Export) and the **Story analytics** block (Narrative order,
    Appearances, Scene matrix).
@@ -54,8 +54,8 @@ below.
   any count, because it is also the way in and an entry that appears and disappears with a count needs
   an explanation whenever it is absent. It is the one statement of pending state that needs nothing
   opened — the right sidebar's panel and its **Pending changes** entry are behind the **Tools** drawer
-  below `xl`, and below `lg` the actions row is inside the collapsed menu, which is why the same
-  partial is rendered beside the toggler there. It is deliberately **not** in a page header, whose
+  below `xl` and may be a collapsed icon strip above it, and below `lg` the actions row is inside the
+  collapsed menu, which is why the same partial is rendered beside the toggler there. It is deliberately **not** in a page header, whose
   actions are about the page rather than about the universe. It states what is waiting and never
   whether an editing session is on: every mutation is remembered in this mode whether the reader
   pressed **Start editing** or not (ADR 0022), and its figure is the one `DraftPreview#count` that the
@@ -131,8 +131,14 @@ action: creation belongs to the page that lists the records.
 
 Renders only when `Current.universe` is present. It is a permanent 12.75rem column at `xl` and above,
 and a Bootstrap `offcanvas-end` below `xl` (opened from the **Tools** button on the mobile workspace
-bar). It is one continuous tools scope, so it opens with a green-accented **Universe tools** context
-block and then the sections that follow it:
+bar). At `xl` and above its top control collapses it to a **3rem icon strip**, giving the writing
+column back 156px; the control is not offered in the drawer, whose header already closes it. The
+choice is a **browser preference** (`AppToolsRail`), like the theme and the language, and it is
+rendered from a cookie on the first request so the rail never snaps width after load. Expanded is
+the default. Collapsed, the intro, the panel's change rows, and the Inspector are hidden; every
+entry keeps its icon, its accessible name, and a pointer `title`, and the pending panel keeps its
+count as a pill so pending work is still stated. It is one continuous tools scope, so it opens with
+a green-accented **Universe tools** context block and then the sections that follow it:
 
 - **Configuration**: **Tags**, which opens the shared taxonomy workspace with **Universe Tags**
   selected by default and **Story Tags** for the story-scoped taxonomies, plus the universe

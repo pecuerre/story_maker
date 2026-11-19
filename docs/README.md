@@ -13,6 +13,7 @@ per-universe development-data convention, and the public/private universe access
 | [visual_design.md](visual_design.md) | Bootstrap theme tokens, light/dark, typography, spacing, application shell, responsive behavior, accessibility, and the painted treatment of the shared view patterns |
 | [visual_design_brief.md](visual_design_brief.md) | The agreed visual aim: intended users, the reference-atlas character, what "modern" means here, reference products, constraints, and the screens a direction is judged on |
 | [visual_directions.md](visual_directions.md) | Three visual directions, the chosen Index direction, palettes, typography, density, tradeoffs, contrast checks, and the review and applied prototypes |
+| [prototypes/](prototypes/) | Static current-vs-proposed comparison pages: the Scene filter, Scene neighbour rail, visual directions, and workspace widths |
 | [conventions.md](conventions.md) | The cross-cutting code conventions: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, soft delete, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, production boundary, caching |

@@ -27,6 +27,38 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-11-19
+
+- **[added]** **Collapsible tools rail.**
+  - **The gap.** Backlog item 82 asked whether the workspace shell's two fixed columns should be
+    rebalanced at constrained widths. The comparison page measured the right rail's 204 px against a
+    compact rail, a collapsible rail, and a tools drawer below 1400. It recommended the drawer because
+    it removes the 1200–1280 cliff without asking the reader to find a control. The owner reviewed the
+    page and chose the collapsible rail instead: the compact rail loses too much label column, the
+    drawer spends a 42 px workspace bar and a labelled click through 200 px of window widths, and the
+    left rail stays at `lg`.
+  - **The implementation.** At `xl` and above the rail's own button toggles a class on
+    `.workspace-shell`; the same custom property that sets the third grid column drops from 12.75rem
+    to 3rem, returning 156 px to the writing column. Every collapsed rule is scoped to
+    `.right-sidebar`, because the class lives on the shell and the first version styled both
+    navigation columns at once. The collapsed strip hides the intro, the pending panel's change rows,
+    and the Inspector, and clips section titles, link labels, and counts rather than removing them, so
+    every link keeps its accessible name. The controller adds the matching `title` for a pointer
+    reader in place of the hidden label. The pending panel keeps its count as a pill, so pending work
+    is stated inside the rail as well as in the top bar.
+  - **Why a cookie.** The state is a browser preference of the same kind as the theme and the
+    language (ADR 0013), but the control lives in the rail rather than on the settings page, so the
+    browser writes it. It is deliberately **not** signed: `AppToolsRail#read` normalizes anything but
+    `collapsed` to `expanded`, and a forged value can change only one column's width. The class and
+    the button's name are rendered from the cookie on the first request, so the rail does not snap
+    from 204 px to 48 px after the controller connects; the controller reads the same cookie on
+    connect, so a page Turbo restores from before the last toggle still follows the current state.
+  - **Verification.** `test/models/app_tools_rail_test.rb` (3 runs), `test/javascript/tools_rail_controller_test.js`
+    (7 cases), and `test/system/tools_rail_test.rb` (2 browser cases, 42 assertions) cover the
+    normalized values, the class/label/tooltip/cookie behavior, the width change, that the next
+    request still renders collapsed, and that the left workspace rail keeps its own width and labels. The collapsed strip was checked in the running application in
+    both themes: 48 px rail, 156 px more main column, no horizontal overflow.
+
 ### 2026-11-14
 
 - **[chore]** **Photo file-button theme check.**

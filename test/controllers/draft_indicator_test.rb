@@ -8,6 +8,10 @@ require "test_helper"
 # place every page has, so what matters here is that it says the same thing, in
 # the same words, under the same gates — and that it is there at zero as well as
 # at any count.
+#
+# It renders twice, exclusively: inside `.navbar-actions` at `lg` and above, and
+# beside the toggler in `.navbar-mobile-actions` below it. The assertions below
+# check both placements so the two cannot drift.
 class DraftIndicatorTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
@@ -25,30 +29,39 @@ class DraftIndicatorTest < ActionDispatch::IntegrationTest
     get universe_story_path(universe_slug: @universe.slug, id: stories(:story_one).id)
 
     assert_response :success
+    # The same partial is rendered twice — once in the actions row and once
+    # beside the collapsed navbar's toggler — so the two placements are
+    # asserted together and then individually.
     assert_select "nav.navbar a.draft-indicator[href=?]",
+      universe_drafts_path(universe_slug: @universe.slug), count: 2
+    assert_select ".navbar-actions a.draft-indicator[href=?]",
       universe_drafts_path(universe_slug: @universe.slug), count: 1
-    assert_select ".draft-indicator .draft-indicator-count", text: "2"
-    assert_select ".draft-indicator[title=?]", I18n.t("drafts.pending.count", count: 2)
+    assert_select ".navbar-mobile-actions a.draft-indicator[href=?]",
+      universe_drafts_path(universe_slug: @universe.slug), count: 1
+    assert_select ".draft-indicator .draft-indicator-count", count: 2, text: "2"
+    assert_select ".draft-indicator[title=?]", I18n.t("drafts.pending.count", count: 2), count: 2
     assert_select ".draft-indicator[aria-label=?]",
-      "#{I18n.t("drafts.indicator.label")}: #{I18n.t("drafts.pending.count", count: 2)}"
+      "#{I18n.t("drafts.indicator.label")}: #{I18n.t("drafts.pending.count", count: 2)}", count: 2
   end
 
   test "it renders at zero without a count badge" do
     get universe_path(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "nav.navbar .draft-indicator", count: 1
+    assert_select "nav.navbar .draft-indicator", count: 2
+    assert_select ".navbar-actions .draft-indicator", count: 1
+    assert_select ".navbar-mobile-actions .draft-indicator", count: 1
     assert_select ".draft-indicator .draft-indicator-count", count: 0
     # The words are the ones the sidebar panel and the universe page use, so the
     # three surfaces cannot describe one draft in three ways.
-    assert_select ".draft-indicator[title=?]", I18n.t("drafts.pending.count", count: 0)
+    assert_select ".draft-indicator[title=?]", I18n.t("drafts.pending.count", count: 0), count: 2
   end
 
   test "it marks the drafts page current" do
     get universe_drafts_path(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select ".draft-indicator.active[aria-current=?]", "page"
+    assert_select ".draft-indicator.active[aria-current=?]", "page", count: 2
   end
 
   test "a direct universe and a guest get no indicator" do

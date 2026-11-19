@@ -14,6 +14,13 @@
     # the bell, because it is workspace state while a notification is addressed
     # to the person.
     #
+    # **It renders in two places, and only one is visible.** Below `lg` the
+    # actions row is inside the collapsed navigation, so the same partial is
+    # rendered beside the toggler instead; `d-lg-none` makes the two placements
+    # exclusive. The actions-row copy is also hidden below `lg` even while the
+    # menu is open, so the reader never sees two. The shared partial is what
+    # keeps their count and destination identical.
+    #
     # **It renders at zero as well as at any count.** The entry is also the way
     # into the drafts list and its history, and a control that appears and
     # disappears with a count is a control whose absence needs explaining. The

@@ -268,14 +268,15 @@ The painted treatment only. What it states, where it sits, and why it is not in 
 [features/navigation.md](features/navigation.md) — read that for *why*; this is what it looks like.
 
 The indicator wears the bell's own shape: a `btn-outline-light` at the same small size, in the same
-actions row. The journal icon is followed by the word **Draft** and, when something is waiting, its
-count as a `badge` **inside the button's flex row** rather than pinned to a corner, for the bell's
-reason: the navbar is too small for a corner badge and a count the reader can read beats a dot. The
-number uses tabular numerals so 9 → 10 does not shift the bell beside it. It is `text-bg-light` rather
-than the bell's danger red, because pending work is the reader's own, waiting to be applied, and not
-an alert about something that happened. At zero the badge is absent and the word stays, so the button
-neither changes size nor disappears with its count. It is a plain link, not a dropdown: there is
-nothing to choose between, and the drafts page is the list.
+actions row; below `lg`, where that row is inside the collapsed menu, the same button sits beside the
+toggler and keeps the same paint. The journal icon is followed by the word **Draft** and, when
+something is waiting, its count as a `badge` **inside the button's flex row** rather than pinned to a
+corner, for the bell's reason: the navbar is too small for a corner badge and a count the reader can
+read beats a dot. The number uses tabular numerals so 9 → 10 does not shift the bell beside it. It is
+`text-bg-light` rather than the bell's danger red, because pending work is the reader's own, waiting to
+be applied, and not an alert about something that happened. At zero the badge is absent and the word
+stays, so the button neither changes size nor disappears with its count. It is a plain link, not a
+dropdown: there is nothing to choose between, and the drafts page is the list.
 
 ### The notifications bell
 
@@ -354,7 +355,11 @@ the rules that keep navigation honest, are in
 - Below `lg`, it becomes a Bootstrap `offcanvas-start`; the main area shows a compact `Menu`
   button and the current universe/story context.
 - Below `lg` the navbar collapses into the toggler menu, and the search box is inside it with the
-  account menu — it is one collapsed navigation surface, not a bar that stays partly usable.
+  account menu; the draft indicator stays outside beside the toggler, so pending work needs nothing
+  opened. It is otherwise one collapsed navigation surface, not a bar that stays partly usable.
+- At `lg` and above, a long Universe or Story name truncates within its `12rem` maximum inside the
+  scope link; the search, the link list, and the scope items are allowed to shrink, so the bar never
+  grows wider than the viewport.
 - At `xl` and above, the right utility navigation is a `12.75rem` sticky column.
 - Below `xl`, it becomes a Bootstrap `offcanvas-end`; the workspace bar exposes it through a
   `Tools` button. The `Menu` button is only shown below `lg`, when the left panel also needs an
@@ -789,7 +794,9 @@ state, light/dark, and desktop/phone, so the two are judged like for like rather
 description. The [visual directions](visual_directions.md) exercise is the precedent for a large
 comparison, and the [Scene filter comparison](scene_filter_prototype.html) is the working example.
 The [Scene neighbour comparison](scene_neighbor_prototype.html) applies the same review bar to a
-details page, where the states are first, last, and only scenes rather than list filters.
+details page, where the states are first, last, and only scenes rather than list filters. The
+[workspace-width comparison](workspace_widths_prototype.html) applies it to the shell's rails,
+breakpoints, drawers, and 200% zoom.
 
 - Copy the built values from `_theme.scss` and the real view markup. A prototype is a hand-built
   mock, not a running Rails page, but it must not introduce a second palette or a simplified

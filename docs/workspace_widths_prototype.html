@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-design="current" data-width="1200" data-names="typical" data-pending="two" data-tools="expanded">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Universe Maker — Workspace width comparison</title>
+<style>
+  /* ============================================================
+     Review chrome. Not part of either layout.
+     ============================================================ */
+  :root { --review-h: 52px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  [hidden] { display: none !important; }
+  body {
+    background: #e5e2db;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar {
+    position: sticky; top: 0; z-index: 100; min-height: var(--review-h);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 8px 16px; background: #14171a; color: #edf0f2;
+    font: 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .reviewbar strong { font-size: 14px; letter-spacing: .01em; }
+  .reviewbar .sep { width: 1px; height: 22px; background: #394047; }
+  .reviewbar .group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .reviewbar .group-label {
+    color: #aab4bc; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; margin-right: 2px;
+  }
+  .reviewbar button {
+    appearance: none; border: 1px solid #3c454d; background: #20262b; color: #e8edf0;
+    border-radius: 4px; padding: 5px 9px; font: inherit; cursor: pointer;
+  }
+  .reviewbar button:hover { background: #2b3339; }
+  .reviewbar button[aria-pressed="true"] {
+    background: #e8edf0; border-color: #e8edf0; color: #15191c; font-weight: 650;
+  }
+  .reviewbar .note { margin-left: auto; color: #9aa5ad; font-size: 11.5px; }
+
+  .urlbar {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 8px 16px; background: #f3f1ec; color: #4c4a44;
+    border-bottom: 1px solid #d3ccbc; font-size: 12px;
+  }
+  .urlbar .urlbar-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: #6d675c;
+  }
+  .urlbar code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; overflow-wrap: anywhere; color: #1e1d1a;
+  }
+  .urlbar .urlbar-note { margin-left: auto; color: #6d675c; font-size: 11px; }
+
+  /* ============================================================
+     Built Index tokens (app/assets/stylesheets/_application_custom.scss).
+     ============================================================ */
+  html {
+    --bg: #f6f4ee; --surface: #fffdf8; --surface-2: #ece8dd;
+    --text: #1e1d1a; --muted: #5f5a50;
+    --border: #d3ccbc; --control-border: #8c8371;
+    --primary: #1d4f7a; --primary-strong: #173f61; --primary-soft: #e4edf5;
+    --on-primary: #ffffff; --hover: #efebe2; --row-hover: #faf7f0;
+    --danger: #a32626;
+    --sidebar-bg: #fbf9f3; --tools-bg: #f8f5ed; --topbar-bg: #20242a;
+    --scope-universe: #244a7c; --scope-universe-soft: #e7edf6;
+    --scope-story: #8a2f3a; --scope-story-soft: #f6e6e8;
+    --scope-tools: #2a6a4b; --scope-tools-soft: #e5f0e9;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+      Georgia, "Times New Roman", serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --bg: #171613; --surface: #1e1c18; --surface-2: #28241e;
+    --text: #ece7dc; --muted: #b3ab9b;
+    --border: #3d382e; --control-border: #8b8272;
+    --primary: #9cc0e0; --primary-strong: #c7ddf0; --primary-soft: #22384b;
+    --on-primary: #0d2237; --hover: #26221c; --row-hover: #242019;
+    --danger: #f09999;
+    --sidebar-bg: #1b1915; --tools-bg: #1a1814; --topbar-bg: #101216;
+    --scope-universe: #9db7dd; --scope-universe-soft: #223449;
+    --scope-story: #eda3ab; --scope-story-soft: #3a2427;
+    --scope-tools: #8ccbaa; --scope-tools-soft: #1e352b;
+    color-scheme: dark;
+  }
+
+  .stage {
+    display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+    padding: 22px 16px 18px; overflow-x: auto;
+  }
+  .stage-caption {
+    align-self: center; color: #57534a; font-size: 11.5px; letter-spacing: .02em;
+    text-align: center; max-width: 900px;
+  }
+  .mock {
+    flex: none;
+    position: relative;
+    width: 1200px; height: 800px;
+    margin: 0 auto;
+    background: var(--bg); color: var(--text);
+    outline: 1px solid #b5ae9f; border-radius: 6px;
+    box-shadow: 0 14px 44px rgba(25, 23, 19, .16);
+    overflow: hidden;
+    font-size: 15px; line-height: 1.5;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .mock a { color: var(--primary); text-decoration: none; }
+  .mock a:hover { text-decoration: underline; }
+  .mock h1, .mock h2, .mock p { margin-top: 0; }
+  .mock :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  /* ============================================================
+     Top bar (layouts/_navbar.html.erb)
+     ============================================================ */
+  .um-navbar {
+    position: relative; z-index: 30;
+    display: flex; align-items: center; gap: 16px;
+    height: 50px; padding: 0 16px;
+    background: var(--topbar-bg); color: #f1eee6;
+    font-size: 14px;
+  }
+  .um-brand { font-weight: 700; color: #f1eee6; white-space: nowrap; }
+  .um-navbar .scope-links { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .um-nav-link {
+    color: #d9d5ca; padding: 6px 8px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .um-nav-link span {
+    display: inline-block; max-width: 12rem; overflow: hidden;
+    text-overflow: ellipsis; vertical-align: bottom;
+    color: #f1eee6; font-weight: 600; white-space: nowrap;
+  }
+  .um-search {
+    display: flex; align-items: center; flex: 1 1 16rem; min-width: 8rem; max-width: 30rem;
+    height: 32px; border: 1px solid #555c64; border-radius: 4px;
+    background: #171a1f; color: #cfcac0; padding: 0 10px; gap: 8px;
+    font-size: 12.5px;
+  }
+  .um-search .icon { color: #aab4bc; font-size: 12px; }
+  .um-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .um-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    border: 1px solid #6a737c; border-radius: 4px;
+    background: transparent; color: #f1eee6;
+    padding: 4px 8px; font-size: 12px; white-space: nowrap; cursor: pointer;
+  }
+  .mock .um-pill { color: #f1eee6; }
+  .um-pill .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px;
+    background: #ece8dd; color: #1e1d1a; font-size: 10.5px; font-weight: 700;
+  }
+  .um-toggler {
+    display: none; margin-left: auto;
+    width: 38px; height: 34px; border: 1px solid #555c64; border-radius: 4px;
+    background: transparent; color: #f1eee6; font-size: 16px;
+  }
+  .um-mobile-draft { display: none; margin-left: auto; }
+  .mock[data-navbar="collapsed"] .um-mobile-draft { display: inline-flex; }
+  .mock[data-navbar="collapsed"] .scope-links,
+  .mock[data-navbar="collapsed"] .um-search,
+  .mock[data-navbar="collapsed"] .um-actions { display: none; }
+  .mock[data-navbar="collapsed"] .um-toggler { display: block; }
+
+  /* ============================================================
+     Workspace shell (application.html.erb + _application_custom.scss)
+     ============================================================ */
+  .um-shell {
+    position: relative;
+    display: flex; align-items: stretch;
+    height: calc(100% - 50px);
+    max-width: 1440px; margin: 0 auto;
+  }
+  .um-rail {
+    flex: none;
+    width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--rail-bg);
+    border-right: 1px solid var(--border);
+    scrollbar-width: thin;
+  }
+  .um-rail--left { width: 232px; }
+  .um-tools { width: 204px; border-right: 0; border-left: 1px solid var(--border); }
+  .um-main {
+    flex: 1 1 auto; min-width: 0;
+    display: flex; flex-direction: column;
+    height: 100%; overflow-y: auto;
+  }
+  .mock[data-left="drawer"] .um-rail--left,
+  .mock[data-right="drawer"] .um-tools {
+    position: absolute; top: -50px; bottom: 0; z-index: 45;
+    height: calc(100% + 50px);
+    width: var(--drawer-w);
+    border: 0;
+    box-shadow: 0 0 28px rgba(20, 18, 14, .34);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform .18s ease;
+  }
+  .mock[data-left="drawer"] .um-rail--left { --drawer-w: 232px; }
+  .mock[data-right="drawer"] .um-tools { --drawer-w: 204px; right: 0; left: auto; transform: translateX(102%); }
+  .mock[data-open="left"] .um-rail--left,
+  .mock[data-open="right"] .um-tools {
+    transform: translateX(0);
+    visibility: visible;
+  }
+  .mock[data-left="rail"] .um-rail--left { width: 232px; }
+  .mock[data-left="drawer"] .um-rail--left { background: var(--sidebar-bg); }
+  .mock[data-right="drawer"] .um-tools { background: var(--tools-bg); }
+  .um-backdrop {
+    position: absolute; top: -50px; left: 0; right: 0; bottom: 0; z-index: 44;
+    background: rgba(12, 11, 9, .42);
+  }
+  .um-backdrop[hidden] { display: none; }
+  .drawer-head {
+    display: none;
+    align-items: center; justify-content: space-between; gap: 12px;
+    height: 58px; padding: 0 16px; border-bottom: 1px solid var(--border);
+    background: inherit;
+  }
+  .drawer-head h2 {
+    margin: 0; font-size: 16px; font-family: var(--serif); font-weight: 600;
+  }
+  .drawer-head button {
+    width: 30px; height: 30px; border: 1px solid var(--border);
+    border-radius: 4px; background: transparent; color: var(--text); font-size: 16px;
+  }
+  .mock[data-left="drawer"] .um-rail--left .drawer-head,
+  .mock[data-right="drawer"] .um-tools .drawer-head { display: flex; }
+  .rail-body { height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+  .mock[data-left="drawer"] .um-rail--left .rail-body,
+  .mock[data-right="drawer"] .um-tools .rail-body { height: calc(100% - 58px); }
+
+  /* Sidebar paint, from `_application_custom.scss`. */
+  .sidebar-context { padding: 16px 16px 4px; }
+  .sidebar-eyebrow {
+    margin-bottom: 4px; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .11em; text-transform: uppercase;
+  }
+  .sidebar-context--universe .sidebar-eyebrow { color: var(--scope-universe); }
+  .sidebar-context--story { padding-top: 20px; }
+  .sidebar-context--story .sidebar-eyebrow { color: var(--scope-story); }
+  .sidebar-context--tools .sidebar-eyebrow { color: var(--scope-tools); }
+  .sidebar-name {
+    margin: 0; overflow-wrap: anywhere;
+    font-family: var(--serif); font-size: 15.5px; font-weight: 600; line-height: 1.25;
+  }
+  .sidebar-story-name { color: var(--scope-story); }
+  .sidebar-section { padding: 6px 8px 12px; }
+  .sidebar-section-title {
+    margin: 0 0 4px; padding: 6px 10px 4px;
+    color: var(--scope-universe);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+    line-height: 1.2; text-transform: uppercase;
+  }
+  .sidebar-section--story .sidebar-section-title { color: var(--scope-story); }
+  .sidebar-section--tools .sidebar-section-title { color: var(--scope-tools); }
+  .sidebar-list { margin: 0; padding: 0; list-style: none; }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 8px;
+    min-height: 30px; padding: 0 10px;
+    border-inline-start: 3px solid transparent; border-radius: 3px;
+    color: var(--text); font-size: 12.8px; font-weight: 500;
+    text-decoration: none;
+  }
+  .mock[data-dense="true"] .sidebar-link { min-height: 40px; }
+  .sidebar-link .bi {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; flex: 0 0 16px; color: var(--muted); font-size: 12px;
+  }
+  .sidebar-link:hover { background: var(--hover); color: var(--primary-strong); text-decoration: none; }
+  .sidebar-link.active {
+    border-inline-start-color: var(--primary);
+    background: var(--primary-soft); color: var(--primary-strong); font-weight: 650;
+  }
+  .sidebar-count { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .sidebar-hint {
+    margin: 8px 10px 0; color: var(--muted); font-size: 12px; line-height: 1.4;
+  }
+
+  /* Right rail context and pending panel. */
+  .tools-intro { padding: 16px 16px 4px; }
+  .tools-intro p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+  .draft-pending-panel {
+    margin: 4px 5px 0; padding: 8px 10px;
+    border-inline-start: 3px solid var(--scope-tools);
+    background: var(--scope-tools-soft);
+  }
+  .draft-pending-summary {
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 0 6px; color: var(--scope-tools); font-size: 13px; font-weight: 700;
+  }
+  .draft-pending-changes { margin: 0 0 6px; padding: 0; list-style: none; }
+  .draft-pending-change {
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: 13px; line-height: 1.35;
+  }
+  .draft-pending-change + .draft-pending-change { margin-top: 5px; }
+  .draft-badge {
+    flex: none; border: 1px solid var(--border); border-radius: 9px;
+    padding: 0 6px; font-size: 10.5px; line-height: 1.5;
+  }
+  .draft-pending-more { margin: 0; color: var(--muted); font-size: 12px; }
+  .mock[data-pending="empty"] .pending-rows,
+  .mock[data-pending="empty"] .pending-more { display: none; }
+  .mock[data-pending="two"] .pending-empty { display: none; }
+
+  /* Inspector rows. */
+  .inspector-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    min-height: 30px; padding: 4px 10px; font-size: 12px;
+  }
+  .inspector-row + .inspector-row { border-top: 1px solid var(--border); }
+  .inspector-row .value { color: var(--muted); text-align: end; }
+
+  /* Collapsible tools rail (proposal only). */
+  .tools-toggle {
+    display: none; align-items: center; gap: 6px;
+    width: calc(100% - 16px); margin: 8px 8px 0;
+    min-height: 28px; padding: 0 8px;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: transparent; color: var(--muted); font: inherit; font-size: 11.5px;
+    cursor: pointer; text-align: start;
+  }
+  .mock[data-design="collapsible"] .tools-toggle { display: flex; }
+  .tools-toggle:hover { background: var(--hover); color: var(--text); }
+  .tools-toggle .chevron { margin-left: auto; font-size: 11px; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .um-tools { width: 48px; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .um-tools .tools-intro,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .draft-pending-changes,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .draft-pending-more,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .inspector-row .label,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .inspector-row .value { display: none; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .tools-label,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .um-tools .sidebar-section-title,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .draft-pending-summary .pending-text,
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .sidebar-count {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .sidebar-section { padding: 4px 0; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .sidebar-link {
+    justify-content: center; padding: 0; min-height: 34px;
+    border-inline-start-width: 0;
+  }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .sidebar-link .bi { width: auto; flex: none; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .draft-pending-panel {
+    margin: 4px 6px; padding: 6px 0; text-align: center;
+  }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .draft-pending-summary {
+    justify-content: center; margin: 0;
+  }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .tools-toggle {
+    width: 32px; margin: 8px auto 4px; padding: 0; justify-content: center;
+  }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .tools-toggle .chevron { display: none; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .sidebar-section--tools:last-child { display: none; }
+  .mock[data-design="collapsible"][data-right="rail"][data-tools="collapsed"] .inspector-row {
+    justify-content: center; padding: 4px 0;
+  }
+
+  /* ============================================================
+     Page (shared/_page_header, list rows, filters)
+     ============================================================ */
+  .mobile-workspace-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px 0; background: var(--bg);
+  }
+  .mock[data-mobilebar="hidden"] .mobile-workspace-bar { display: none; }
+  .mobile-workspace-actions { display: flex; flex: none; align-items: center; gap: 8px; }
+  .ws-button {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 31px; padding: 0 10px;
+    border: 1px solid var(--primary); border-radius: 4px;
+    background: transparent; color: var(--primary); font: inherit; font-size: 13px;
+    cursor: pointer;
+  }
+  .ws-button--secondary { border-color: var(--control-border); color: var(--text); }
+  .mock[data-menu="hidden"] .ws-menu { display: none; }
+  .mock[data-toolsbutton="hidden"] .ws-tools { display: none; }
+  .mobile-workspace-context {
+    display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: 4px;
+    min-width: 0; margin-left: auto; color: var(--muted);
+    font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; text-align: end;
+  }
+  .mobile-workspace-story::before { content: "·\00a0"; }
+
+  .page-shell {
+    width: 100%; max-width: 1040px; margin: 0 auto;
+    padding: var(--page-pad, 30px); padding-bottom: 64px;
+  }
+  .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  .page-head > div:first-child { flex: 1 1 18rem; min-width: 0; }
+  .page-eyebrow {
+    margin-bottom: 4px; color: var(--muted);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+  }
+  .page-title {
+    margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 600;
+    line-height: 1.18; letter-spacing: -.012em;
+  }
+  .page-description {
+    max-width: 64ch; margin: 6px 0 0; color: var(--muted);
+    font-family: var(--serif); font-size: 15px; line-height: 1.5;
+  }
+  .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 31px; padding: 0 12px;
+    border: 1px solid transparent; border-radius: 4px;
+    font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .btn-outline {
+    background: transparent; border-color: var(--control-border); color: var(--text);
+  }
+  .filter-card {
+    display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;
+    padding: 12px; margin-bottom: 14px;
+    border: 1px solid var(--border); border-radius: 5px; background: var(--surface);
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field--grow { flex: 1 1 14rem; }
+  .field label { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .field input, .field select {
+    width: 100%; min-height: 31px; padding: 0 9px;
+    border: 1px solid var(--control-border); border-radius: 4px;
+    background: var(--surface); color: var(--text); font: inherit; font-size: 13px;
+  }
+  .filter-note { margin: -4px 0 12px; color: var(--muted); font-size: 12px; }
+  .scene-list { border-top: 1px solid var(--border); }
+  .scene-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 4px; border-bottom: 1px solid var(--border);
+  }
+  .scene-position {
+    flex: none; width: 22px; padding-top: 2px; color: var(--muted);
+    font-size: 11.5px; font-variant-numeric: tabular-nums; text-align: end;
+  }
+  .scene-body { flex: 1 1 auto; min-width: 0; }
+  .scene-title {
+    margin: 0; font-family: var(--serif); font-size: 15.5px; font-weight: 600;
+    line-height: 1.3; overflow-wrap: anywhere;
+  }
+  .scene-desc {
+    margin: 3px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+    overflow: hidden; overflow-wrap: anywhere;
+  }
+  .scene-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 5px; color: var(--muted); font-size: 11.5px; }
+  .scene-actions { display: flex; flex: none; align-items: center; gap: 6px; }
+  .tag {
+    display: inline-flex; align-items: center; border: 1px solid var(--border);
+    border-radius: 9px; padding: 0 7px; font-size: 10.5px; line-height: 1.6;
+  }
+  .menu-dots {
+    width: 28px; height: 28px; border: 1px solid transparent; border-radius: 4px;
+    background: transparent; color: var(--muted); font-size: 16px; cursor: pointer;
+  }
+  .menu-dots:hover { background: var(--hover); border-color: var(--border); }
+
+  /* Compact right rail (proposal only): 9rem instead of 12.75rem. */
+  .mock[data-design="compact"][data-right="rail"] .um-tools { width: 144px; }
+  .mock[data-design="compact"][data-right="rail"] .um-tools .sidebar-section { padding-inline: 4px; }
+  .mock[data-design="compact"][data-right="rail"] .um-tools .sidebar-link {
+    padding: 4px 6px; gap: 6px; font-size: 12px; line-height: 1.25;
+  }
+  .mock[data-design="compact"][data-right="rail"] .um-tools .sidebar-link .bi { flex: 0 0 14px; width: 14px; }
+  .mock[data-design="compact"][data-right="rail"] .um-tools .draft-pending-panel {
+    margin-inline: 2px; padding: 6px 6px;
+  }
+  .mock[data-design="compact"][data-right="rail"] .um-tools .draft-pending-change { font-size: 12px; }
+
+  /* ============================================================
+     Notes
+     ============================================================ */
+  .notes {
+    max-width: 980px; margin: 0 auto; padding: 8px 20px 70px;
+    color: #2a2823; font-size: 14.5px; line-height: 1.55;
+  }
+  .notes h2 {
+    margin: 30px 0 10px; font-family: var(--serif); font-size: 22px;
+    font-weight: 600; line-height: 1.25;
+  }
+  .notes h2:first-child { margin-top: 6px; }
+  .notes p, .notes li { max-width: 86ch; }
+  .notes code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .9em; background: #dcd7cb; padding: 1px 4px; border-radius: 3px;
+  }
+  .notes .recommendation {
+    border-left: 4px solid #2a6a4b; background: #e3eee7;
+    padding: 12px 14px; margin: 10px 0 14px;
+  }
+  .notes .measurement {
+    border: 1px solid #c4bdae; background: #f3f1ea; padding: 12px 14px;
+    font-size: 13.5px; line-height: 1.55;
+  }
+  .notes .measurement strong { font-variant-numeric: tabular-nums; }
+  .notes ul { padding-left: 22px; }
+  .notes li + li { margin-top: 5px; }
+  .table-wrap { overflow-x: auto; margin: 12px 0 6px; }
+  table.measure {
+    border-collapse: collapse; font-size: 12.5px; min-width: 720px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.measure th, table.measure td {
+    border: 1px solid #c4bdae; padding: 6px 9px; text-align: right;
+  }
+  table.measure th:first-child, table.measure td:first-child { text-align: left; }
+  table.measure thead th { background: #e8e4da; font-weight: 650; }
+  table.measure tr.best td { background: #e3eee7; font-weight: 650; }
+  .table-note { color: #57534a; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="reviewbar">
+  <strong>Workspace widths</strong>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Design">
+    <span class="group-label">Design</span>
+    <button type="button" data-set-design="current" aria-pressed="true">Current</button>
+    <button type="button" data-set-design="compact" aria-pressed="false">Compact rail</button>
+    <button type="button" data-set-design="collapsible" aria-pressed="false">Collapsible rail</button>
+    <button type="button" data-set-design="late" aria-pressed="false">Tools from 1400</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Width">
+    <span class="group-label">Width</span>
+    <button type="button" data-set-width="1440" aria-pressed="false">1440</button>
+    <button type="button" data-set-width="1400" aria-pressed="false">1400</button>
+    <button type="button" data-set-width="1200" aria-pressed="true">1200</button>
+    <button type="button" data-set-width="1199" aria-pressed="false">1199</button>
+    <button type="button" data-set-width="992" aria-pressed="false">992</button>
+    <button type="button" data-set-width="720" aria-pressed="false">720 (200%)</button>
+    <button type="button" data-set-width="390" aria-pressed="false">390</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Theme">
+    <span class="group-label">Theme</span>
+    <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+    <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Scope names">
+    <span class="group-label">Names</span>
+    <button type="button" data-set-names="typical" aria-pressed="true">Typical</button>
+    <button type="button" data-set-names="long" aria-pressed="false">Long</button>
+  </div>
+  <span class="sep"></span>
+  <div class="group" role="group" aria-label="Pending work">
+    <span class="group-label">Pending</span>
+    <button type="button" data-set-pending="two" aria-pressed="true">Two changes</button>
+    <button type="button" data-set-pending="empty" aria-pressed="false">Empty</button>
+  </div>
+  <div class="group" id="tools-state-group" role="group" aria-label="Tools state">
+    <span class="sep"></span>
+    <span class="group-label">Tools rail</span>
+    <button type="button" data-set-tools="expanded" aria-pressed="true">Expanded</button>
+    <button type="button" data-set-tools="collapsed" aria-pressed="false">Collapsed</button>
+  </div>
+  <span class="note">Review mockup · 2026-11-19 · not production</span>
+</div>
+
+<div class="urlbar">
+  <span class="urlbar-label">GET</span>
+  <code>/u/lotr/s/4/scenes</code>
+  <span class="urlbar-note" data-width-note>Simulated viewport 1200 × 800 CSS pixels</span>
+</div>
+
+<div class="stage">
+  <span class="stage-caption" data-scroll-note>Scroll horizontally if your window is narrower than the simulated viewport.</span>
+
+  <div class="mock" id="mock" data-design="current" data-left="rail" data-right="rail" data-navbar="expanded" data-mobilebar="hidden" data-menu="hidden" data-toolsbutton="hidden" data-dense="false" data-pending="two" data-tools="expanded" data-names="typical" data-open="none">
+    <!-- ================= TOP BAR ================= -->
+    <div class="um-navbar" role="navigation" aria-label="Primary navigation">
+      <span class="um-brand">Universe Maker</span>
+      <div class="scope-links">
+        <a class="um-nav-link" href="#">Universe <span data-universe-name>lotr</span></a>
+        <a class="um-nav-link" href="#">Story <span data-story-name>The Lord of the Rings</span></a>
+      </div>
+      <div class="um-search" role="search">
+        <span class="icon" aria-hidden="true">⌕</span>
+        <span>Search this universe…</span>
+        <span style="margin-left:auto;color:#aab4bc;font-size:11px;">All</span>
+      </div>
+      <div class="um-actions">
+        <a class="um-pill" href="#" title="Draft: 2 pending changes">Draft <span class="badge" data-draft-badge>2</span></a>
+        <button class="um-pill" type="button">Account</button>
+      </div>
+      <a class="um-pill um-mobile-draft" href="#" title="Draft: 2 pending changes">Draft <span class="badge" data-draft-badge>2</span></a>
+      <button class="um-toggler" type="button" aria-label="Toggle navigation">☰</button>
+    </div>
+
+    <div class="um-shell">
+      <!-- ================= LEFT WORKSPACE NAVIGATION ================= -->
+      <aside class="um-rail um-rail--left" id="mock-navigation" aria-label="Workspace navigation">
+        <div class="drawer-head">
+          <h2>Workspace navigation</h2>
+          <button type="button" data-close="left" aria-label="Close navigation">×</button>
+        </div>
+        <div class="rail-body">
+          <div class="sidebar-context sidebar-context--universe">
+            <div class="sidebar-eyebrow">Current universe</div>
+            <h2 class="sidebar-name" data-universe-name>lotr</h2>
+          </div>
+
+          <nav class="workspace-navigation" aria-label="Universe and story">
+            <section class="sidebar-section sidebar-section--universe">
+              <h3 class="sidebar-section-title">Universe bible</h3>
+              <ul class="sidebar-list">
+                <li><a class="sidebar-link active" href="#" aria-current="page"><span class="bi" aria-hidden="true">♙</span>Characters <span class="sidebar-count">18</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">◈</span>Factions <span class="sidebar-count">7</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⌖</span>Locations <span class="sidebar-count">24</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">◷</span>Events <span class="sidebar-count">11</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">▣</span>Items <span class="sidebar-count">16</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⚖</span>Canon <span class="sidebar-count">9</span></a></li>
+              </ul>
+            </section>
+
+            <div class="sidebar-context sidebar-context--story">
+              <div class="sidebar-eyebrow">Current story</div>
+              <h2 class="sidebar-name sidebar-story-name" data-story-name>The Lord of the Rings</h2>
+            </div>
+
+            <section class="sidebar-section sidebar-section--story">
+              <h3 class="sidebar-section-title">Story workspace</h3>
+              <ul class="sidebar-list">
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⌂</span>Story overview</a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">☰</span>Sections <span class="sidebar-count">12</span></a></li>
+                <li><a class="sidebar-link active" href="#"><span class="bi" aria-hidden="true">▤</span>Scenes <span class="sidebar-count">24</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⋔</span>Plots <span class="sidebar-count">3</span></a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⇩</span>Export</a></li>
+              </ul>
+            </section>
+
+            <section class="sidebar-section sidebar-section--story">
+              <h3 class="sidebar-section-title">Story analytics</h3>
+              <ul class="sidebar-list">
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">⇢</span>Narrative order</a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">▦</span>Appearances</a></li>
+                <li><a class="sidebar-link" href="#"><span class="bi" aria-hidden="true">▧</span>Scene matrix</a></li>
+              </ul>
+            </section>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- ================= MAIN ================= -->
+      <main class="um-main" id="main-content">
+        <div class="mobile-workspace-bar">
+          <div class="mobile-workspace-actions">
+            <button class="ws-button ws-menu" type="button" data-open="left" aria-controls="mock-navigation" aria-expanded="false">☰ Menu</button>
+            <button class="ws-button ws-button--secondary ws-tools" type="button" data-open="right" aria-controls="mock-tools" aria-expanded="false">✦ Tools</button>
+          </div>
+          <span class="mobile-workspace-context">
+            <span class="mobile-workspace-universe" data-universe-name>lotr</span><span class="mobile-workspace-story" data-story-name>The Lord of the Rings</span>
+          </span>
+        </div>
+
+        <div class="page-shell">
+          <header class="page-head">
+            <div>
+              <div class="page-eyebrow">Story: The Lord of the Rings</div>
+              <h1 class="page-title">Scenes</h1>
+              <p class="page-description">24 scenes in the order The Lord of the Rings is told. Narrative order is not in-world chronology.</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn btn-primary" type="button">New scene</button>
+              <button class="btn btn-outline" type="button">Scene board</button>
+            </div>
+          </header>
+
+          <div class="filter-card">
+            <div class="field field--grow">
+              <label for="mock-q">Search scenes</label>
+              <input id="mock-q" type="search" placeholder="Title or prose">
+            </div>
+            <div class="field">
+              <label for="mock-status">Status</label>
+              <select id="mock-status"><option>Any</option><option>Revised</option><option>Draft</option></select>
+            </div>
+            <button class="btn btn-outline" type="button">Apply</button>
+            <button class="btn btn-outline" type="button">Advanced filters</button>
+          </div>
+          <p class="filter-note">24 scenes</p>
+
+          <div class="scene-list">
+            <div class="scene-row">
+              <span class="scene-position">1</span>
+              <div class="scene-body">
+                <p class="scene-title">A Long-Expected Party</p>
+                <p class="scene-desc">Bilbo announces a celebration, and the Shire gathers to hear what he will say about the ring.</p>
+                <div class="scene-meta"><span>Chapter one</span><span>1,840 words</span><span class="tag">Revised</span></div>
+              </div>
+              <div class="scene-actions"><button class="menu-dots" type="button" aria-label="Actions for A Long-Expected Party">⋯</button></div>
+            </div>
+
+            <div class="scene-row">
+              <span class="scene-position">2</span>
+              <div class="scene-body">
+                <p class="scene-title">The Shadow of the Past</p>
+                <p class="scene-desc">Gandalf tells Frodo what the ring is, and why the road out of the Shire cannot wait.</p>
+                <div class="scene-meta"><span>Chapter two</span><span>2,410 words</span><span class="tag">Revised</span></div>
+              </div>
+              <div class="scene-actions"><button class="menu-dots" type="button" aria-label="Actions for The Shadow of the Past">⋯</button></div>
+            </div>
+
+            <div class="scene-row">
+              <span class="scene-position">3</span>
+              <div class="scene-body">
+                <p class="scene-title">The Council of Elrond, and What Was Said Beneath the Broken Column</p>
+                <p class="scene-desc">Nine walkers are chosen while the assembled company argues over what to do with the ring.</p>
+                <div class="scene-meta"><span>Chapter three</span><span>3,620 words</span><span class="tag">Draft</span></div>
+              </div>
+              <div class="scene-actions"><button class="menu-dots" type="button" aria-label="Actions for The Council of Elrond">⋯</button></div>
+            </div>
+
+            <div class="scene-row">
+              <span class="scene-position">4</span>
+              <div class="scene-body">
+                <p class="scene-title">The Bridge of Khazad-dûm</p>
+                <p class="scene-desc">The company crosses the bridge, and Gandalf turns back to face the Balrog.</p>
+                <div class="scene-meta"><span>Chapter four</span><span>2,050 words</span><span class="tag">Revised</span></div>
+              </div>
+              <div class="scene-actions"><button class="menu-dots" type="button" aria-label="Actions for The Bridge of Khazad-dûm">⋯</button></div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ================= RIGHT TOOLS RAIL ================= -->
+      <aside class="um-rail um-tools" aria-label="Universe tools" id="mock-tools">
+        <div class="drawer-head">
+          <h2>Universe tools</h2>
+          <button type="button" data-close="right" aria-label="Close tools">×</button>
+        </div>
+        <div class="rail-body">
+          <div class="sidebar-context sidebar-context--tools tools-intro">
+            <div class="sidebar-eyebrow">Tools</div>
+            <p>Configuration and governance for this universe, kept out of the writing column.</p>
+          </div>
+
+          <button class="tools-toggle" type="button" data-set-tools="collapsed" aria-expanded="true">
+            <span aria-hidden="true">⟨</span>
+            <span class="tools-label">Collapse tools</span>
+            <span class="chevron" aria-hidden="true">‹</span>
+          </button>
+
+          <section class="sidebar-section sidebar-section--tools">
+            <h3 class="sidebar-section-title">Configuration</h3>
+            <ul class="sidebar-list">
+              <li><a class="sidebar-link" href="#" title="Tags"><span class="bi" aria-hidden="true">#</span><span class="tools-label">Tags</span></a></li>
+              <li><a class="sidebar-link" href="#" title="Members"><span class="bi" aria-hidden="true">♟</span><span class="tools-label">Members</span></a></li>
+              <li><a class="sidebar-link" href="#" title="Backup"><span class="bi" aria-hidden="true">↓</span><span class="tools-label">Backup</span></a></li>
+            </ul>
+          </section>
+
+          <section class="sidebar-section sidebar-section--tools">
+            <h3 class="sidebar-section-title">Collaboration</h3>
+            <ul class="sidebar-list">
+              <li class="draft-pending-panel">
+                <p class="draft-pending-summary"><span aria-hidden="true">✎</span><span class="pending-text" data-pending-summary>2 pending changes</span></p>
+                <ul class="draft-pending-changes pending-rows">
+                  <li class="draft-pending-change"><span class="draft-badge">updated</span><span>A Long-Expected Party</span></li>
+                  <li class="draft-pending-change"><span class="draft-badge">created</span><span>The Council of Elrond</span></li>
+                </ul>
+                <p class="draft-pending-more pending-more">1 more change</p>
+                <p class="draft-pending-more pending-empty">Nothing waiting.</p>
+              </li>
+              <li><a class="sidebar-link" href="#" title="Pending changes"><span class="bi" aria-hidden="true">✎</span><span class="tools-label">Pending changes</span></a></li>
+              <li><a class="sidebar-link" href="#" title="Review requests"><span class="bi" aria-hidden="true">☰</span><span class="tools-label">Review requests</span><span class="sidebar-count">1</span></a></li>
+              <li><a class="sidebar-link" href="#" title="History"><span class="bi" aria-hidden="true">↺</span><span class="tools-label">History</span><span class="sidebar-count">36</span></a></li>
+              <li><a class="sidebar-link" href="#" title="Collaborators"><span class="bi" aria-hidden="true">⚑</span><span class="tools-label">Collaborators</span><span class="sidebar-count">3</span></a></li>
+            </ul>
+          </section>
+
+          <section class="sidebar-section sidebar-section--tools">
+            <h3 class="sidebar-section-title">Inspector</h3>
+            <div class="inspector-row"><span class="label">Sections</span><span class="value">12</span></div>
+            <div class="inspector-row"><span class="label">Scenes</span><span class="value">24</span></div>
+            <div class="inspector-row"><span class="label">Words</span><span class="value">38,232</span></div>
+          </section>
+        </div>
+      </aside>
+
+      <div class="um-backdrop" data-close="all" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h2>What this comparison tests</h2>
+  <p>The workspace shell reserves a <code>232 px</code> left rail and a <code>204 px</code> right rail at its widest, so the writing column loses <code>436 px</code> before the page has drawn anything. The reserved width is fixed while the window is not, so the two breakpoints create two sudden losses of usable content: crossing below <code>xl</code> (1200 px) gives the main column <code>203 px</code> more, and crossing below <code>lg</code> (992 px) gives it another <code>231 px</code>. A narrower window is not consistently narrower content — at 1200 px the page holds 704 px, while at 1199 px it holds 907 px.</p>
+  <p>This is a static mock of the real shell markup and the built values in <code>_application_custom.scss</code>, not a running Rails page. The content, counts, and names are illustrative; the widths, paddings, row heights, top bar, drawers, and tools entries follow the application. The review bar switches the design, the simulated viewport, both themes, typical or long scope names, an empty or populated pending panel, and the expanded or collapsed tools rail. The application view and stylesheet are untouched.</p>
+
+  <h2>Measured in the running application</h2>
+  <p>These values were read from the development application at <code>/u/lotr/s/4/scenes</code> as the signed-in owner, with <code>lotr@lotr</code>, at each CSS viewport. The page content is the <code>.page-shell</code> width minus its horizontal padding.</p>
+  <div class="table-wrap">
+    <table class="measure">
+      <thead>
+        <tr><th>Viewport</th><th>Left rail</th><th>Right rail</th><th>Main</th><th>Page content</th><th>Right rail content</th><th>Search</th><th>Draft indicator</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1440 × 900</td><td>232</td><td>204</td><td>1004</td><td>940</td><td>667 in 750</td><td>top bar</td><td>visible</td></tr>
+        <tr><td>1280 × 800</td><td>232</td><td>204</td><td>844</td><td>780</td><td>667 in 750</td><td>top bar</td><td>visible</td></tr>
+        <tr><td>1200 × 800</td><td>232</td><td>204</td><td>764</td><td>704</td><td>667 in 750</td><td>top bar</td><td>visible</td></tr>
+        <tr><td>1199 × 800</td><td>232</td><td>drawer</td><td>967</td><td>907</td><td>745 in 745</td><td>top bar</td><td>visible</td></tr>
+        <tr><td>992 × 700</td><td>232</td><td>drawer</td><td>760</td><td>710</td><td>667 in 645</td><td>top bar</td><td>visible</td></tr>
+        <tr><td>991 × 700</td><td>drawer</td><td>drawer</td><td>991</td><td>941</td><td>737 in 645</td><td>hamburger</td><td>visible (toggler)</td></tr>
+        <tr><td>720 × 450 (200%)</td><td>drawer</td><td>drawer</td><td>720</td><td>684</td><td>737 in 395</td><td>hamburger</td><td>visible (toggler)</td></tr>
+        <tr><td>390 × 844</td><td>drawer</td><td>drawer</td><td>390</td><td>358</td><td>789 in 789</td><td>hamburger</td><td>visible (toggler)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">“667 in 750” means 667 px of rail content in a 750 px column; no scrolling. At 992 the drawer is 645 px tall for 667 px of content, so its last 22 px need scrolling. At 720 × 450 the tools drawer body is 395 px tall for 737 px of content; with two pending rows the panel alone is 184 px, runs from 328 px to 511 px inside that body, and its lower rows need scrolling. The left drawer holds 874 px of content in the same 395 px. Long scope names wrap to 39 px and 58 px in the 232 px rail. At 720 the two-line phone context makes the mobile bar 48 px tall; at 390 it wraps to three lines and 85 px. No page width overflows — but at exactly 992 with long scope names the <em>navbar</em> did: the collapsed-behaviour breakpoint had not been reached, the two scope names truncated at their 12rem maximum, and the search and actions could not shrink enough, so the bar's scroll width was 1144 px against 992. The same change lets the bar's search and scope links shrink; `test/system/navbar_layout_test.rb` covers that boundary with long names, and the mock truncates the names rather than reproducing the old overflow.</p>
+
+  <h2>The four designs</h2>
+  <ul>
+    <li><strong>Current.</strong> Left rail at <code>lg</code>, right rail at <code>xl</code>; below those widths each becomes a labelled drawer button in the workspace bar.</li>
+    <li><strong>Compact rail.</strong> Keep the right rail at <code>xl</code> but make it <code>9rem</code> (144 px), a 60 px saving. The same entries stay, but “Review requests” wraps and the tools scope loses a third of its label column.</li>
+    <li><strong>Collapsible rail.</strong> Keep the full rail by default and add a <strong>Collapse tools</strong> button. Collapsed, it is a 48 px icon strip with title and accessible-name labels, and the writing column gains 156 px. The reader chooses it; the default still costs 204 px.</li>
+    <li><strong>Tools from 1400.</strong> The right rail is a drawer below Bootstrap's <code>xxl</code> (1400 px) and a rail at and above it. The Tools button remains in the workspace bar, and the top bar's draft indicator still states pending work because the navbar stays expanded at these widths.</li>
+  </ul>
+
+  <h2>Measured from this mock</h2>
+  <p class="measurement" data-measurements>Measuring…</p>
+  <p>The table below is read from this page's own DOM by applying each design at each viewport, then restoring the selected state. “Tools from 1400” and “Collapsible” are measured in the state that saves space: the drawer below its threshold and the collapsed rail at <code>xl</code> and above. The current design is the baseline.</p>
+
+  <div class="table-wrap">
+    <table class="measure" id="width-table">
+      <thead>
+        <tr><th>Viewport</th><th>Current</th><th>Compact rail</th><th>Collapsible (collapsed)</th><th>Tools from 1400</th><th>Best gain</th></tr>
+      </thead>
+      <tbody>
+        <tr data-row="1440"><td>1440</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1400"><td>1400</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1399"><td>1399</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1280"><td>1280</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1200"><td>1200</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="1199"><td>1199</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="992"><td>992</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="720"><td>720 (200%)</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+        <tr data-row="390"><td>390</td><td data-current>—</td><td data-compact>—</td><td data-collapsible>—</td><td data-late>—</td><td data-best>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="table-note">Page content in CSS pixels at each simulated viewport, from the mock's <code>.page-shell</code> minus padding. The “best gain” column is the largest improvement over the current design in that row. At 1440 the page's <code>65rem</code> maximum caps the gain at 36 px even after the tools rail is removed or collapsed, because the main column can then exceed the reading measure. At 1399 the <strong>Tools from 1400</strong> design is still a drawer and holds 976 px; at 1400 it becomes a rail and drops to 900 px, which is the 76 px step at its new boundary. The other three designs do not change at 1400 because their thresholds are 1200. Font fallback can move a boundary by a pixel.</p>
+  <p class="table-note">The recommended design is not the largest number in the 1400 row — the collapsible rail wins there. It is the only option that removes the 1200–1280 cliff without adding a control the reader must find, and at 1400 and above it matches the current design.</p>
+
+  <h2>Recommended</h2>
+  <p class="recommendation"><strong>Let the tools rail return at <code>xxl</code>: a drawer from 992 to 1399 and a rail at 1400 and above.</strong> Only the 1200–1399 range actually changes; below 1200 it is already a drawer. This is the smallest change that addresses the actual cliff: the current right rail costs 204 px exactly where the writing column is most constrained, and making it a drawer there returns 196–204 px at 1200–1280. At 1399 the page is already near its 1040 px reading maximum, so the same move shows only 77 px of content, though the main column is still wider. The Tools button is already the pattern below 1200, the top bar's search and draft indicator remain visible because the navbar is still expanded at these widths, and the rail returns at 1400 where the shell has room for it. The cost is one labelled click to reach Configuration and Collaboration between 1200 and 1399, and the 76 px step at the new boundary.</p>
+  <ul>
+    <li><strong>Keep the left rail at <code>lg</code>.</strong> The comparison did not find a reason to move it; the 231 px cliff at 992 is the same problem on the other side, and moving that boundary would cost the content navigation its persistent home on tablets. It is recorded here for a later decision, not folded into this recommendation.</li>
+    <li><strong>Keep the pending panel and the top bar indicator.</strong> At 1200–1399 the indicator still answers “is anything waiting?” without opening anything, which is the requirement this item sets. Do not move pending work into the tools drawer.</li>
+    <li><strong>Do not collapse the rail automatically.</strong> A collapsible rail is a reasonable reader preference at 1400 and above, where it gains 36 px at 1440 and 76 px at 1400, but it is not the fix for a constrained width: the default still takes 204 px, and the collapsed state hides every visible tool label.</li>
+  </ul>
+
+  <h2>Rejected, and why</h2>
+  <ul>
+    <li><strong>Compact rail as the answer.</strong> It recovers 60 px at 1200 and 1280, and only 36 px at 1440 because the page is already at its reading maximum. “Review requests” wraps in a 144 px rail, its content grows to 755 px in a 750 px column at 1200 and 1280 and starts scrolling, and the 203 px cliff at 1200 remains. A narrower label column is a real cost for a gain too small to change the experience.</li>
+    <li><strong>Collapsible rail as the default fix.</strong> The measured gain is real — 860 px of content at 1200 instead of 704 — but it depends on the reader finding and using a control, and the collapsed state is an icon strip whose labels are available on hover as a title or to assistive technology, but not in the visible reading surface. It is a good optional preference, not a substitute for not reserving the rail when there is no room.</li>
+    <li><strong>Moving the left rail off <code>lg</code>.</strong> It would flatten the 992 cliff, but universe and story navigation would become a drawer on tablets and small laptops, and the item's first concern is the writing column at the <code>xl</code> boundary. Keep it as a separate decision.</li>
+  </ul>
+
+  <h2>What 200% zoom changes</h2>
+  <p>At 200% zoom on a 1440 × 900 screen the CSS viewport is 720 × 450. The horizontal result is close to the 1200 px desktop case — 684 px of content, 20 px less — but the vertical result is not: the tools drawer body is 395 px tall for 737 px of content, and with two pending rows the panel runs from 328 px to 511 px, so its lower rows are below the fold until the drawer is scrolled. The left drawer is worse, at 874 px of content. No width overflows, and long names wrap rather than clip.</p>
+  <p>There is a separate finding here: below <code>lg</code> the draft indicator sat inside the collapsed navbar, so at 200% zoom it was not visible on first paint at all. That was true independently of which tools design is chosen, and at 1200–1399 the recommended design keeps the desktop indicator visible. The same change now renders the shared indicator beside the toggler below <code>lg</code>, so the count is on the first paint at 200% zoom too; <code>test/system/navbar_layout_test.rb</code> covers it.</p>
+
+  <h2>Still to check outside this page</h2>
+  <p>This comparison does not replace rendered browser checks, keyboard and screen-reader inspection, or participant testing. Before accepting a direction, confirm the drawer toggle's focus order and <code>aria-expanded</code> state, the Tools button's placement at exactly 1400, the rail's scroll position after a route change, and the page at real 200% zoom in both themes. The mock's numbers are layout measurements, not a claim that every page has the same content width: wide tables, the appearance grid, and the scene matrix each have their own horizontal behavior.</p>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var mock = document.getElementById('mock');
+    var review = {
+      design: 'current',
+      width: '1200',
+      theme: 'light',
+      names: 'typical',
+      pending: 'two',
+      tools: 'expanded'
+    };
+
+    var presets = {
+      '1440': { height: 900 },
+      '1400': { height: 900 },
+      '1399': { height: 900 },
+      '1280': { height: 800 },
+      '1200': { height: 800 },
+      '1199': { height: 800 },
+      '992': { height: 700 },
+      '720': { height: 450 },
+      '390': { height: 844 }
+    };
+
+    var allowed = {
+      design: ['current', 'compact', 'collapsible', 'late'],
+      width: Object.keys(presets),
+      theme: ['light', 'dark'],
+      names: ['typical', 'long'],
+      pending: ['two', 'empty'],
+      tools: ['expanded', 'collapsed']
+    };
+
+    var params = new URLSearchParams(window.location.search);
+    Object.keys(allowed).forEach(function (key) {
+      if (allowed[key].indexOf(params.get(key)) !== -1) review[key] = params.get(key);
+    });
+
+    var longNames = {
+      universe: 'The Meridian Archive of Unfinished Histories',
+      story: 'The Fifth Cabinet and the Ledger of Small Hours'
+    };
+    var typicalNames = {
+      universe: 'lotr',
+      story: 'The Lord of the Rings'
+    };
+
+    function padFor(width) {
+      return Math.min(32, Math.max(16, width * 0.025));
+    }
+
+    function layoutFor(design, width, toolsState) {
+      var left = width >= 992 ? 232 : 0;
+      var leftMode = width >= 992 ? 'rail' : 'drawer';
+      var right = 0;
+      var rightMode = 'drawer';
+      var rightWidth = 204;
+
+      if (design === 'late') {
+        if (width >= 1400) {
+          right = 204;
+          rightMode = 'rail';
+        }
+      } else if (width >= 1200) {
+        rightMode = 'rail';
+        if (design === 'compact') right = 144;
+        else if (design === 'collapsible') right = toolsState === 'collapsed' ? 48 : 204;
+        else right = 204;
+      }
+
+      var toolsButton = rightMode === 'drawer';
+      var bar = width < 1200 || toolsButton;
+      var shell = Math.min(1440, width);
+      var main = shell - left - right;
+      var page = Math.min(1040, main);
+      var pad = padFor(width);
+      var content = Math.round(page - pad * 2);
+
+      return {
+        left: left,
+        leftMode: leftMode,
+        right: right,
+        rightMode: rightMode,
+        rightWidth: rightWidth,
+        toolsButton: toolsButton,
+        bar: bar,
+        main: main,
+        page: page,
+        pad: pad,
+        content: content,
+        navbar: width >= 992 ? 'expanded' : 'collapsed',
+        menu: width < 992,
+        dense: width < 992,
+        shellMax: shell
+      };
+    }
+
+    function applyLayout(design, widthKey, toolsState, options) {
+      options = options || {};
+      var width = Number(widthKey);
+      var preset = presets[widthKey];
+      var layout = layoutFor(design, width, toolsState);
+
+      mock.style.width = width + 'px';
+      mock.style.height = preset.height + 'px';
+      mock.style.setProperty('--page-pad', layout.pad + 'px');
+      mock.dataset.design = design;
+      mock.dataset.left = layout.leftMode;
+      mock.dataset.right = layout.rightMode;
+      mock.dataset.navbar = layout.navbar;
+      mock.dataset.mobilebar = layout.bar ? 'shown' : 'hidden';
+      mock.dataset.menu = layout.menu ? 'shown' : 'hidden';
+      mock.dataset.toolsbutton = layout.toolsButton ? 'shown' : 'hidden';
+      mock.dataset.dense = layout.dense ? 'true' : 'false';
+      mock.dataset.names = options.names || review.names;
+      mock.dataset.pending = options.pending || review.pending;
+      mock.dataset.tools = toolsState;
+      root.setAttribute('data-design', design);
+      root.setAttribute('data-width', widthKey);
+      root.setAttribute('data-theme', review.theme);
+      root.setAttribute('data-names', options.names || review.names);
+      root.setAttribute('data-pending', options.pending || review.pending);
+      root.setAttribute('data-tools', toolsState);
+
+      var names = (options.names || review.names) === 'long' ? longNames : typicalNames;
+      document.querySelectorAll('[data-universe-name]').forEach(function (element) {
+        element.textContent = names.universe;
+      });
+      document.querySelectorAll('[data-story-name]').forEach(function (element) {
+        element.textContent = names.story;
+      });
+
+      var pending = (options.pending || review.pending) === 'two';
+      var summary = mock.querySelector('[data-pending-summary]');
+      if (summary) summary.textContent = pending ? '2 pending changes' : '0 pending changes';
+      mock.querySelectorAll('[data-draft-badge]').forEach(function (badge) {
+        badge.hidden = !pending;
+      });
+      mock.querySelectorAll('.um-pill[title]').forEach(function (pill) {
+        pill.setAttribute('title', pending ? 'Draft: 2 pending changes' : 'Draft: no pending changes');
+      });
+
+      var toggle = mock.querySelector('.tools-toggle');
+      if (toggle) {
+        var collapsed = toolsState === 'collapsed' && design === 'collapsible';
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('data-set-tools', collapsed ? 'expanded' : 'collapsed');
+        var label = toggle.querySelector('.tools-label');
+        if (label) label.textContent = collapsed ? 'Expand tools' : 'Collapse tools';
+      }
+
+      closeDrawers();
+      return layout;
+    }
+
+    function readLayout() {
+      var width = Number(review.width);
+      var layout = layoutFor(review.design, width, review.tools);
+      var page = mock.querySelector('.page-shell');
+      var pageStyle = window.getComputedStyle(page);
+      var content = Math.round(page.clientWidth - parseFloat(pageStyle.paddingLeft) - parseFloat(pageStyle.paddingRight));
+      var rightBody = mock.querySelector('.um-tools .rail-body');
+      var pending = mock.querySelector('.draft-pending-panel');
+      var bodyRect = rightBody.getBoundingClientRect();
+      var pendingRect = pending.getBoundingClientRect();
+      var lastChild = rightBody.lastElementChild;
+      var contentHeight = lastChild
+        ? Math.round(lastChild.getBoundingClientRect().bottom - bodyRect.top)
+        : rightBody.scrollHeight;
+
+      return {
+        layout: layout,
+        content: content,
+        mainWidth: Math.round(mock.querySelector('.um-main').getBoundingClientRect().width),
+        leftWidth: layout.left,
+        rightWidth: layout.right,
+        pageWidth: Math.round(page.getBoundingClientRect().width),
+        horizontalOverflow: page.scrollWidth > page.clientWidth + 1 ||
+          mock.querySelector('.um-main').scrollWidth > mock.querySelector('.um-main').clientWidth + 1,
+        rightBody: { client: rightBody.clientHeight, content: contentHeight },
+        pending: {
+          top: Math.round(pendingRect.top - bodyRect.top),
+          bottom: Math.round(pendingRect.bottom - bodyRect.top),
+          height: Math.round(pendingRect.height),
+          fullyVisible: (pendingRect.bottom - bodyRect.top) <= rightBody.clientHeight
+        }
+      };
+    }
+
+    function plus(value) {
+      return value > 0 ? '+' + value : String(value);
+    }
+
+    function renderMeasurements() {
+      var data = readLayout();
+      var current = layoutFor('current', Number(review.width), 'expanded');
+      var gain = data.content - current.content;
+      var parts = [];
+
+      parts.push('Simulated viewport ' + review.width + ' × ' + presets[review.width].height + '.');
+      parts.push('Left rail ' + data.leftWidth + ' px' + (data.layout.leftMode === 'drawer' ? ' (drawer)' : '') +
+        ', right rail ' + data.rightWidth + ' px' + (data.layout.rightMode === 'drawer' ? ' (drawer)' : '') +
+        ', main ' + data.mainWidth + ' px, page content ' + data.content + ' px.');
+      parts.push('Page content is ' + plus(gain) + ' px against the current design at this width.');
+
+      if (data.layout.rightMode === 'rail') {
+        parts.push('The tools rail holds ' + data.rightBody.content + ' px of content in a ' +
+          data.rightBody.client + ' px column' +
+          (data.rightBody.content > data.rightBody.client + 1 ? ', so it scrolls' : ', so it does not scroll') + '.');
+      } else {
+        parts.push('Tools is a drawer behind the workspace bar; opened, its body is ' +
+          data.rightBody.client + ' px tall for ' + data.rightBody.content + ' px of content.');
+      }
+
+      parts.push('The pending panel runs ' + data.pending.top + '–' + data.pending.bottom +
+        ' px in that body (' + data.pending.height + ' px tall), ' +
+        (data.pending.fullyVisible ? 'fully visible' : 'partly below the fold') + '.');
+      parts.push(Number(review.width) >= 992
+        ? 'Search and Draft are in the top bar.'
+        : 'Search is inside the collapsed navbar; Draft is beside the toggler.');
+      if (Number(review.width) < 992) {
+        parts.push('Menu and Tools are labelled buttons in the workspace bar.');
+      } else if (data.layout.toolsButton) {
+        parts.push('Tools is a labelled button in the workspace bar.');
+      }
+
+      if (data.horizontalOverflow) parts.push('The page overflows horizontally.');
+
+      document.querySelector('[data-measurements]').textContent = parts.join(' ');
+      document.querySelector('[data-width-note]').textContent =
+        'Simulated viewport ' + review.width + ' × ' + presets[review.width].height + ' CSS pixels';
+    }
+
+    function snapshotContent(design, widthKey, toolsState) {
+      var previous = {
+        design: mock.dataset.design,
+        left: mock.dataset.left,
+        right: mock.dataset.right,
+        navbar: mock.dataset.navbar,
+        mobilebar: mock.dataset.mobilebar,
+        menu: mock.dataset.menu,
+        toolsbutton: mock.dataset.toolsbutton,
+        dense: mock.dataset.dense,
+        w: mock.style.width,
+        h: mock.style.height,
+        pad: mock.style.getPropertyValue('--page-pad')
+      };
+
+      applyLayout(design, widthKey, toolsState, {});
+      var page = mock.querySelector('.page-shell');
+      var style = window.getComputedStyle(page);
+      var content = Math.round(page.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+
+      mock.dataset.design = previous.design;
+      mock.dataset.left = previous.left;
+      mock.dataset.right = previous.right;
+      mock.dataset.navbar = previous.navbar;
+      mock.dataset.mobilebar = previous.mobilebar;
+      mock.dataset.menu = previous.menu;
+      mock.dataset.toolsbutton = previous.toolsbutton;
+      mock.dataset.dense = previous.dense;
+      mock.style.width = previous.w;
+      mock.style.height = previous.h;
+      mock.style.setProperty('--page-pad', previous.pad);
+
+      return content;
+    }
+
+    function buildTable() {
+      ['1440', '1400', '1399', '1280', '1200', '1199', '992', '720', '390'].forEach(function (widthKey) {
+        var row = document.querySelector('[data-row="' + widthKey + '"]');
+        if (!row) return;
+        var values = {
+          current: snapshotContent('current', widthKey, 'expanded'),
+          compact: snapshotContent('compact', widthKey, 'expanded'),
+          collapsible: snapshotContent('collapsible', widthKey, 'collapsed'),
+          late: snapshotContent('late', widthKey, 'expanded')
+        };
+        row.querySelector('[data-current]').textContent = values.current;
+        row.querySelector('[data-compact]').textContent = values.compact;
+        row.querySelector('[data-collapsible]').textContent = values.collapsible;
+        row.querySelector('[data-late]').textContent = values.late;
+
+        var best = Math.max(values.current, values.compact, values.collapsible, values.late);
+        var bestCell = row.querySelector('[data-best]');
+        bestCell.textContent = best > values.current ? '+' + (best - values.current) : '—';
+        row.classList.toggle('best', best > values.current + 1);
+      });
+    }
+
+    function closeDrawers() {
+      mock.dataset.open = 'none';
+      mock.querySelector('.um-backdrop').hidden = true;
+      mock.querySelectorAll('[data-open]').forEach(function (button) {
+        button.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function openDrawer(side) {
+      mock.dataset.open = side;
+      mock.querySelector('.um-backdrop').hidden = false;
+      var button = mock.querySelector('[data-open="' + side + '"]');
+      if (button) button.setAttribute('aria-expanded', 'true');
+      var close = mock.querySelector((side === 'left' ? '.um-rail--left' : '.um-tools') + ' [data-close]');
+      if (close) close.focus();
+    }
+
+    function applyPressed(selector, attribute, value) {
+      document.querySelectorAll(selector).forEach(function (button) {
+        button.setAttribute('aria-pressed', String(button.getAttribute(attribute) === value));
+      });
+    }
+
+    function render() {
+      applyLayout(review.design, review.width, review.tools, {});
+      window.requestAnimationFrame(function () {
+        applyLayout(review.design, review.width, review.tools, {});
+        renderMeasurements();
+      });
+
+      document.querySelector('[data-scroll-note]').textContent =
+        'Simulated viewport ' + review.width + ' × ' + presets[review.width].height +
+        ' CSS pixels. Scroll horizontally if your window is narrower than the viewport.';
+
+      document.getElementById('tools-state-group').hidden = review.design !== 'collapsible';
+      applyPressed('[data-set-design]', 'data-set-design', review.design);
+      applyPressed('[data-set-width]', 'data-set-width', review.width);
+      applyPressed('[data-set-theme]', 'data-set-theme', review.theme);
+      applyPressed('[data-set-names]', 'data-set-names', review.names);
+      applyPressed('[data-set-pending]', 'data-set-pending', review.pending);
+      applyPressed('[data-set-tools]', 'data-set-tools', review.tools);
+    }
+
+    document.querySelectorAll('[data-set-design]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.design = button.getAttribute('data-set-design');
+        if (review.design !== 'collapsible') review.tools = 'expanded';
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-width]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.width = button.getAttribute('data-set-width');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-theme]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.theme = button.getAttribute('data-set-theme');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-names]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.names = button.getAttribute('data-set-names');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-pending]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        review.pending = button.getAttribute('data-set-pending');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-set-tools]').forEach(function (button) {
+      button.addEventListener('click', function (event) {
+        if (event.currentTarget.closest('.tools-toggle') && review.design !== 'collapsible') return;
+        review.tools = button.getAttribute('data-set-tools');
+        render();
+      });
+    });
+    document.querySelectorAll('[data-open]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        openDrawer(button.getAttribute('data-open'));
+      });
+    });
+    document.querySelectorAll('[data-close]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        closeDrawers();
+      });
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeDrawers();
+    });
+
+    // A closed drawer's content is still laid out off-screen, so the inspector
+    // can measure it; opening it is only for review.
+    buildTable();
+    render();
+  })();
+</script>
+</body>
+</html>

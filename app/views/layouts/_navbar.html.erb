@@ -4,14 +4,22 @@
         open and is the only place a new universe is created. %>
     <%= link_to t("app.name"), root_path, class: "navbar-brand fw-bold" %>
 
-    <button class="navbar-toggler" type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#primary-navigation"
-      aria-controls="primary-navigation"
-      aria-expanded="false"
-      aria-label="<%= t("layouts.toggle_navigation") %>">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <%# Below `lg` the collapsed navigation hides the actions row, and the draft
+        indicator would be behind the toggler. Workspace state that outlives the
+        page must need nothing opened, so the indicator is repeated here beside
+        the toggler; `d-lg-none` keeps the two placements exclusive and the
+        partial is shared, so their count and destination cannot disagree. %>
+    <div class="navbar-mobile-actions d-flex d-lg-none align-items-center gap-2 ms-auto">
+      <%= render "layouts/draft_indicator" %>
+      <button class="navbar-toggler" type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#primary-navigation"
+        aria-controls="primary-navigation"
+        aria-expanded="false"
+        aria-label="<%= t("layouts.toggle_navigation") %>">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
 
     <div class="collapse navbar-collapse" id="primary-navigation">
       <ul class="navbar-nav me-auto align-items-lg-center gap-lg-1">
@@ -54,7 +62,10 @@
           and a guest sees the same menu with Log in as its first entry and no bell,
           because there is nothing there addressed to a guest. %>
       <div class="navbar-actions ms-auto mt-3 mt-lg-0 d-flex align-items-center gap-2">
-        <%= render "layouts/draft_indicator" %>
+        <%# The actions row is inside the collapsed menu below `lg`, so this copy
+            is hidden there even while the menu is open; the mobile copy beside
+            the toggler is the visible one. %>
+        <div class="d-none d-lg-flex"><%= render "layouts/draft_indicator" %></div>
         <%= render "layouts/notifications" %>
 
         <% on_settings_page = controller_name == "settings" %>

@@ -44,6 +44,15 @@ Labels used below, in the order their groups appear:
 
 - **Scene neighbour rail.** Scene Details now opens and closes with previous/next links to the adjacent Scenes in narrative order, with named story boundaries and one-scene copy; the rail is read-only and never follows a filtered list.
 
+### fixed
+
+- **Draft indicator below `lg`.** The pending-work indicator now sits beside the collapsed navbar's toggler, so it is visible on the first paint at tablet and phone widths without opening the menu.
+- **Long navbar scope names.** The `lg` bar now allows its search, link list, and scope items to shrink, and the scope name truncates within its `12rem` maximum, so a long Universe or Story name no longer widens the bar at 992px.
+
+### docs
+
+- **Workspace width comparison.** A static prototype compares the current rails with a compact rail, a collapsible rail, and a tools drawer below 1400, measured at the `lg`/`xl` boundaries and at 200% zoom; the backlog's 30rem rail figure is corrected to the built 27.25rem.
+
 ## 2026-11-18
 
 ### changed

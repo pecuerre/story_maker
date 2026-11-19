@@ -47,13 +47,15 @@ below.
   link, because a story is never implied.
 - **Search** — one GET form between the scope links and the actions, plus the dropdown that answers
   while someone types. See [features/search.md](search.md).
-- **Draft** — the reader's own pending work, in `.navbar-actions` before the bell, and rendered only
-  where a draft can exist: a signed-in reader in a universe that remembers changes rather than writing
-  them. It is one word and, when something is waiting, a count, and it links to the drafts list; it
-  renders at **zero** as well as at any count, because it is also the way in and an entry that appears
-  and disappears with a count needs an explanation whenever it is absent. It is the one statement of
-  pending state that needs nothing opened — the right sidebar's panel and its **Pending changes** entry
-  are behind the **Tools** drawer below `xl` — and it is deliberately **not** in a page header, whose
+- **Draft** — the reader's own pending work, in `.navbar-actions` before the bell and, below `lg`,
+  beside the toggler in `.navbar-mobile-actions`, rendered only where a draft can exist: a signed-in
+  reader in a universe that remembers changes rather than writing them. It is one word and, when
+  something is waiting, a count, and it links to the drafts list; it renders at **zero** as well as at
+  any count, because it is also the way in and an entry that appears and disappears with a count needs
+  an explanation whenever it is absent. It is the one statement of pending state that needs nothing
+  opened — the right sidebar's panel and its **Pending changes** entry are behind the **Tools** drawer
+  below `xl`, and below `lg` the actions row is inside the collapsed menu, which is why the same
+  partial is rendered beside the toggler there. It is deliberately **not** in a page header, whose
   actions are about the page rather than about the universe. It states what is waiting and never
   whether an editing session is on: every mutation is remembered in this mode whether the reader
   pressed **Start editing** or not (ADR 0022), and its figure is the one `DraftPreview#count` that the

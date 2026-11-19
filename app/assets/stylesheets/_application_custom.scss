@@ -217,14 +217,32 @@ summary:focus-visible {
   letter-spacing: -.01em;
 }
 
+// The collapsed bar is one flex row at `lg`, and a long universe or story name
+// must not widen it. The collapse, the link list, and the search may all shrink;
+// the scope link is a flex row so its label keeps its width while the name
+// truncates inside `.navbar-context`.
+.navbar-collapse,
+.navbar-nav,
+.navbar-nav .nav-item {
+  min-width: 0;
+}
+
 .navbar .nav-link,
 .navbar .btn {
   font-size: .8rem;
   white-space: nowrap;
 }
 
+.navbar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  min-width: 0;
+}
+
 .navbar-context {
-  display: inline-block;
+  display: block;
+  min-width: 0;
   max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -290,6 +308,7 @@ $um-search-match: #ffc107;
   position: relative;
   z-index: 20;
   flex: 1 1 12rem;
+  min-width: 0;
   max-width: 30rem;
   margin-block: .75rem;
 

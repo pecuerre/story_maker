@@ -7,7 +7,7 @@
       "dependencies": {
         "@popperjs/core": "^2.11.8",
         "autoprefixer": "^10.5.4",
-        "bootstrap": "^5.3.8",
+        "bootstrap": "^5.3.9",
         "bootstrap-icons": "^1.13.1",
         "postcss": "^8.5.26",
         "postcss-cli": "^12.0.0",
@@ -87,7 +87,7 @@
 
     "baseline-browser-mapping": ["baseline-browser-mapping@2.11.20", "", { "bin": { "baseline-browser-mapping": "dist/cli.cjs" } }, "sha512-H0ulySigv6icDJ1F7SjtdCD6PrhTpdYCmP0CactWy1+ekh0AFd0o1Wn5T8b+hnTmdBx19u9yhL6wvCylXMY7zw=="],
 
-    "bootstrap": ["bootstrap@5.3.8", "", {}, "sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg=="],
+    "bootstrap": ["bootstrap@5.3.9", "", { "peerDependencies": { "@popperjs/core": "^2.11.8" } }, "sha512-20cU0rcfw8WdxtVbmfU+xT2EjvVTw9Ror/h1Qvd7DXCujRg8OO9mdBCsmTHdJFf3BuadmBNJtgIuUXsBqSkk/w=="],
 
     "bootstrap-icons": ["bootstrap-icons@1.13.1", "", {}, "sha512-ijombt4v6bv5CLeXvRWKy7CuM3TRTuPEuGaGKvTV5cz65rQSY8RQ2JcHt6b90cBBAC7s8fsf2EkQDldzCoXUjw=="],
 
